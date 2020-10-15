@@ -1,0 +1,4 @@
+useDynLib(hierNetGxE)
+import(RcppEigen)
+importFrom(Rcpp, evalCpp)
+exportPattern("^[[:alpha:]]+")
