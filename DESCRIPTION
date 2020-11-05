@@ -1,11 +1,14 @@
 Package: hierNetGxE
 Type: Package
-Title: What the package does (short line)
+Title: Hierarchical Selection of Interacton Terms in a Regularized Regression Model
 Version: 1.0
 Date: 2020-10-03
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
+Author: Natalia Zemlianskaia
+Maintainer: <natasha.zemlianskaia@gmail.com>
+Description: The model focuses on a single environmental exposure and induces 
+    a main-effect-before-interaction hierarchical structure for the selection of interaction terms 
+    in a regularized regression model
 License: What license is it under?
-Imports: Rcpp (>= 1.0.3)
+Imports: Rcpp (>= 1.0.3), dplyr, foreach
+Suggests: doParallel
 LinkingTo: Rcpp, RcppEigen

@@ -9,6 +9,7 @@
 Rcpp::List fitModelRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
                         const Eigen::Map<Eigen::VectorXd>& E,
                         const Eigen::Map<Eigen::VectorXd>& Y,
+                        const Eigen::Map<Eigen::VectorXd>& weights,
                         const Rcpp::LogicalVector& standardize,
                         const Eigen::VectorXd& grid,
                         const Rcpp::NumericVector& grid_size,
@@ -17,11 +18,11 @@ Rcpp::List fitModelRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
                         double tolerance,
                         int max_iterations,
                         int min_working_set_size) {
-
-  Solver solver(G, E, Y);
+  
+  Solver solver(G, E, Y, weights);
   
   const int grid_size_squared = grid.size() * grid.size();
-  //const int grid_size_squared = 32;
+  
   Eigen::VectorXd beta_0(grid_size_squared);
   Eigen::VectorXd beta_e(grid_size_squared);
   Eigen::MatrixXd beta_g(grid_size_squared, G.cols());
@@ -32,6 +33,7 @@ Rcpp::List fitModelRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
   Eigen::VectorXd num_iterations(grid_size_squared);
   Eigen::VectorXd num_fitered_by_safe_g(grid_size_squared);
   Eigen::VectorXd num_fitered_by_safe_gxe(grid_size_squared);
+  Eigen::VectorXd objective_value(grid_size_squared);
   
   Eigen::VectorXd grid_lambda_1 = grid;
   std::sort(grid_lambda_1.data(), grid_lambda_1.data() + grid_lambda_1.size());
@@ -54,6 +56,7 @@ Rcpp::List fitModelRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
       working_set_size[index] = solver.get_working_set_size();
       num_fitered_by_safe_g[index] = solver.get_num_fitered_by_safe_g();
       num_fitered_by_safe_gxe[index] = solver.get_num_fitered_by_safe_gxe();
+      objective_value[index] = solver.get_value();
       index++;
       
       if (index >= grid_size_squared) {
@@ -78,6 +81,8 @@ Rcpp::List fitModelRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
     Rcpp::Named("num_iterations") = num_iterations,
     Rcpp::Named("working_set_size") = working_set_size,
     Rcpp::Named("num_fitered_by_safe_g") = num_fitered_by_safe_g,
-    Rcpp::Named("num_fitered_by_safe_gxe") = num_fitered_by_safe_gxe
+    Rcpp::Named("num_fitered_by_safe_gxe") = num_fitered_by_safe_gxe,
+    Rcpp::Named("objective_value") = objective_value,    
+    Rcpp::Named("grid") = grid
   );
 }
