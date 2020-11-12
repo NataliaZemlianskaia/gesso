@@ -8,8 +8,6 @@ hierNetGxE.fit = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, g
   }
   n = dim(G)[1]
   weights = rep(1, n) / n
-  print("YO")
-  flush.console()
   return(fitModelRcpp(G, E, Y, weights, standardize, grid, grid_size, grid_min_ratio, family, tolerance, max_iterations, min_working_set_size))
 }
 
@@ -30,17 +28,30 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
 
   if (parallel) {
     print("Parallel")
-    result = foreach(k = 1L:nfolds,
-                      .packages = c("hierNetGxE"),
-                      .combine = cbind) %dopar% {
-      weights = rep(1, n)
-      weights[foldid == k] = 0.0
-      weights = weights / sum(weights)
-      test_idx = as.integer(which(foldid == k) - 1)
-      fit = fitModelCVRcpp(G, E, Y, weights, test_idx, standardize, grid, grid_size,
-                           grid_min_ratio, family, tolerance, max_iterations, min_working_set_size)
-      fit$test_loss
-    }
+    result = do.call(rbind, mclapply(
+      1L:nfolds,
+      function(k, ...) {
+        weights = rep(1, n)
+        weights[foldid == k] = 0.0
+        weights = weights / sum(weights)
+        test_idx = as.integer(which(foldid == k) - 1)
+        fit = fitModelCVRcpp(G, E, Y, weights, test_idx, standardize, grid, grid_size,
+                             grid_min_ratio, family, tolerance, max_iterations, min_working_set_size)
+        return(fit$test_loss)
+      },
+      mc.cores=nfolds
+    )) 
+    #result = foreach(k = 1L:nfolds,
+    #                  .packages = c("hierNetGxE"),
+    #                  .combine = cbind) %dopar% {
+    #  weights = rep(1, n)
+    #  weights[foldid == k] = 0.0
+    #  weights = weights / sum(weights)
+    #  test_idx = as.integer(which(foldid == k) - 1)
+    #  fit = fitModelCVRcpp(G, E, Y, weights, test_idx, standardize, grid, grid_size,
+    #                       grid_min_ratio, family, tolerance, max_iterations, min_working_set_size)
+    #  fit$test_loss
+    #}
   } else {
     result = c()
     for (k in 1:nfolds) {
