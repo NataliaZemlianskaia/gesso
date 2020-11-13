@@ -102,8 +102,10 @@ protected:
   VecXd case5_A12_div_detA;  
   
   double primal_objective;
-  VecXd abs_nu_by_G;
-  VecXd abs_nu_by_GxE;
+  VecXd abs_res_by_G;
+  VecXd abs_res_by_GxE;
+  bool abs_res_by_G_uptodate;
+  double x_opt;
   VecXd upperbound_nu_by_G;
   VecXd upperbound_nu_by_GxE;
   
@@ -112,8 +114,8 @@ protected:
   ArrayXb safe_set_zero;
   std::vector<int> working_set;
   
-  VecXd abs_inner_nu_by_G;
-  VecXd abs_inner_nu_by_GxE;
+  VecXd abs_inner_res_by_G;
+  VecXd abs_inner_res_by_GxE;
   
   ArrayXb active_set;
   
@@ -149,22 +151,24 @@ protected:
     case_3_F(p),
     case5_A22_div_detA(p),
     case5_A12_div_detA(p),
-    abs_nu_by_G(p),
-    abs_nu_by_GxE(p),
+    abs_res_by_G(p),
+    abs_res_by_GxE(p),
     upperbound_nu_by_G(p),
     upperbound_nu_by_GxE(p),
     safe_set_g(p),
     safe_set_gxe(p),
     safe_set_zero(p),
-    abs_inner_nu_by_G(p),
-    abs_inner_nu_by_GxE(p),
+    abs_inner_res_by_G(p),
+    abs_inner_res_by_GxE(p),
     active_set(p),
     temp_p(p),
     temp_n(n) {
     
+    abs_res_by_G_uptodate = false;
     b_g.setZero(p);
     b_gxe.setZero(p);
     delta.setZero(p);
+    res = Y;
     
     working_set.reserve(p);
     
@@ -201,13 +205,9 @@ protected:
       case5_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p); 
       
       norm2_Y_w = weighted_squared_norm(Y, weights);
-      
-      res = (Y.array() - b_0).matrix() - G * (b_g + E.cwiseProduct(b_gxe)) - E * b_e;
     }
     
     int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) {
-      std::cout << "G[0,0]" << G.col(0)[0] << "\n";
-      
       safe_set_g.setOnes(p);
       safe_set_gxe.setOnes(p);
       safe_set_zero.setOnes(p);
@@ -228,9 +228,6 @@ protected:
       double duality_gap, inner_duality_gap, max_diff_tolerance, max_diff;
       while (num_passes < max_iterations) {
         duality_gap = check_duality_gap(lambda_1, lambda_2, false);
-        if (num_passes == 0) {
-          std::cout << "duality_gap=" << duality_gap << "\n";
-        }
         if (duality_gap < tolerance) {
           break;
         }
@@ -269,16 +266,16 @@ protected:
       return x_opt  * triple_dot_product(res, weights, Y) - x_opt * x_opt * weighted_squared_norm(res, weights) / 2;
     }
     
-    double naive_projection(double lambda_1, double lambda_2, const Eigen::Ref<VecXd>& abs_nu_by_G, const Eigen::Ref<VecXd>& abs_nu_by_GxE) {
+    double naive_projection(double lambda_1, double lambda_2, const Eigen::Ref<VecXd>& abs_res_by_G, const Eigen::Ref<VecXd>& abs_res_by_GxE) {
       //VecXd dual_delta
-      temp_p = (lambda_1 * abs_nu_by_GxE - lambda_2 * abs_nu_by_G).cwiseQuotient(abs_nu_by_GxE + abs_nu_by_G).cwiseMax(0).cwiseMin(lambda_1);
+      temp_p = (lambda_1 * abs_res_by_GxE - lambda_2 * abs_res_by_G).cwiseQuotient(abs_res_by_GxE + abs_res_by_G).cwiseMax(0).cwiseMin(lambda_1);
       double M = std::numeric_limits<double>::infinity();
-      for (int i = 0; i < abs_nu_by_G.size(); ++i) {
-        if (abs_nu_by_G[i] > 0) {
-          M = std::min(M, (lambda_1 - temp_p[i]) / abs_nu_by_G[i]);
+      for (int i = 0; i < abs_res_by_G.size(); ++i) {
+        if (abs_res_by_G[i] > 0) {
+          M = std::min(M, (lambda_1 - temp_p[i]) / abs_res_by_G[i]);
         }
-        if (abs_nu_by_GxE[i] > 0) {
-          M = std::min(M, (lambda_2 + temp_p[i]) / abs_nu_by_GxE[i]);
+        if (abs_res_by_GxE[i] > 0) {
+          M = std::min(M, (lambda_2 + temp_p[i]) / abs_res_by_GxE[i]);
         }      
       }
       double x_hat = triple_dot_product(res, Y, weights) / triple_dot_product(res, res, weights);
@@ -292,12 +289,12 @@ protected:
     }
     
     double update_nu(double lambda_1, double lambda_2) {
-      abs_nu_by_G = (res.cwiseProduct(weights).transpose() * G).cwiseAbs().transpose();
-      abs_nu_by_GxE = (res.cwiseProduct(weights).cwiseProduct(E).transpose() * G).cwiseAbs().transpose();
-      double x_opt = naive_projection(lambda_1, lambda_2, abs_nu_by_G, abs_nu_by_GxE);
+      if (!abs_res_by_G_uptodate) {
+        abs_res_by_G = (res.cwiseProduct(weights).transpose() * G).cwiseAbs().transpose();
+        abs_res_by_GxE = (res.cwiseProduct(weights).cwiseProduct(E).transpose() * G).cwiseAbs().transpose();
+      }
+      x_opt = naive_projection(lambda_1, lambda_2, abs_res_by_G, abs_res_by_GxE);
       double dual_objective = compute_dual_objective(x_opt);
-      abs_nu_by_G *= x_opt;
-      abs_nu_by_GxE *= x_opt;
       return dual_objective;
     }
     
@@ -308,15 +305,15 @@ protected:
       // https://stackoverflow.com/questions/34449805/reserve-dense-eigen-matrix
       //abs_inner_nu_by_G.conservativeResize(working_set.size());
       //abs_inner_nu_by_GxE.conservativeResize(working_set.size());
-      abs_inner_nu_by_G.setZero(working_set.size());
-      abs_inner_nu_by_GxE.setZero(working_set.size());
+      abs_inner_res_by_G.setZero(working_set.size());
+      abs_inner_res_by_GxE.setZero(working_set.size());
       //VecXd res_w
       temp_n = res.cwiseProduct(weights);
       for (int i = 0; i < working_set.size(); ++i) {
-        abs_inner_nu_by_G[i] = std::abs(temp_n.dot(G.col(working_set[i])));
-        abs_inner_nu_by_GxE[i] = std::abs(temp_n.cwiseProduct(E).dot(G.col(working_set[i])));
+        abs_inner_res_by_G[i] = std::abs(temp_n.dot(G.col(working_set[i])));
+        abs_inner_res_by_GxE[i] = std::abs(temp_n.cwiseProduct(E).dot(G.col(working_set[i])));
       }
-      double x_opt = naive_projection(lambda_1, lambda_2, abs_inner_nu_by_G, abs_inner_nu_by_GxE);
+      double x_opt = naive_projection(lambda_1, lambda_2, abs_inner_res_by_G, abs_inner_res_by_GxE);
       return compute_dual_objective(x_opt);
     }
     
@@ -329,7 +326,7 @@ protected:
         current_dual_objective = update_nu(lambda_1, lambda_2);  
       }
       
-      for (int i = 0; i < p; ++i) {
+      /*for (int i = 0; i < p; ++i) {
         double delta_upperbound = lambda_1 - abs_nu_by_G[i];
         double delta_lowerbound = abs_nu_by_GxE[i] - lambda_2;
         if (delta_lowerbound < 0) { 
@@ -344,7 +341,7 @@ protected:
       }
       if (abs(triple_dot_product(res, E, weights)) > 1e-15) {
         std::cout << "SPARTA b_e: " << triple_dot_product(res, E, weights) << "\n";
-      }            
+      }*/            
       
       primal_objective = weighted_squared_norm(res, weights) / 2.0 + lambda_1 * (b_g.cwiseAbs().cwiseMax(b_gxe.cwiseAbs())).sum() + lambda_2 * b_gxe.cwiseAbs().sum();
       return primal_objective - current_dual_objective;
@@ -353,10 +350,10 @@ protected:
     void update_working_set(double lambda_1, double lambda_2, double dual_gap, int working_set_size) {
       double r = sqrt(2 * dual_gap);
       //ArrayXd d_j = ((lambda_1 - abs_nu_by_G.array()) + (r * norm_GxE).array().max(lambda_2 - abs_nu_by_GxE.array())) / (norm_GxE + norm_G).array();
-      ArrayXd d_j = (lambda_1 - lambda_2 - abs_nu_by_G.array() - (lambda_2 - r * norm_GxE.array()).max(abs_nu_by_GxE.array())) / (norm_GxE + norm_G).array();
+      ArrayXd d_j = (lambda_1 - lambda_2 - (x_opt * abs_res_by_G).array() - (lambda_2 - r * norm_GxE.array()).max((x_opt * abs_res_by_GxE).array())) / (norm_GxE + norm_G).array();
       
-      upperbound_nu_by_G = abs_nu_by_G + r * norm_G;
-      upperbound_nu_by_GxE = abs_nu_by_GxE + r * norm_GxE;
+      upperbound_nu_by_G = x_opt * abs_res_by_G + r * norm_G;
+      upperbound_nu_by_GxE = x_opt * abs_res_by_GxE + r * norm_GxE;
       safe_set_zero = (upperbound_nu_by_GxE.array() - lambda_2).max(0) < (lambda_1 - upperbound_nu_by_G.array());
       for (int i = 0; i < p; ++i) {
         safe_set_gxe[i] = safe_set_gxe[i] && (!safe_set_zero[i]) && (upperbound_nu_by_GxE[i] >= lambda_2);
@@ -366,10 +363,12 @@ protected:
       for (int i = 0; i < p; ++i) {
         if (b_gxe[i] != 0 && (!safe_set_gxe[i])) {
           res += G.col(i).cwiseProduct(E) * b_gxe[i];
+          abs_res_by_G_uptodate = false;
           b_gxe[i] = 0;
         }
         if (b_g[i] != 0 && (!safe_set_g[i])) {
           res += G.col(i) * b_g[i];
+          abs_res_by_G_uptodate = false;
           b_g[i] = 0;
         }      
       }
@@ -400,7 +399,11 @@ protected:
       b_0 = (sum_res_w - sum_E_w * b_e) / sum_w;
       res = res.array() - b_0;
       res -= E * b_e;
-      return std::max(sum_w * sqr(b_0 - b_0_old), norm2_E_w * sqr(b_e_old - b_e));
+      double max_diff = std::max(sum_w * sqr(b_0 - b_0_old), norm2_E_w * sqr(b_e_old - b_e));
+      if (max_diff > 0) {
+        abs_res_by_G_uptodate = false;
+      }
+      return max_diff;
     }
     
     double update_b_for_working_set(double lambda_1, double lambda_2, bool active_set_iteration) {
@@ -440,8 +443,11 @@ protected:
             b_g[index] = 0; b_gxe[index] = 0; delta[index] = delta_upperbound;
             curr_diff = norm2_G[index] * sqr(b_g_old);
             max_diff = std::max(max_diff, curr_diff);
-            if (!active_set_iteration && !active_set[index]) {
-              active_set[index] = int(curr_diff > 0);
+            if (curr_diff > 0) {
+              abs_res_by_G_uptodate = false;
+              if (!active_set_iteration && !active_set[index]) {
+                active_set[index] = true;
+              }              
             }
             continue;
           } else {
@@ -450,9 +456,12 @@ protected:
             res -= b_g[index] * G.col(index);
             curr_diff = norm2_G[index] * sqr(b_g_new - b_g_old);
             max_diff = std::max(max_diff, curr_diff);
-            if (!active_set_iteration && !active_set[index]) {
-              active_set[index] = int(curr_diff > 0);
-            }        
+            if (curr_diff > 0) {
+              abs_res_by_G_uptodate = false;
+              if (!active_set_iteration && !active_set[index]) {
+                active_set[index] = true;
+              }              
+            }    
             continue;
           }
         }
@@ -466,9 +475,12 @@ protected:
           curr_diff = std::max(norm2_G[index] * sqr(b_g_old), 
                                norm2_GxE[index] * sqr(b_gxe_old));
           max_diff = std::max(max_diff, curr_diff);      
-          if (!active_set_iteration && !active_set[index]) {
-            active_set[index] = int(curr_diff > 0);
-          }      
+          if (curr_diff > 0) {
+            abs_res_by_G_uptodate = false;
+            if (!active_set_iteration && !active_set[index]) {
+              active_set[index] = true;
+            }              
+          }
           continue;
         }
         
@@ -488,9 +500,12 @@ protected:
               curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
                                    norm2_GxE[index] * sqr(b_gxe_old - root_2));
               max_diff = std::max(max_diff, curr_diff);              
-              if (!active_set_iteration && !active_set[index]) {
-                active_set[index] = int(curr_diff > 0);
-              }          
+              if (curr_diff > 0) {
+                abs_res_by_G_uptodate = false;
+                if (!active_set_iteration && !active_set[index]) {
+                  active_set[index] = true;
+                }              
+              }     
               has_solved = true;
               break;
             }
@@ -523,9 +538,12 @@ protected:
                 curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
                                      norm2_GxE[index] * sqr(b_gxe_old - root_2));
                 max_diff = std::max(max_diff, curr_diff);               
-                if (!active_set_iteration && !active_set[index]) {
-                  active_set[index] = int(curr_diff > 0);
-                }            
+                if (curr_diff > 0) {
+                  abs_res_by_G_uptodate = false;
+                  if (!active_set_iteration && !active_set[index]) {
+                    active_set[index] = true;
+                  }              
+                }           
                 has_solved = true;
                 break;
               }          
@@ -548,9 +566,12 @@ protected:
           curr_diff = std::max(norm2_G[index] * sqr(b_g_old - b_g_new), 
                                norm2_GxE[index] * sqr(b_gxe_old));
           max_diff = std::max(max_diff, curr_diff);         
-          if (!active_set_iteration && !active_set[index]) {
-            active_set[index] = int(curr_diff > 0);
-          }      
+          if (curr_diff > 0) {
+            abs_res_by_G_uptodate = false;
+            if (!active_set_iteration && !active_set[index]) {
+              active_set[index] = true;
+            }              
+          }    
           continue;
         }    
         
@@ -571,9 +592,12 @@ protected:
                 curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
                                      norm2_GxE[index] * sqr(b_gxe_old - root_2));
                 max_diff = std::max(max_diff, curr_diff);                     
-                if (!active_set_iteration && !active_set[index]) {
-                  active_set[index] = int(curr_diff > 0);
-                }            
+                if (curr_diff > 0) {
+                  abs_res_by_G_uptodate = false;
+                  if (!active_set_iteration && !active_set[index]) {
+                    active_set[index] = true;
+                  }              
+                }       
                 has_solved = true;
                 break;
               }

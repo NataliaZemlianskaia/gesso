@@ -22,7 +22,7 @@ Rcpp::List fitModelRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
   Solver solver(G, E, Y, weights);
   
   const int grid_size_squared = grid.size() * grid.size();
-  
+
   Eigen::VectorXd beta_0(grid_size_squared);
   Eigen::VectorXd beta_e(grid_size_squared);
   Eigen::MatrixXd beta_g(grid_size_squared, G.cols());

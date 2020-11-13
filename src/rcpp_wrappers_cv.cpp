@@ -32,7 +32,7 @@ Rcpp::List fitModelCVRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
   std::sort(grid_lambda_1.data(), grid_lambda_1.data() + grid_lambda_1.size());
   std::reverse(grid_lambda_1.data(), grid_lambda_1.data() + grid_lambda_1.size());
   Eigen::VectorXd grid_lambda_2 = grid_lambda_1;
-  
+    
   int index = 0;
   int curr_solver_iterations;
   for (int i = 0; i < grid.size(); ++i) {

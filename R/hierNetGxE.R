@@ -28,6 +28,7 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
 
   if (parallel) {
     print("Parallel")
+    start_parallel = Sys.time()
     result = do.call(rbind, mclapply(
       1L:nfolds,
       function(k, ...) {
@@ -52,11 +53,14 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
     #                       grid_min_ratio, family, tolerance, max_iterations, min_working_set_size)
     #  fit$test_loss
     #}
+    print(Sys.time() - start_parallel)
+    result_ = colMeans(result)
   } else {
     result = c()
     for (k in 1:nfolds) {
       print("Non-parallel")
       cat(k, "\n")
+      start_np = Sys.time()
       flush.console()      
       weights = rep(1, n)
       weights[foldid == k] = 0.0
@@ -65,26 +69,28 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
       fit = fitModelCVRcpp(G, E, Y, weights, test_idx, standardize, grid, grid_size,
                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size)
       result = cbind(result, fit$test_loss)
+      print(Sys.time() - start_np)
     }
+    result_ = rowMeans(result)
   }
   
   weights = rep(1, n)
   weights = weights / sum(weights)
   print("fit on full data")
-  start_ = Sys.time()
+  start_all = Sys.time()
   fit_all_data = fitModelRcpp(G, E, Y, weights, standardize, grid, grid_size, grid_min_ratio,
                               family, tolerance, max_iterations, min_working_set_size)
-  stop_ = Sys.time() - start_ 
-  print(stop_)
+  print(Sys.time() - start_all)
   
-  result = rowMeans(result)
-  lambda.min.index = which.min(result)
-  loss.min = result[lambda.min.index]
-  loss.se = sd(result)/sqrt(length(result))
+  #result_ = rowMeans(result)
+  #result_ = colMeans(result)
+  lambda.min.index = which.min(result_)
+  loss.min = result_[lambda.min.index]
+  loss.se = sd(result_)/sqrt(length(result_))
   
   #result = cbind(fit_all_data$lambda_1, fit_all_data$lambda_2, rowMeans(result)) 
   result = tibble(lambda_1=fit_all_data$lambda_1, lambda_2=fit_all_data$lambda_2, 
-                  mean_loss=result) 
+                  mean_loss=result_) 
   
   #lambda.se = (result %>%
   #  filter(mean_loss <= loss.min + loss.se) %>%
