@@ -655,7 +655,7 @@ protected:
       return primal_objective;
     }
 
-    double get_test_loss(const Eigen::Map<Eigen::VectorXi>& test_idx) {
+    double get_test_loss(const std::vector<int>& test_idx) {
       double test_loss = 0;
       double residual;
       int index;

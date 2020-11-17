@@ -1,5 +1,4 @@
 
-
 hierNetGxE.fit = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, grid_min_ratio=1e-4, family="gaussian",
                       tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   stopifnot(!standardize)
@@ -14,6 +13,7 @@ hierNetGxE.fit = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, g
 hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, grid_min_ratio=1e-4, family="gaussian",
                          nfolds=5, parallel=TRUE, seed=42,
                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
+  
   set.seed(seed)
   stopifnot(!standardize)
   if (is.null(grid)) {
@@ -29,50 +29,15 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
   if (parallel) {
     print("Parallel")
     start_parallel = Sys.time()
-    result = do.call(rbind, mclapply(
-      1L:nfolds,
-      function(k, ...) {
-        weights = rep(1, n)
-        weights[foldid == k] = 0.0
-        weights = weights / sum(weights)
-        test_idx = as.integer(which(foldid == k) - 1)
-        fit = fitModelCVRcpp(G, E, Y, weights, test_idx, standardize, grid, grid_size,
-                             grid_min_ratio, family, tolerance, max_iterations, min_working_set_size)
-        return(fit$test_loss)
-      },
-      mc.cores=nfolds
-    )) 
-    #result = foreach(k = 1L:nfolds,
-    #                  .packages = c("hierNetGxE"),
-    #                  .combine = cbind) %dopar% {
-    #  weights = rep(1, n)
-    #  weights[foldid == k] = 0.0
-    #  weights = weights / sum(weights)
-    #  test_idx = as.integer(which(foldid == k) - 1)
-    #  fit = fitModelCVRcpp(G, E, Y, weights, test_idx, standardize, grid, grid_size,
-    #                       grid_min_ratio, family, tolerance, max_iterations, min_working_set_size)
-    #  fit$test_loss
-    #}
+    result = fitModelCVRcpp(G, E, Y, standardize, grid, grid_size,
+                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, nfolds)
     print(Sys.time() - start_parallel)
-    result_ = colMeans(result)
   } else {
-    result = c()
-    for (k in 1:nfolds) {
-      print("Non-parallel")
-      cat(k, "\n")
-      start_np = Sys.time()
-      flush.console()      
-      weights = rep(1, n)
-      weights[foldid == k] = 0.0
-      weights = weights / sum(weights)
-      test_idx = c(as.integer(which(foldid == k) - 1))
-      fit = fitModelCVRcpp(G, E, Y, weights, test_idx, standardize, grid, grid_size,
-                           grid_min_ratio, family, tolerance, max_iterations, min_working_set_size)
-      result = cbind(result, fit$test_loss)
-      print(Sys.time() - start_np)
-    }
-    result_ = rowMeans(result)
+    print("Non-parallel")
+    result = fitModelCVRcpp(G, E, Y, standardize, grid, grid_size,
+                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, 1)
   }
+  result_ = colMeans(result)
   
   weights = rep(1, n)
   weights = weights / sum(weights)

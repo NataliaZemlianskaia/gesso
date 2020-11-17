@@ -11,4 +11,4 @@ Description: The model focuses on a single environmental exposure and induces
 License: What license is it under?
 Imports: Rcpp (>= 1.0.3), dplyr, foreach
 Suggests: doParallel
-LinkingTo: Rcpp, RcppEigen
+LinkingTo: Rcpp, RcppEigen, RcppThread
