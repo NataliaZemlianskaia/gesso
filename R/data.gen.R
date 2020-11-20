@@ -8,7 +8,7 @@ colStdp = function(x) {
 }
 
 data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, family="gaussian",
-                    mode="strong_hierarchical", normalize=TRUE, seed=1){
+                    mode="strong_hierarchical", normalize=TRUE, seed=1, pG=0.2, pE=0.3){
   set.seed(seed)
   n_train = sample_size
   n_valid = round(sample_size / 10)
@@ -48,11 +48,8 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
     }
   }
   
-  pG = 0.2
-  pE = 0.3
-  
-  G = matrix(rbinom(n*p, 1, pG), nrow=n, ncol=p)
-  E = rbinom(n, 1, pE)
+  G = matrix(as.double(rbinom(n*p, 1, pG)), nrow=n, ncol=p)
+  E = as.double(rbinom(n, 1, pE))
   GxE = G*E
   
   sign_G = rbinom(p, 1, 0.5)*2 - 1
@@ -126,18 +123,27 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
       mean_Y = mean(Y_train)
       std_Y = stdp(Y_train)
       
-      Y_train = (Y_train - mean_Y) / std_Y
-      Y_valid = (Y_valid - mean_Y) / std_Y
-      Y_test = (Y_test - mean_Y) / std_Y
+      #Y_train = (Y_train - mean_Y) / std_Y
+      #Y_valid = (Y_valid - mean_Y) / std_Y
+      #Y_test = (Y_test - mean_Y) / std_Y
+      Y_train = Y_train / std_Y
+      Y_valid = Y_valid / std_Y
+      Y_test = Y_test / std_Y
     }
     
-    G_train = (G_train - rep(mean_G, rep.int(nrow(G_train), ncol(G_train)))) / rep(std_G, rep.int(nrow(G_train), ncol(G_train)))
-    G_valid = (G_valid - rep(mean_G, rep.int(nrow(G_valid), ncol(G_valid)))) / rep(std_G, rep.int(nrow(G_valid), ncol(G_valid)))
-    G_test = (G_test - rep(mean_G, rep.int(nrow(G_test), ncol(G_test)))) / rep(std_G, rep.int(nrow(G_test), ncol(G_test)))
+    #G_train = (G_train - rep(mean_G, rep.int(nrow(G_train), ncol(G_train)))) / rep(std_G, rep.int(nrow(G_train), ncol(G_train)))
+    #G_valid = (G_valid - rep(mean_G, rep.int(nrow(G_valid), ncol(G_valid)))) / rep(std_G, rep.int(nrow(G_valid), ncol(G_valid)))
+    #G_test = (G_test - rep(mean_G, rep.int(nrow(G_test), ncol(G_test)))) / rep(std_G, rep.int(nrow(G_test), ncol(G_test)))
+    G_train = G_train / rep(std_G, rep.int(nrow(G_train), ncol(G_train)))
+    G_valid = G_valid / rep(std_G, rep.int(nrow(G_valid), ncol(G_valid)))
+    G_test = G_test / rep(std_G, rep.int(nrow(G_test), ncol(G_test)))
     
-    E_train = (E_train - mean_E) / std_E
-    E_valid = (E_valid - mean_E) / std_E
-    E_test = (E_test - mean_E) / std_E
+    #E_train = (E_train - mean_E) / std_E
+    #E_valid = (E_valid - mean_E) / std_E
+    #E_test = (E_test - mean_E) / std_E
+    E_train = E_train / std_E
+    E_valid = E_valid / std_E
+    E_test = E_test / std_E
   }
   
   GxE_train = G_train * E_train

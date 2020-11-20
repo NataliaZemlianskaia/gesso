@@ -7,8 +7,9 @@
 #include <limits>
 #include <vector>
 
-#include <RcppEigen.h>
 // [[Rcpp::depends(RcppEigen)]]
+#include <RcppEigen.h>
+
 
 inline double sqr(double x) {
   return x * x;
@@ -59,9 +60,12 @@ std::vector<int> argsort(const T& array) {
   return indices;
 }
 
+template <typename TG>
 class Solver {
   typedef Eigen::Map<const Eigen::MatrixXd> MapMat;
   typedef Eigen::Map<const Eigen::VectorXd> MapVec;
+  typedef Eigen::Map<Eigen::SparseMatrix<double>> MapSpMat;
+  typedef Eigen::Map<Eigen::SparseVector<double>> MapSpVec;
   typedef Eigen::VectorXd VecXd;
   typedef Eigen::VectorXi VecXi;
   typedef Eigen::ArrayXd ArrayXd;
@@ -70,7 +74,7 @@ class Solver {
 protected:
   const int n;
   const int p;
-  MapMat G;
+  TG G;
   MapVec E;
   MapVec Y;
   MapVec weights;
@@ -122,7 +126,7 @@ protected:
   VecXd temp_p;
   VecXd temp_n;
   
-  public: Solver(const Eigen::Map<Eigen::MatrixXd>& G_,
+  public: Solver(const MapMat& G_,
                  const Eigen::Map<Eigen::VectorXd>& E_,
                  const Eigen::Map<Eigen::VectorXd>& Y_,
                  const Eigen::Map<Eigen::VectorXd>& weights_) :
@@ -174,6 +178,59 @@ protected:
     
     update_weighted_variables();
   }
+   
+   Solver(const MapSpMat& G_,
+          const Eigen::Map<Eigen::VectorXd>& E_,
+          const Eigen::Map<Eigen::VectorXd>& Y_,
+          const Eigen::Map<Eigen::VectorXd>& weights_) :
+    n(G_.rows()),
+    p(G_.cols()),
+    G(G_),
+    E(E_.data(), E_.rows()),
+    Y(Y_.data(), Y_.rows()),
+    weights(weights_.data(), weights_.rows()),
+    res(n),
+    b_0(0), 
+    b_e(0),
+    b_g(p),
+    b_gxe(p),
+    delta(p),
+    norm2_G(p),
+    norm_G(p),    
+    norm2_GxE(p),
+    norm_GxE(p),    
+    G_by_GxE(p),
+    case1_A22_div_detA(p),
+    case1_A12_div_detA(p),
+    case_3_A(p),
+    case_3_B(p),
+    case_3_E(p),
+    case_3_F(p),
+    case5_A22_div_detA(p),
+    case5_A12_div_detA(p),
+    abs_res_by_G(p),
+    abs_res_by_GxE(p),
+    upperbound_nu_by_G(p),
+    upperbound_nu_by_GxE(p),
+    safe_set_g(p),
+    safe_set_gxe(p),
+    safe_set_zero(p),
+    abs_inner_res_by_G(p),
+    abs_inner_res_by_GxE(p),
+    active_set(p),
+    temp_p(p),
+    temp_n(n) {
+     
+     abs_res_by_G_uptodate = false;
+     b_g.setZero(p);
+     b_gxe.setZero(p);
+     delta.setZero(p);
+     res = Y;
+     
+     working_set.reserve(p);
+     
+     update_weighted_variables();
+   } 
     
     void update_weighted_variables() {
       sum_w = weights.sum();
@@ -310,8 +367,8 @@ protected:
       //VecXd res_w
       temp_n = res.cwiseProduct(weights);
       for (int i = 0; i < working_set.size(); ++i) {
-        abs_inner_res_by_G[i] = std::abs(temp_n.dot(G.col(working_set[i])));
-        abs_inner_res_by_GxE[i] = std::abs(temp_n.cwiseProduct(E).dot(G.col(working_set[i])));
+        abs_inner_res_by_G[i] = std::abs(G.col(working_set[i]).dot(temp_n));
+        abs_inner_res_by_GxE[i] = std::abs(G.col(working_set[i]).dot(temp_n.cwiseProduct(E)));
       }
       double x_opt = naive_projection(lambda_1, lambda_2, abs_inner_res_by_G, abs_inner_res_by_GxE);
       return compute_dual_objective(x_opt);

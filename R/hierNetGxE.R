@@ -2,20 +2,47 @@
 hierNetGxE.fit = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, grid_min_ratio=1e-4, family="gaussian",
                       tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   stopifnot(!standardize)
+  
+  if (is(G, "matrix")) {
+    if (typeof(G) != "double")
+      stop("G must be of type double")
+    is_sparse_g = FALSE
+  } else if ("dgCMatrix" %in% class(G)) {
+    if (typeof(G@x) != "double")
+      stop("G must be of type double")
+    is_sparse_g = TRUE
+  } else {
+    stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
+  }  
+  print(is_sparse_g)
   if (is.null(grid)) {
     grid = 10^seq(-4, log10(0.1), length.out=grid_size)
   }
   n = dim(G)[1]
   weights = rep(1, n) / n
-  return(fitModelRcpp(G, E, Y, weights, standardize, grid, grid_size, grid_min_ratio, family, tolerance, max_iterations, min_working_set_size))
+  return(fitModel(G, E, Y, weights, standardize, grid, grid_size, grid_min_ratio, family, 
+                  tolerance, max_iterations, min_working_set_size, is_sparse_g))
 }
 
-hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, grid_min_ratio=1e-4, family="gaussian",
+hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, grid_min_ratio=1e-4, 
+                         family="gaussian",
                          nfolds=5, parallel=TRUE, seed=42,
                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   
   set.seed(seed)
   stopifnot(!standardize)
+  if (is(G, "matrix")) {
+    if (typeof(G) != "double")
+      stop("G must be of type double")
+    is_sparse_g = FALSE
+  } else if ("dgCMatrix" %in% class(G)) {
+    if (typeof(G@x) != "double")
+      stop("G must be of type double")
+    is_sparse_g = TRUE
+  } else {
+    stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
+  }  
+  print(is_sparse_g)  
   if (is.null(grid)) {
     grid = 10^seq(-4, log10(0.1), length.out=grid_size)
   }
@@ -29,13 +56,13 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
   if (parallel) {
     print("Parallel")
     start_parallel = Sys.time()
-    result = fitModelCVRcpp(G, E, Y, standardize, grid, grid_size,
-                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, nfolds)
+    result = fitModelCV(G, E, Y, standardize, grid, grid_size,
+                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, nfolds, is_sparse_g)
     print(Sys.time() - start_parallel)
   } else {
     print("Non-parallel")
-    result = fitModelCVRcpp(G, E, Y, standardize, grid, grid_size,
-                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, 1)
+    result = fitModelCV(G, E, Y, standardize, grid, grid_size,
+                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, 1, is_sparse_g)
   }
   result_ = colMeans(result)
   
@@ -43,8 +70,8 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
   weights = weights / sum(weights)
   print("fit on full data")
   start_all = Sys.time()
-  fit_all_data = fitModelRcpp(G, E, Y, weights, standardize, grid, grid_size, grid_min_ratio,
-                              family, tolerance, max_iterations, min_working_set_size)
+  fit_all_data = fitModel(G, E, Y, weights, standardize, grid, grid_size, grid_min_ratio,
+                              family, tolerance, max_iterations, min_working_set_size, is_sparse_g)
   print(Sys.time() - start_all)
   
   #result_ = rowMeans(result)

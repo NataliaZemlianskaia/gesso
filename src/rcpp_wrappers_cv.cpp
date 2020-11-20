@@ -9,8 +9,14 @@
 // [[Rcpp::depends(RcppThread)]]
 #include <RcppThread.h>
 
-// [[Rcpp::export]]
-void fitModelCVRcppSingleFold(const Eigen::Map<Eigen::MatrixXd>& G,
+typedef Eigen::Map<const Eigen::MatrixXd> MapMat;
+typedef Eigen::Map<const Eigen::VectorXd> MapVec;
+//typedef Eigen::MappedSparseMatrix<double> MapSpMat;
+typedef Eigen::Map<Eigen::SparseMatrix<double>> MapSpMat;
+typedef Eigen::Map<Eigen::SparseVector<double>> MapSpVec;
+
+template <typename TG>
+void fitModelCVRcppSingleFold(const TG& G,
                                 const Eigen::Map<Eigen::VectorXd>& E,
                                 const Eigen::Map<Eigen::VectorXd>& Y,
                                 const std::vector<int>& fold_ids,
@@ -36,7 +42,7 @@ void fitModelCVRcppSingleFold(const Eigen::Map<Eigen::MatrixXd>& G,
   weights = weights / weights.sum();
   Eigen::Map<Eigen::VectorXd> weights_map(weights.data(), n);
   
-  Solver solver(G, E, Y, weights_map);
+  Solver<TG> solver(G, E, Y, weights_map);
   
   const int grid_size_squared = grid.size() * grid.size();
   
@@ -66,8 +72,8 @@ void fitModelCVRcppSingleFold(const Eigen::Map<Eigen::MatrixXd>& G,
   }
 }
 
-// [[Rcpp::export]]
-Eigen::MatrixXd fitModelCVRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
+template <typename TG>
+Eigen::MatrixXd fitModelCVRcpp(const TG& G,
                                      const Eigen::Map<Eigen::VectorXd>& E,
                                      const Eigen::Map<Eigen::VectorXd>& Y,
                                      const Rcpp::LogicalVector& standardize,
@@ -81,7 +87,6 @@ Eigen::MatrixXd fitModelCVRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
                                      int nfolds,
                                      int seed,
                                      int ncores) {
-  
   const int grid_size_squared = grid.size() * grid.size();
   Eigen::MatrixXd test_loss(nfolds, grid_size_squared);
   
@@ -92,20 +97,52 @@ Eigen::MatrixXd fitModelCVRcpp(const Eigen::Map<Eigen::MatrixXd>& G,
   srand(seed);
   std::random_shuffle(fold_ids.begin(), fold_ids.end());
   
+  
+  
   if (ncores == 1) {
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
-      fitModelCVRcppSingleFold(G, E, Y, fold_ids, standardize, grid, family,
+      fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, standardize, grid, family,
                            tolerance, max_iterations,
                            min_working_set_size, test_fold_id, test_loss);
   } else {
     RcppThread::ThreadPool pool(ncores);
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       pool.push([&, test_fold_id] {
-        fitModelCVRcppSingleFold(G, E, Y, fold_ids, standardize, grid,
+        fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, standardize, grid,
                              family, tolerance, max_iterations,
                              min_working_set_size, test_fold_id, test_loss);
       });
     pool.join();
   }
   return test_loss;
+}
+
+// [[Rcpp::export]]
+Eigen::MatrixXd fitModelCV(SEXP G,
+                               const Eigen::Map<Eigen::VectorXd>& E,
+                               const Eigen::Map<Eigen::VectorXd>& Y,
+                               const Rcpp::LogicalVector& standardize,
+                               const Eigen::VectorXd& grid,
+                               const Rcpp::NumericVector& grid_size,
+                               const Rcpp::NumericVector& grid_min_ratio,
+                               const std::string& family,
+                               double tolerance,
+                               int max_iterations,
+                               int min_working_set_size,
+                               int nfolds,
+                               int seed,
+                               int ncores,
+                               bool sparse_g) {
+  if (sparse_g) {
+    return fitModelCVRcpp<MapSpMat>(Rcpp::as<MapSpMat>(G), E, Y,
+                                  standardize, grid, grid_size, grid_min_ratio,
+                                  family, tolerance, max_iterations, min_working_set_size,
+                                  nfolds, seed, ncores);    
+  } else {
+    Rcpp::NumericMatrix G_mat(G);
+    MapMat Gmap((const double *) &G_mat[0], G_mat.rows(), G_mat.cols());
+    return fitModelCVRcpp<MapMat>(Gmap, E, Y, standardize, grid, grid_size,
+                                grid_min_ratio, family, tolerance, max_iterations, min_working_set_size,
+                                nfolds, seed, ncores);
+  }
 }

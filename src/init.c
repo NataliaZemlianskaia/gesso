@@ -8,14 +8,12 @@
  */
 
 /* .Call calls */
-extern SEXP _hierNetGxE_fitModelCVRcpp(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _hierNetGxE_fitModelCVRcppSingleFold(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _hierNetGxE_fitModelRcpp(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _hierNetGxE_fitModel(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _hierNetGxE_fitModelCV(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-  {"_hierNetGxE_fitModelCVRcpp",           (DL_FUNC) &_hierNetGxE_fitModelCVRcpp,           14},
-  {"_hierNetGxE_fitModelCVRcppSingleFold", (DL_FUNC) &_hierNetGxE_fitModelCVRcppSingleFold, 12},
-  {"_hierNetGxE_fitModelRcpp",             (DL_FUNC) &_hierNetGxE_fitModelRcpp,             12},
+  {"_hierNetGxE_fitModel",   (DL_FUNC) &_hierNetGxE_fitModel,   13},
+  {"_hierNetGxE_fitModelCV", (DL_FUNC) &_hierNetGxE_fitModelCV, 15},
   {NULL, NULL, 0}
 };
 
