@@ -6,7 +6,6 @@
 
 typedef Eigen::Map<const Eigen::MatrixXd> MapMat;
 typedef Eigen::Map<const Eigen::VectorXd> MapVec;
-//typedef Eigen::MappedSparseMatrix<double> MapSpMat;
 typedef Eigen::Map<Eigen::SparseMatrix<double>> MapSpMat;
 typedef Eigen::Map<Eigen::SparseVector<double>> MapSpVec;
 
@@ -15,15 +14,13 @@ Rcpp::List fitModelRcpp(const TG& G,
                         const Eigen::Map<Eigen::VectorXd>& E,
                         const Eigen::Map<Eigen::VectorXd>& Y,
                         const Eigen::Map<Eigen::VectorXd>& weights,
-                        const Rcpp::LogicalVector& standardize,
+                        const Rcpp::LogicalVector& normalize,
                         const Eigen::VectorXd& grid,
-                        const Rcpp::NumericVector& grid_size,
-                        const Rcpp::NumericVector& grid_min_ratio,
                         const std::string& family,
                         double tolerance,
                         int max_iterations,
                         int min_working_set_size) {
-  Solver<TG> solver(G, E, Y, weights);
+  Solver<TG> solver(G, E, Y, weights, normalize[0]);
   
   const int grid_size_squared = grid.size() * grid.size();
 
@@ -96,10 +93,8 @@ Rcpp::List fitModel(SEXP G,
                     const Eigen::Map<Eigen::VectorXd>& E,
                     const Eigen::Map<Eigen::VectorXd>& Y,
                     const Eigen::Map<Eigen::VectorXd>& weights,
-                    const Rcpp::LogicalVector& standardize,
+                    const Rcpp::LogicalVector& normalize,
                     const Eigen::VectorXd& grid,
-                    const Rcpp::NumericVector& grid_size,
-                    const Rcpp::NumericVector& grid_min_ratio,
                     const std::string& family,
                     double tolerance,
                     int max_iterations,
@@ -107,12 +102,12 @@ Rcpp::List fitModel(SEXP G,
                     bool sparse_g) {
   if (sparse_g) {
     return fitModelRcpp<MapSpMat>(Rcpp::as<MapSpMat>(G), E, Y,
-                                            weights, standardize, grid, grid_size, grid_min_ratio,
+                                            weights, normalize, grid,
                                             family, tolerance, max_iterations, min_working_set_size);    
   } else {
     Rcpp::NumericMatrix G_mat(G);
     MapMat Gmap((const double *) &G_mat[0], G_mat.rows(), G_mat.cols());
-    return fitModelRcpp<MapMat>(Gmap, E, Y, weights, standardize, grid, grid_size,
-                                grid_min_ratio, family, tolerance, max_iterations, min_working_set_size);
+    return fitModelRcpp<MapMat>(Gmap, E, Y, weights, normalize, grid,
+                                family, tolerance, max_iterations, min_working_set_size);
   }
 }

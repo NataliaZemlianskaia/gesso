@@ -119,17 +119,17 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
     mean_E = mean(E_train)
     std_E = stdp(E_train)
     
-    if (family == "gaussian"){
-      mean_Y = mean(Y_train)
-      std_Y = stdp(Y_train)
+    #if (family == "gaussian"){
+      #mean_Y = mean(Y_train)
+      #std_Y = stdp(Y_train)
       
       #Y_train = (Y_train - mean_Y) / std_Y
       #Y_valid = (Y_valid - mean_Y) / std_Y
       #Y_test = (Y_test - mean_Y) / std_Y
-      Y_train = Y_train / std_Y
-      Y_valid = Y_valid / std_Y
-      Y_test = Y_test / std_Y
-    }
+      #Y_train = Y_train / std_Y
+      #Y_valid = Y_valid / std_Y
+      #Y_test = Y_test / std_Y
+    #}
     
     #G_train = (G_train - rep(mean_G, rep.int(nrow(G_train), ncol(G_train)))) / rep(std_G, rep.int(nrow(G_train), ncol(G_train)))
     #G_valid = (G_valid - rep(mean_G, rep.int(nrow(G_valid), ncol(G_valid)))) / rep(std_G, rep.int(nrow(G_valid), ncol(G_valid)))

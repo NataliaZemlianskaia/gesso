@@ -1,8 +1,32 @@
-
-hierNetGxE.fit = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, grid_min_ratio=1e-4, family="gaussian",
-                      tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
-  stopifnot(!standardize)
+compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio) {
+  std = function(x) {
+    mx = mean(x)
+    return(sqrt(mean((x - mx)^2)))
+  }
   
+  colStd = function(x) {
+    return(apply(x, 2, std))
+  }
+  
+  n = dim(G)[1]
+  G_by_Yn_abs = abs(Y %*% G)[1,] / n
+  GxE_by_Yn_abs = abs((Y * E) %*% G)[1,] / n  
+  if (normalize) {
+    std_G = colStd(G)
+    G_by_Yn_abs = G_by_Yn_abs / std_G
+    GxE_by_Yn_abs = GxE_by_Yn_abs / (std_G * std(E))
+  }
+  
+  lambda_max = max(c(G_by_Yn_abs, GxE_by_Yn_abs))
+  lambda_min = grid_min_ratio * lambda_max
+  grid = 10^seq(log10(lambda_min), log10(lambda_max), length.out=grid_size)
+  return(grid)
+}
+
+
+hierNetGxE.fit = function(G, E, Y, normalize=FALSE, grid=NULL, grid_size=20, 
+                          grid_min_ratio=1e-4, family="gaussian",
+                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   if (is(G, "matrix")) {
     if (typeof(G) != "double")
       stop("G must be of type double")
@@ -14,23 +38,25 @@ hierNetGxE.fit = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, g
   } else {
     stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
   }  
-  print(is_sparse_g)
   if (is.null(grid)) {
-    grid = 10^seq(-4, log10(0.1), length.out=grid_size)
+    grid = compute.grid(G, E, Y, normalize, grid_size, grid_min_ratio)
   }
+  
   n = dim(G)[1]
   weights = rep(1, n) / n
-  return(fitModel(G, E, Y, weights, standardize, grid, grid_size, grid_min_ratio, family, 
-                  tolerance, max_iterations, min_working_set_size, is_sparse_g))
+  fit = fitModel(G, E, Y, weights, normalize, grid, family, 
+                 tolerance, max_iterations, min_working_set_size, is_sparse_g)
+  fit$beta_g_nonzero = rowSums(fit$beta_g != 0)
+  fit$beta_gxe_nonzero = rowSums(fit$beta_gxe != 0) 
+  return(fit)
 }
 
-hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, grid_min_ratio=1e-4, 
+hierNetGxE.cv = function(G, E, Y, normalize=FALSE, grid=NULL, grid_size=20, grid_min_ratio=1e-4, 
                          family="gaussian",
                          nfolds=5, parallel=TRUE, seed=42,
                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   
   set.seed(seed)
-  stopifnot(!standardize)
   if (is(G, "matrix")) {
     if (typeof(G) != "double")
       stop("G must be of type double")
@@ -42,9 +68,8 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
   } else {
     stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
   }  
-  print(is_sparse_g)  
   if (is.null(grid)) {
-    grid = 10^seq(-4, log10(0.1), length.out=grid_size)
+    grid = compute.grid(G, E, Y, normalize, grid_size, grid_min_ratio)
   }
   n = dim(G)[1]  
 
@@ -56,13 +81,13 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
   if (parallel) {
     print("Parallel")
     start_parallel = Sys.time()
-    result = fitModelCV(G, E, Y, standardize, grid, grid_size,
-                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, nfolds, is_sparse_g)
+    result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
+                        max_iterations, min_working_set_size, nfolds, seed, nfolds, is_sparse_g)
     print(Sys.time() - start_parallel)
   } else {
     print("Non-parallel")
-    result = fitModelCV(G, E, Y, standardize, grid, grid_size,
-                            grid_min_ratio, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, 1, is_sparse_g)
+    result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
+                        max_iterations, min_working_set_size, nfolds, seed, 1, is_sparse_g)
   }
   result_ = colMeans(result)
   
@@ -70,8 +95,8 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
   weights = weights / sum(weights)
   print("fit on full data")
   start_all = Sys.time()
-  fit_all_data = fitModel(G, E, Y, weights, standardize, grid, grid_size, grid_min_ratio,
-                              family, tolerance, max_iterations, min_working_set_size, is_sparse_g)
+  fit_all_data = fitModel(G, E, Y, weights, normalize, grid, family,
+                          tolerance, max_iterations, min_working_set_size, is_sparse_g)
   print(Sys.time() - start_all)
   
   #result_ = rowMeans(result)
@@ -95,7 +120,7 @@ hierNetGxE.cv = function(G, E, Y, standardize=FALSE, grid=NULL, grid_size=10, gr
               fit=fit_all_data, grid=grid))
 }
 
-hierNet.coef = function(fit, lambda){
+hierNetGxE.coef = function(fit, lambda){
  lambda_idx = which(fit$lambda_1 == lambda$lambda_1 & fit$lambda_2 == lambda$lambda_2)
  beta_0 = fit$beta_0[lambda_idx]
  beta_e = fit$beta_e[lambda_idx]

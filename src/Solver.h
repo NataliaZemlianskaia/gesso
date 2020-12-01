@@ -78,6 +78,7 @@ protected:
   MapVec E;
   MapVec Y;
   MapVec weights;
+  bool normalize;
   VecXd res;
 
   double b_0;
@@ -86,6 +87,8 @@ protected:
   VecXd b_gxe;
   VecXd delta;
   
+  VecXd normalize_weights_g;
+  double normalize_weights_e;
   double sum_w;
   double sum_E_w;
   double norm2_E_w;
@@ -129,19 +132,22 @@ protected:
   public: Solver(const MapMat& G_,
                  const Eigen::Map<Eigen::VectorXd>& E_,
                  const Eigen::Map<Eigen::VectorXd>& Y_,
-                 const Eigen::Map<Eigen::VectorXd>& weights_) :
+                 const Eigen::Map<Eigen::VectorXd>& weights_,
+                 bool normalize_) :
     n(G_.rows()),
     p(G_.cols()),
     G(G_.data(), G_.rows(), p),
     E(E_.data(), E_.rows()),
     Y(Y_.data(), Y_.rows()),
     weights(weights_.data(), weights_.rows()),
+    normalize(normalize_),
     res(n),
     b_0(0), 
     b_e(0),
     b_g(p),
     b_gxe(p),
     delta(p),
+    normalize_weights_g(p),
     norm2_G(p),
     norm_G(p),    
     norm2_GxE(p),
@@ -172,9 +178,10 @@ protected:
     b_g.setZero(p);
     b_gxe.setZero(p);
     delta.setZero(p);
-    res = Y;
     
     working_set.reserve(p);
+    
+    res = Y;
     
     update_weighted_variables();
   }
@@ -182,19 +189,22 @@ protected:
    Solver(const MapSpMat& G_,
           const Eigen::Map<Eigen::VectorXd>& E_,
           const Eigen::Map<Eigen::VectorXd>& Y_,
-          const Eigen::Map<Eigen::VectorXd>& weights_) :
+          const Eigen::Map<Eigen::VectorXd>& weights_,
+          bool normalize_) :
     n(G_.rows()),
     p(G_.cols()),
     G(G_),
     E(E_.data(), E_.rows()),
     Y(Y_.data(), Y_.rows()),
     weights(weights_.data(), weights_.rows()),
+    normalize(normalize_),
     res(n),
     b_0(0), 
     b_e(0),
     b_g(p),
     b_gxe(p),
     delta(p),
+    normalize_weights_g(p),
     norm2_G(p),
     norm_G(p),    
     norm2_GxE(p),
@@ -225,26 +235,37 @@ protected:
      b_g.setZero(p);
      b_gxe.setZero(p);
      delta.setZero(p);
-     res = Y;
-     
+
      working_set.reserve(p);
+     
+     res = Y;
      
      update_weighted_variables();
    } 
     
     void update_weighted_variables() {
+      if (normalize) {
+        for (int i = 0; i < p; ++i) {
+          normalize_weights_g[i] = 1.0 / std::sqrt(G.col(i).cwiseProduct(G.col(i)).dot(weights) - sqr(G.col(i).dot(weights)));
+        }
+        normalize_weights_e = 1.0 / std::sqrt(E.cwiseProduct(E).dot(weights) - sqr(E.dot(weights)));
+      } else {
+        normalize_weights_g.setOnes(p);
+        normalize_weights_e = 1;
+      }
+
       sum_w = weights.sum();
-      sum_E_w = E.dot(weights);
-      norm2_E_w = E.cwiseProduct(E).dot(weights);
+      sum_E_w = normalize_weights_e * E.dot(weights);
+      norm2_E_w = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights);
       denominator_E = sum_w * norm2_E_w - sqr(sum_E_w);
       
       for (int i = 0; i < G.cols(); ++i) {
-        temp_p = G.col(i).cwiseProduct(G.col(i));
-        norm2_G[i] = temp_p.dot(weights);
-        temp_p = temp_p.cwiseProduct(E);
-        G_by_GxE[i] = temp_p.dot(weights);
-        temp_p = temp_p.cwiseProduct(E);
-        norm2_GxE[i] = temp_p.dot(weights);
+        temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
+        norm2_G[i] = temp_n.dot(weights);
+        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+        G_by_GxE[i] = temp_n.dot(weights);
+        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+        norm2_GxE[i] = temp_n.dot(weights);
       }
       
       norm_G = norm2_G.cwiseSqrt();
@@ -347,8 +368,8 @@ protected:
     
     double update_nu(double lambda_1, double lambda_2) {
       if (!abs_res_by_G_uptodate) {
-        abs_res_by_G = (res.cwiseProduct(weights).transpose() * G).cwiseAbs().transpose();
-        abs_res_by_GxE = (res.cwiseProduct(weights).cwiseProduct(E).transpose() * G).cwiseAbs().transpose();
+        abs_res_by_G = (res.cwiseProduct(weights).transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g);
+        abs_res_by_GxE = (res.cwiseProduct(weights).cwiseProduct(E).transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g) * normalize_weights_e;
       }
       x_opt = naive_projection(lambda_1, lambda_2, abs_res_by_G, abs_res_by_GxE);
       double dual_objective = compute_dual_objective(x_opt);
@@ -367,8 +388,8 @@ protected:
       //VecXd res_w
       temp_n = res.cwiseProduct(weights);
       for (int i = 0; i < working_set.size(); ++i) {
-        abs_inner_res_by_G[i] = std::abs(G.col(working_set[i]).dot(temp_n));
-        abs_inner_res_by_GxE[i] = std::abs(G.col(working_set[i]).dot(temp_n.cwiseProduct(E)));
+        abs_inner_res_by_G[i] = std::abs(G.col(working_set[i]).dot(temp_n)) * normalize_weights_g[working_set[i]];
+        abs_inner_res_by_GxE[i] = std::abs(G.col(working_set[i]).dot(temp_n.cwiseProduct(E))) * normalize_weights_g[working_set[i]] * normalize_weights_e;
       }
       double x_opt = naive_projection(lambda_1, lambda_2, abs_inner_res_by_G, abs_inner_res_by_GxE);
       return compute_dual_objective(x_opt);
@@ -382,24 +403,6 @@ protected:
       } else {
         current_dual_objective = update_nu(lambda_1, lambda_2);  
       }
-      
-      /*for (int i = 0; i < p; ++i) {
-        double delta_upperbound = lambda_1 - abs_nu_by_G[i];
-        double delta_lowerbound = abs_nu_by_GxE[i] - lambda_2;
-        if (delta_lowerbound < 0) { 
-          delta_lowerbound = 0;
-        }
-        if (delta_lowerbound > delta_upperbound + 1e-10) {
-          std::cout << "SPARTA!!!!\n";
-        }
-      }
-      if (abs(res.dot(weights)) > 1e-15) {
-        std::cout << "SPARTA b_0: " << res.dot(weights) << "\n";
-      }
-      if (abs(triple_dot_product(res, E, weights)) > 1e-15) {
-        std::cout << "SPARTA b_e: " << triple_dot_product(res, E, weights) << "\n";
-      }*/            
-      
       primal_objective = weighted_squared_norm(res, weights) / 2.0 + lambda_1 * (b_g.cwiseAbs().cwiseMax(b_gxe.cwiseAbs())).sum() + lambda_2 * b_gxe.cwiseAbs().sum();
       return primal_objective - current_dual_objective;
     }
@@ -419,12 +422,12 @@ protected:
       
       for (int i = 0; i < p; ++i) {
         if (b_gxe[i] != 0 && (!safe_set_gxe[i])) {
-          res += G.col(i).cwiseProduct(E) * b_gxe[i];
+          res += normalize_weights_e * normalize_weights_g[i] * G.col(i).cwiseProduct(E) * b_gxe[i];
           abs_res_by_G_uptodate = false;
           b_gxe[i] = 0;
         }
         if (b_g[i] != 0 && (!safe_set_g[i])) {
-          res += G.col(i) * b_g[i];
+          res += normalize_weights_g[i] * G.col(i) * b_g[i];
           abs_res_by_G_uptodate = false;
           b_g[i] = 0;
         }      
@@ -443,19 +446,19 @@ protected:
           working_set.push_back(index);  
         }
       }
-      //sort(working_set.begin(), working_set.end());
     }
     
     double update_intercept() {
-      res += E * b_e;
+      res += normalize_weights_e * E * b_e;
       res = res.array() + b_0;
       double b_0_old = b_0;
       double b_e_old = b_e;
       double sum_res_w = res.dot(weights);
-      b_e = (sum_w * triple_dot_product(E, res, weights) - sum_E_w * sum_res_w) / denominator_E;
+      b_e = (sum_w * triple_dot_product(E * normalize_weights_e, res, weights) - 
+        sum_E_w * sum_res_w) / denominator_E;
       b_0 = (sum_res_w - sum_E_w * b_e) / sum_w;
       res = res.array() - b_0;
-      res -= E * b_e;
+      res -= E * b_e * normalize_weights_e;
       double max_diff = std::max(sum_w * sqr(b_0 - b_0_old), norm2_E_w * sqr(b_e_old - b_e));
       if (max_diff > 0) {
         abs_res_by_G_uptodate = false;
@@ -486,12 +489,10 @@ protected:
         b_g_old = b_g[index];
         b_gxe_old = b_gxe[index];
         
-        res += b_g[index] * G.col(index) + G.col(index).cwiseProduct(E) * b_gxe[index];
+        res += normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
 
-        //G_by_res = triple_dot_product(G.col(index), res, weights);
-        //GxE_by_res = triple_dot_product(G.col(index).cwiseProduct(E), res, weights);
-        G_by_res = G.col(index).cwiseProduct(weights).dot(res);
-        GxE_by_res = G.col(index).cwiseProduct(E).cwiseProduct(weights).dot(res);
+        G_by_res = normalize_weights_g[index] * G.col(index).cwiseProduct(weights).dot(res);
+        GxE_by_res = normalize_weights_e * normalize_weights_g[index] * G.col(index).cwiseProduct(E).cwiseProduct(weights).dot(res);
         
         if (norm2_GxE[index] == 0.0 || !safe_set_gxe[index]) {
           delta_upperbound = lambda_1 - std::abs(G_by_res);
@@ -510,7 +511,7 @@ protected:
           } else {
             b_g_new = soft_threshold(G_by_res, lambda_1) / norm2_G[index];
             b_g[index] = b_g_new; b_gxe[index] = 0; delta[index] = 0;
-            res -= b_g[index] * G.col(index);
+            res -= normalize_weights_g[index] * b_g[index] * G.col(index);
             curr_diff = norm2_G[index] * sqr(b_g_new - b_g_old);
             max_diff = std::max(max_diff, curr_diff);
             if (curr_diff > 0) {
@@ -553,7 +554,7 @@ protected:
             b_gxe_numerator = GxE_by_res - G_by_GxE[index]  * root_1;
             if (s * b_gxe_numerator > lambda_1 + lambda_2) {
               b_g[index] = root_1; b_gxe[index] = root_2; delta[index] = lambda_1;
-              res -= b_g[index] * G.col(index) + G.col(index).cwiseProduct(E) * b_gxe[index];
+              res -= normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
               curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
                                    norm2_GxE[index] * sqr(b_gxe_old - root_2));
               max_diff = std::max(max_diff, curr_diff);              
@@ -591,7 +592,7 @@ protected:
               if ((s_gxe * b_gxe_numerator > lambda_2 + root_3) &&
                   (s_g * b_g_numerator > lambda_1 - root_3)) {
                 b_g[index] = root_1; b_gxe[index] = root_2; delta[index] = root_3;
-                res -= b_g[index] * G.col(index) + G.col(index).cwiseProduct(E) * b_gxe[index];
+                res -= normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
                 curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
                                      norm2_GxE[index] * sqr(b_gxe_old - root_2));
                 max_diff = std::max(max_diff, curr_diff);               
@@ -619,7 +620,7 @@ protected:
         b_gxe_numerator = GxE_by_res - G_by_GxE[index] * b_g_new;
         if (std::abs(b_gxe_numerator) <= lambda_2) {
           b_g[index] = b_g_new; b_gxe[index] = 0; delta[index] = 0;
-          res -= b_g[index] * G.col(index);
+          res -= normalize_weights_g[index] * b_g[index] * G.col(index);
           curr_diff = std::max(norm2_G[index] * sqr(b_g_old - b_g_new), 
                                norm2_GxE[index] * sqr(b_gxe_old));
           max_diff = std::max(max_diff, curr_diff);         
@@ -645,7 +646,7 @@ protected:
               b_g_numerator = (G_by_res - root_2 * G_by_GxE[index]);
               if (s_g * b_g_numerator > lambda_1) {
                 b_g[index] = root_1; b_gxe[index] = root_2; delta[index] = 0;
-                res -= b_g[index] * G.col(index) + G.col(index).cwiseProduct(E) * b_gxe[index];
+                res -= normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
                 curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
                                      norm2_GxE[index] * sqr(b_gxe_old - root_2));
                 max_diff = std::max(max_diff, curr_diff);                     
@@ -673,15 +674,15 @@ protected:
     }
     
     double get_b_e() {
-      return b_e;
+      return b_e * normalize_weights_e;
     }
     
     VecXd get_b_g() {
-      return b_g;
+      return b_g.cwiseProduct(normalize_weights_g);
     }  
     
     VecXd get_b_gxe() {
-      return b_gxe;
+      return b_gxe.cwiseProduct(normalize_weights_g) * normalize_weights_e;
     }
     
     int get_working_set_size() {
