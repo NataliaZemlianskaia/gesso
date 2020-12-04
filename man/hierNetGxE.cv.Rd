@@ -59,8 +59,8 @@ hierNetGxE.cv(G, E, Y, normalize = FALSE, grid = NULL, grid_size = 20,
 data = data.gen(sample_size=1000, p=100000)
 model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train, grid_size=20, 
         parallel=TRUE, nfolds=3)
-gxe_coefficients = hierNetGxE.coef(model$fit, model$lambda.min)$beta_gxe                      
-g_coefficients = hierNetGxE.coef(model$fit, model$lambda.min)$beta_g                      
+gxe_coefficients = hierNetGxE.coef(model$fit, model$lambda_min)$beta_gxe                      
+g_coefficients = hierNetGxE.coef(model$fit, model$lambda_min)$beta_g                      
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
