@@ -5,7 +5,7 @@
 Cross-Validation
 }
 \description{
-Performs \code{nfolds}-fold cross-validation for hierNetGxE
+Performs \code{nfolds}-fold cross-validation to tune hyperparmeters \code{lambda_1} and \code{lambda_2} for hierNetGxE model.
 }
 \usage{
 hierNetGxE.cv(G, E, Y, normalize = FALSE, grid = NULL, grid_size = 20, 

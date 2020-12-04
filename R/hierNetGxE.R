@@ -89,7 +89,9 @@ hierNetGxE.cv = function(G, E, Y, normalize=FALSE, grid=NULL, grid_size=20, grid
     result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
                         max_iterations, min_working_set_size, nfolds, seed, 1, is_sparse_g)
   }
-  result_ = colMeans(result)
+  result_ = colMeans(result$test_loss)
+  mean_beta_g_nonzero = colMeans(result$beta_g_nonzero)
+  mean_beta_gxe_nonzero = colMeans(result$beta_gxe_nonzero)
   
   weights = rep(1, n)
   weights = weights / sum(weights)
@@ -99,24 +101,25 @@ hierNetGxE.cv = function(G, E, Y, normalize=FALSE, grid=NULL, grid_size=20, grid
                           tolerance, max_iterations, min_working_set_size, is_sparse_g)
   print(Sys.time() - start_all)
   
-  #result_ = rowMeans(result)
-  #result_ = colMeans(result)
-  lambda.min.index = which.min(result_)
-  loss.min = result_[lambda.min.index]
-  loss.se = sd(result_)/sqrt(length(result_))
+  lambda_min_index = which.min(result_)
+  loss_min = result_[lambda_min_index]
+  loss_se = sd(result_)/sqrt(length(result_))
   
-  #result = cbind(fit_all_data$lambda_1, fit_all_data$lambda_2, rowMeans(result)) 
-  result = tibble(lambda_1=fit_all_data$lambda_1, lambda_2=fit_all_data$lambda_2, 
-                  mean_loss=result_) 
+  result = tibble(lambda_1=fit_all_data$lambda_1,
+                  lambda_2=fit_all_data$lambda_2, 
+                  mean_loss=result_,
+                  mean_beta_g_nonzero=mean_beta_g_nonzero,
+                  mean_beta_gxe_nonzero=mean_beta_gxe_nonzero) 
   
-  #lambda.se = (result %>%
-  #  filter(mean_loss <= loss.min + loss.se) %>%
-  #  arrange(desc(lambda_1), desc(lambda_2)) %>%
-  #  slice(1))[1:2]
+  lambda_se = (result %>%
+    filter(mean_loss <= loss_min + loss_se) %>%
+    arrange(desc(lambda_1), desc(lambda_2)) %>%
+    slice(1))[1:2]
   
-  lambda.min = result[lambda.min.index, 1:2]
-  return(list(result=result, lambda.min=lambda.min, 
-              #lambda.se=lambda.se, 
+  lambda_min = result[lambda_min_index, 1:2]
+  
+  return(list(cv_result=result, lambda_min=lambda_min, 
+              lambda_se=lambda_se, 
               fit=fit_all_data, grid=grid))
 }
 
@@ -126,10 +129,18 @@ hierNetGxE.coef = function(fit, lambda){
  beta_e = fit$beta_e[lambda_idx]
  beta_g = fit$beta_g[lambda_idx,]
  beta_gxe = fit$beta_gxe[lambda_idx,]
+ 
  return(list(beta_0=beta_0, beta_e=beta_e, beta_g=beta_g, beta_gxe=beta_gxe))
 }
   
+hierNetGxE.coefnum = function(fit, cv_result, target_b_gxe_non_zero){
+  best_lambdas = cv_result %>%
+    filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
+    filter(mean_loss == min(mean_loss)) %>%
+    select(lambda_1, lambda_2)
   
+  return(hierNetGxE.coef(fit, best_lambdas))
+}
 
   
   

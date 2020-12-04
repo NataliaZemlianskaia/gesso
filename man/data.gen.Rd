@@ -2,7 +2,7 @@
 \alias{data.gen}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Data Generation
+Data Generation.
 }
 \description{
 Generates genotypes data matrix G (\code{sample_size} by \code{p}), vector of environmental measurments E, and an outcome vector Y of size \code{sample_size}. Simulates training, validation, and test datasets.

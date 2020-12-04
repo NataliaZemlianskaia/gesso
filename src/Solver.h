@@ -685,6 +685,25 @@ protected:
       return b_gxe.cwiseProduct(normalize_weights_g) * normalize_weights_e;
     }
     
+    int get_b_g_non_zero() {
+      int result = 0;
+      for (int i = 0; i < p; ++i) {
+        result += int((b_g[i] != 0) && (normalize_weights_g[i] != 0));
+      }
+      return result;
+    }
+    
+    int get_b_gxe_non_zero() {
+      int result = 0;
+      if (normalize_weights_e == 0) {
+        return 0;
+      }
+      for (int i = 0; i < p; ++i) {
+        result += int((b_gxe[i] != 0) && (normalize_weights_g[i] != 0));
+      }
+      return result;
+    }    
+    
     int get_working_set_size() {
       return working_set.size();
     }

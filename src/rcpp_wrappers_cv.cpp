@@ -27,7 +27,9 @@ void fitModelCVRcppSingleFold(const TG& G,
                                 int max_iterations,
                                 int min_working_set_size,
                                 int test_fold_id,
-                                Eigen::MatrixXd& test_loss) {
+                                Eigen::MatrixXd& test_loss,
+                                Eigen::MatrixXi& beta_g_nonzero,
+                                Eigen::MatrixXi& beta_gxe_nonzero) {
   const int n = fold_ids.size();
   Eigen::VectorXd weights(n);
   std::vector<int> test_idx;
@@ -58,6 +60,8 @@ void fitModelCVRcppSingleFold(const TG& G,
       curr_solver_iterations = solver.solve(grid_lambda_1[i], grid_lambda_2[j], tolerance, max_iterations, min_working_set_size);
       
       test_loss(test_fold_id, index) = solver.get_test_loss(test_idx) / test_idx.size();
+      beta_g_nonzero(test_fold_id, index) = solver.get_b_g_non_zero();
+      beta_gxe_nonzero(test_fold_id, index) = solver.get_b_gxe_non_zero();
       index++;
       
       if (index >= grid_size_squared) {
@@ -73,21 +77,23 @@ void fitModelCVRcppSingleFold(const TG& G,
 }
 
 template <typename TG>
-Eigen::MatrixXd fitModelCVRcpp(const TG& G,
-                                     const Eigen::Map<Eigen::VectorXd>& E,
-                                     const Eigen::Map<Eigen::VectorXd>& Y,
-                                     const Rcpp::LogicalVector& normalize,
-                                     const Eigen::VectorXd& grid,
-                                     const std::string& family,
-                                     double tolerance,
-                                     int max_iterations,
-                                     int min_working_set_size,
-                                     int nfolds,
-                                     int seed,
-                                     int ncores) {
+Rcpp::List fitModelCVRcpp(const TG& G,
+                          const Eigen::Map<Eigen::VectorXd>& E,
+                          const Eigen::Map<Eigen::VectorXd>& Y,
+                          const Rcpp::LogicalVector& normalize,
+                          const Eigen::VectorXd& grid,
+                          const std::string& family,
+                          double tolerance,
+                          int max_iterations,
+                          int min_working_set_size,
+                          int nfolds,
+                          int seed,
+                          int ncores) {
   const int grid_size_squared = grid.size() * grid.size();
   Eigen::MatrixXd test_loss(nfolds, grid_size_squared);
-  
+  Eigen::MatrixXi beta_g_nonzero(nfolds, grid_size_squared);
+  Eigen::MatrixXi beta_gxe_nonzero(nfolds, grid_size_squared);
+
   std::vector<int> fold_ids;
   for (int i = 0; i < G.rows(); ++i) {
     fold_ids.push_back(i % nfolds);
@@ -100,34 +106,38 @@ Eigen::MatrixXd fitModelCVRcpp(const TG& G,
   if (ncores == 1) {
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, normalize, grid, family,
-                           tolerance, max_iterations,
-                           min_working_set_size, test_fold_id, test_loss);
+                           tolerance, max_iterations, min_working_set_size,
+                           test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero);
   } else {
     RcppThread::ThreadPool pool(ncores);
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       pool.push([&, test_fold_id] {
         fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, normalize, grid,
-                             family, tolerance, max_iterations,
-                             min_working_set_size, test_fold_id, test_loss);
+                             family, tolerance, max_iterations, min_working_set_size,
+                             test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero);
       });
     pool.join();
   }
-  return test_loss;
+  return Rcpp::List::create(
+    Rcpp::Named("test_loss") = test_loss,
+    Rcpp::Named("beta_g_nonzero") = beta_g_nonzero,
+    Rcpp::Named("beta_gxe_nonzero") = beta_gxe_nonzero
+  );  
 }
 
 // [[Rcpp::export]]
-Eigen::MatrixXd fitModelCV(SEXP G,
-                               const Eigen::Map<Eigen::VectorXd>& E,
-                               const Eigen::Map<Eigen::VectorXd>& Y,
-                               const Rcpp::LogicalVector& normalize,
-                               const Eigen::VectorXd& grid,
-                               const std::string& family,
-                               double tolerance,
-                               int max_iterations,
-                               int min_working_set_size,
-                               int nfolds,
-                               int seed,
-                               int ncores,
+Rcpp::List fitModelCV(SEXP G,
+                      const Eigen::Map<Eigen::VectorXd>& E,
+                      const Eigen::Map<Eigen::VectorXd>& Y,
+                      const Rcpp::LogicalVector& normalize,
+                      const Eigen::VectorXd& grid,
+                      const std::string& family,
+                      double tolerance,
+                      int max_iterations,
+                      int min_working_set_size,
+                      int nfolds,
+                      int seed,
+                      int ncores,
                                bool sparse_g) {
   if (sparse_g) {
     return fitModelCVRcpp<MapSpMat>(Rcpp::as<MapSpMat>(G), E, Y,

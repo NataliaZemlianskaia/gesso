@@ -1,30 +1,26 @@
-\name{hierNetGxE.fit}
-\alias{hierNetGxE.fit}
+\name{hierNetGxE.coefnum}
+\alias{hierNetGxE.coefnum}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-hierNetGxE fit
+Get coefficients with \code{target_b_gxe_non_zero} specified to control the desired sparsity of the model.
 }
 \description{
-Fits hierNetGxE model over the two dimentional grid of hyperparmeters \code{lambda_1} and \code{lambda_2}.
+%%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-hierNetGxE.fit(G, E, Y, normalize = FALSE, grid = NULL, grid_size = 20, 
-              grid_min_ratio = 1e-04, family = "gaussian", tolerance = 1e-04, 
-              max_iterations = 10000, min_working_set_size = 100)
+hierNetGxE.coefnum(fit, cv_result, target_b_gxe_non_zero)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{G}{matrix of main effects}
-  \item{E}{vector of environmental measurments}
-  \item{Y}{outcome vector}
-  \item{normalize}{\code{TRUE} to normalize matrix \code{G} and vector \code{E}}
-  \item{grid}{grid sequence for tuning hyperparameters}
-  \item{grid_size}{specify grid size to generate grid automatically}
-  \item{grid_min_ratio}{}
-  \item{family}{"gaussian" for continuous outcome and "binomial" for binary}
-  \item{tolerance}{tolerance for the dual gap convergence criterion}
-  \item{max_iterations}{maximum number of iterations}
-  \item{min_working_set_size}{minimum size of the working sets}
+  \item{fit}{
+%%     ~~Describe \code{fit} here~~
+}
+  \item{cv_result}{
+%%     ~~Describe \code{cv_result} here~~
+}
+  \item{target_b_gxe_non_zero}{
+%%     ~~Describe \code{target_b_gxe_non_zero} here~~
+}
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
@@ -55,6 +51,15 @@ hierNetGxE.fit(G, E, Y, normalize = FALSE, grid = NULL, grid_size = 20,
 ##---- Should be DIRECTLY executable !! ----
 ##-- ==>  Define data, use random,
 ##--	or do  help(data=index)  for the standard data sets.
+
+## The function is currently defined as
+function (fit, cv_result, target_b_gxe_non_zero) 
+{
+    best_lambdas = cv_result \%>\% filter(mean_beta_gxe_nonzero <= 
+        target_b_gxe_non_zero) \%>\% filter(mean_loss == min(mean_loss)) \%>\% 
+        select(lambda_1, lambda_2)
+    return(hierNetGxE.coef(fit, best_lambdas))
+  }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

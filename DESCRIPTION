@@ -9,6 +9,7 @@ Description: The model focuses on a single environmental exposure and induces
     a main-effect-before-interaction hierarchical structure for the selection of interaction terms 
     in a regularized regression model
 License: What license is it under?
-Imports: Rcpp (>= 1.0.3), dplyr
+Imports: Rcpp (>= 1.0.3)
+Depends: dplyr
 Suggests: Matrix
 LinkingTo: Rcpp, RcppEigen, RcppThread
