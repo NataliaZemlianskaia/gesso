@@ -155,15 +155,15 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
                  Y_train=Y_train, Y_valid=Y_valid, Y_test=Y_test,
                  GxE_train=GxE_train, GxE_valid=GxE_valid, GxE_test=GxE_test,
                  Beta_G=Beta_G, Beta_GxE=Beta_GxE, beta_0=beta_0, beta_E=beta_E,
-                 p=p, sample_size=sample_size,
                  index_beta_non_zero=index_beta_non_zero, index_beta_gxe_non_zero=index_beta_gxe_non_zero,
                  index_beta_zero=index_beta_zero, index_beta_gxe_zero=index_beta_gxe_zero,
-                 family=family,
                  n_g_non_zero=n_g_non_zero,
                  n_gxe_non_zero=n_gxe_non_zero,
                  n_total_non_zero=n_g_non_zero + n_gxe_non_zero,
                  SNR_g=SNR_g,
                  SNR_gxe=SNR_gxe,
+                 family=family,
+                 p=p, sample_size=sample_size,
                  seed=seed,
                  mode=mode)
   return(dataset)

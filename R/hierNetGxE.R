@@ -24,7 +24,7 @@ compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio) {
 }
 
 
-hierNetGxE.fit = function(G, E, Y, normalize=FALSE, grid=NULL, grid_size=20, 
+hierNetGxE.fit = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, 
                           grid_min_ratio=1e-4, family="gaussian",
                           tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   if (is(G, "matrix")) {
@@ -51,9 +51,9 @@ hierNetGxE.fit = function(G, E, Y, normalize=FALSE, grid=NULL, grid_size=20,
   return(fit)
 }
 
-hierNetGxE.cv = function(G, E, Y, normalize=FALSE, grid=NULL, grid_size=20, grid_min_ratio=1e-4, 
+hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_min_ratio=1e-4, 
                          family="gaussian",
-                         nfolds=5, parallel=TRUE, seed=42,
+                         nfolds=4, parallel=TRUE, seed=42,
                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   
   set.seed(seed)
@@ -79,13 +79,13 @@ hierNetGxE.cv = function(G, E, Y, normalize=FALSE, grid=NULL, grid_size=20, grid
   foldid = sample(rep(seq(nfolds), length=n))
 
   if (parallel) {
-    print("Parallel")
+    print("Parallel cv")
     start_parallel = Sys.time()
     result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
                         max_iterations, min_working_set_size, nfolds, seed, nfolds, is_sparse_g)
     print(Sys.time() - start_parallel)
   } else {
-    print("Non-parallel")
+    print("Non-parallel cv")
     result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
                         max_iterations, min_working_set_size, nfolds, seed, 1, is_sparse_g)
   }

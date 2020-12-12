@@ -5,10 +5,10 @@
 hierNetGxE fit
 }
 \description{
-Fits hierNetGxE model over the two dimentional grid of hyperparmeters \code{lambda_1} and \code{lambda_2}.
+Fits hierNetGxE model over the two dimentional grid of hyperparmeters \code{lambda_1} and \code{lambda_2}, returns estimated coefficients for each pair of hyperparameters.
 }
 \usage{
-hierNetGxE.fit(G, E, Y, normalize = FALSE, grid = NULL, grid_size = 20, 
+hierNetGxE.fit(G, E, Y, normalize = TRUE, grid = NULL, grid_size = 20, 
               grid_min_ratio = 1e-04, family = "gaussian", tolerance = 1e-04, 
               max_iterations = 10000, min_working_set_size = 100)
 }
@@ -30,11 +30,21 @@ hierNetGxE.fit(G, E, Y, normalize = FALSE, grid = NULL, grid_size = 20,
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+A list of estimated coefficients for fit on each pair of hyperparameters (\code{lambda_1}, \code{lambda_2})
+\item{beta_0}{vector of estimated intercept values of size \code{lambda_1}*\code{lambda_2}}
+\item{beta_e}{vector of estimated environment coefficients of size \code{lambda_1}*\code{lambda_2}}
+\item{beta_g}{matrix of estimated main effects coefficients organized by rows, size (\code{lambda_1}*\code{lambda_2}) by \code{p}}
+\item{beta_gxe}{matrix of estimated interactions coefficients organized by rows, size (\code{lambda_1}*\code{lambda_2}) by \code{p}}
+\item{num_iterations}{number of iterations until convergence for each fit}
+\item{working_set_size}{maximum number of variables in working set for each fit}
+\item{num_fitered_by_safe_g}
+\item{num_fitered_by_safe_gxe}
+\item{objective_value}{objective function (loss) value for each fit}
+\item{grid}{vector of values used for hyperparameters tuning}
+\item{beta_g_nonzero}{number of estimated non-zero main effects for each fit}
+\item{beta_gxe_nonzero}{number of estimated non-zero interactions for each fit}
+\item{lambda_1}{\code{lambda_1} path values, decreasing}
+\item{lambda_2}{\code{lambda_2} path values, oscillating}
 }
 \references{
 %% ~put references to the literature/web site here ~
@@ -52,9 +62,11 @@ hierNetGxE.fit(G, E, Y, normalize = FALSE, grid = NULL, grid_size = 20,
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
+data = data.gen()
+fit = hierNetGxE.fit(G=data$G_train, E=data$E_train, Y=data$Y_train, normalize=TRUE)
+plot(fit$beta_g_nonzero, pch=19, cex=0.4, 
+     ylab="num of non-zero features", xlab="lambdas path")
+points(fit$beta_gxe_nonzero, pch=19, cex=0.4, col="red")
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

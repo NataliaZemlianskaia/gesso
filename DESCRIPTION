@@ -4,11 +4,11 @@ Title: Hierarchical Selection of Interacton Terms in a Regularized Regression Mo
 Version: 1.0
 Date: 2020-10-03
 Author: Natalia Zemlianskaia
-Maintainer: <natasha.zemlianskaia@gmail.com>
+Maintainer: Natalia Zemlianskaia <natasha.zemlianskaia@gmail.com>
 Description: The model focuses on a single environmental exposure and induces 
-    a main-effect-before-interaction hierarchical structure for the selection of interaction terms 
+    a main-effect-before-interaction hierarchical structure for the joint selection of interaction terms 
     in a regularized regression model
-License: What license is it under?
+License: MIT + file LICENSE
 Imports: Rcpp (>= 1.0.3)
 Depends: dplyr
 Suggests: Matrix
