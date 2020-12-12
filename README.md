@@ -20,7 +20,7 @@ data = data.gen(sample_size=200, p=1000,
                 family="gaussian", mode="strong_hierarchical",
                 normalize=FALSE)
 
-## tune the model over a 2D grid of hyper-parameters   
+## tune the model over a 2D grid of hyperparameters   
 tune_model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train, 
                            grid_size=20, tolerance=1e-4,
                            parallel=TRUE, nfold=3,
