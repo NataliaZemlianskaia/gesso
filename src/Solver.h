@@ -10,6 +10,7 @@
 // [[Rcpp::depends(RcppEigen)]]
 #include <RcppEigen.h>
 
+#include "SolverTypes.h"
 
 inline double sqr(double x) {
   return x * x;
@@ -62,14 +63,6 @@ std::vector<int> argsort(const T& array) {
 
 template <typename TG>
 class Solver {
-  typedef Eigen::Map<const Eigen::MatrixXd> MapMat;
-  typedef Eigen::Map<const Eigen::VectorXd> MapVec;
-  typedef Eigen::Map<Eigen::SparseMatrix<double>> MapSpMat;
-  typedef Eigen::Map<Eigen::SparseVector<double>> MapSpVec;
-  typedef Eigen::VectorXd VecXd;
-  typedef Eigen::VectorXi VecXi;
-  typedef Eigen::ArrayXd ArrayXd;
-  typedef Eigen::Array<bool, Eigen::Dynamic, 1> ArrayXb;
   
 protected:
   const int n;
@@ -186,7 +179,7 @@ protected:
     update_weighted_variables();
   }
    
-   Solver(const MapSpMat& G_,
+   Solver(const MapSparseMat& G_,
           const Eigen::Map<Eigen::VectorXd>& E_,
           const Eigen::Map<Eigen::VectorXd>& Y_,
           const Eigen::Map<Eigen::VectorXd>& weights_,
@@ -344,6 +337,10 @@ protected:
       return x_opt  * triple_dot_product(res, weights, Y) - x_opt * x_opt * weighted_squared_norm(res, weights) / 2;
     }
     
+    double find_scalar_for_naive_projection() {
+      return triple_dot_product(res, Y, weights) / triple_dot_product(res, res, weights);
+    }
+    
     double naive_projection(double lambda_1, double lambda_2, const Eigen::Ref<VecXd>& abs_res_by_G, const Eigen::Ref<VecXd>& abs_res_by_GxE) {
       //VecXd dual_delta
       temp_p = (lambda_1 * abs_res_by_GxE - lambda_2 * abs_res_by_G).cwiseQuotient(abs_res_by_GxE + abs_res_by_G).cwiseMax(0).cwiseMin(lambda_1);
@@ -356,7 +353,7 @@ protected:
           M = std::min(M, (lambda_2 + temp_p[i]) / abs_res_by_GxE[i]);
         }      
       }
-      double x_hat = triple_dot_product(res, Y, weights) / triple_dot_product(res, res, weights);
+      double x_hat = find_scalar_for_naive_projection();
       double x_opt;
       if (std::abs(x_hat) <= M) {
         x_opt = x_hat;

@@ -3,11 +3,7 @@
 #include <string.h>
 
 #include "Solver.h"
-
-typedef Eigen::Map<const Eigen::MatrixXd> MapMat;
-typedef Eigen::Map<const Eigen::VectorXd> MapVec;
-typedef Eigen::Map<Eigen::SparseMatrix<double>> MapSpMat;
-typedef Eigen::Map<Eigen::SparseVector<double>> MapSpVec;
+#include "SolverTypes.h"
 
 template <typename TG>
 Rcpp::List fitModelRcpp(const TG& G,
@@ -101,7 +97,7 @@ Rcpp::List fitModel(SEXP G,
                     int min_working_set_size,
                     bool sparse_g) {
   if (sparse_g) {
-    return fitModelRcpp<MapSpMat>(Rcpp::as<MapSpMat>(G), E, Y,
+    return fitModelRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y,
                                             weights, normalize, grid,
                                             family, tolerance, max_iterations, min_working_set_size);    
   } else {

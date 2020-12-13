@@ -4,16 +4,13 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include "Solver.h"
 
 // [[Rcpp::depends(RcppThread)]]
 #include <RcppThread.h>
 
-typedef Eigen::Map<const Eigen::MatrixXd> MapMat;
-typedef Eigen::Map<const Eigen::VectorXd> MapVec;
-//typedef Eigen::MappedSparseMatrix<double> MapSpMat;
-typedef Eigen::Map<Eigen::SparseMatrix<double>> MapSpMat;
-typedef Eigen::Map<Eigen::SparseVector<double>> MapSpVec;
+#include "Solver.h"
+#include "SolverTypes.h"
+
 
 template <typename TG>
 void fitModelCVRcppSingleFold(const TG& G,
@@ -140,7 +137,7 @@ Rcpp::List fitModelCV(SEXP G,
                       int ncores,
                                bool sparse_g) {
   if (sparse_g) {
-    return fitModelCVRcpp<MapSpMat>(Rcpp::as<MapSpMat>(G), E, Y,
+    return fitModelCVRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y,
                                     normalize, grid,
                                     family, tolerance, max_iterations, min_working_set_size,
                                     nfolds, seed, ncores);    
