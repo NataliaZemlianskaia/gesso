@@ -11,35 +11,30 @@ get.AUC = function(estimated_coef, true_coef){
 }
 
 
-selection.metrics = function(dataset, result) {
-  result_coef = c(result$beta_0_hat, result$beta_G_hat, result$beta_E_hat, result$beta_GxE_hat)
-  
-  if (sum(result$beta_GxE_hat != 0) == 0) {
+selection.metrics = function(data, beta_g, beta_gxe) {
+  if (sum(beta_gxe != 0) == 0) {
     precision_gxe = 1.0
   } else {
-    precision_gxe = sum(result$beta_GxE_hat[dataset$index_beta_gxe_non_zero] != 0) / sum(result$beta_GxE_hat != 0)
+    precision_gxe = sum(beta_gxe[data$index_beta_gxe_non_zero] != 0) / sum(beta_gxe != 0)
   }
-  if (sum(result$beta_G_hat != 0) == 0) {
+  if (sum(beta_g != 0) == 0) {
     precision_g = 1.0
   } else {
-    precision_g = sum(result$beta_G_hat[dataset$index_beta_non_zero] != 0) / sum(result$beta_G_hat != 0)
+    precision_g = sum(beta_g[data$index_beta_non_zero] != 0) / sum(beta_g != 0)
   }  
   
-  return(list(valid_loss=mean((dataset$Y_valid - linear.predictor(dataset$G_valid, dataset$E_valid, result$beta_0_hat, result$beta_G_hat, result$beta_E_hat, result$beta_GxE_hat))^2) / 2,
-              b_g_non_zero=sum(result$beta_G_hat != 0),
-              b_gxe_non_zero=sum(result$beta_GxE_hat != 0),
-              mse=mse_coef(result_coef, dataset),
-              mse_beta = sqrt(mean((result$beta_G_hat[dataset$index_beta_non_zero] - dataset$Beta_G[dataset$index_beta_non_zero])^2)),
-              mse_beta_GxE = sqrt(mean((result$beta_GxE_hat[dataset$index_beta_gxe_non_zero] - dataset$Beta_GxE[dataset$index_beta_gxe_non_zero])^2)),
-              test_loss=mean((dataset$Y_test - linear.predictor(dataset$G_test, dataset$E_test, result$beta_0_hat, result$beta_G_hat, result$beta_E_hat, result$beta_GxE_hat))^2) / 2,
-              sensitivity_g = sum(abs(result$beta_G_hat[dataset$index_beta_non_zero]) != 0)/(length(dataset$index_beta_non_zero) + 1e-8),
-              specificity_g = sum(abs(result$beta_G_hat[dataset$index_beta_zero]) == 0)/(length(dataset$index_beta_zero) + 1e-8),
-              sensitivity_gxe = sum(abs(result$beta_GxE_hat[dataset$index_beta_gxe_non_zero]) != 0)/(length(dataset$index_beta_gxe_non_zero) + 1e-8),
-              specificity_gxe = sum(abs(result$beta_GxE_hat[dataset$index_beta_gxe_zero]) == 0)/(length(dataset$index_beta_gxe_zero) + 1e-8),
+  return(list(b_g_non_zero=sum(beta_g != 0),
+              b_gxe_non_zero=sum(beta_gxe != 0),
+              mse_beta = sqrt(mean((beta_g[data$index_beta_non_zero] - data$Beta_G[data$index_beta_non_zero])^2)),
+              mse_beta_GxE = sqrt(mean((beta_gxe[data$index_beta_gxe_non_zero] - data$Beta_GxE[data$index_beta_gxe_non_zero])^2)),
               
+              sensitivity_g = sum(abs(beta_g[data$index_beta_non_zero]) != 0)/(length(data$index_beta_non_zero) + 1e-8),
+              specificity_g = sum(abs(beta_g[data$index_beta_zero]) == 0)/(length(data$index_beta_zero) + 1e-8),
               precision_g = precision_g,
+              sensitivity_gxe = sum(abs(beta_gxe[data$index_beta_gxe_non_zero]) != 0)/(length(data$index_beta_gxe_non_zero) + 1e-8),
+              specificity_gxe = sum(abs(beta_gxe[data$index_beta_gxe_zero]) == 0)/(length(data$index_beta_gxe_zero) + 1e-8),
               precision_gxe = precision_gxe,
               
-              auc_gxe=getROC_AUC(result$beta_GxE_hat, dataset$Beta_GxE),
-              auc_g=getROC_AUC(result$beta_G_hat, dataset$Beta_G)))
+              auc_g=get.AUC(beta_g, data$Beta_G),
+              auc_gxe=get.AUC(beta_gxe, data$Beta_GxE)))
 }
