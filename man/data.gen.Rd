@@ -48,10 +48,10 @@ A list of simulated datasets and generating coefficients
 \item{SNR_g}{signal-to-noise ratio for the main effects}
 \item{SNR_gxe}{signal-to-noise ratio for the interactions}
 \item{family}{input simulation parameters}
-\item{p}
-\item{sample_size}
-\item{mode}
-\item{seed}
+\item{p}{}
+\item{sample_size}{}
+\item{mode}{}
+\item{seed}{}
 }
 \references{
 %% ~put references to the literature/web site here ~

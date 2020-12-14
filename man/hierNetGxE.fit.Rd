@@ -37,8 +37,8 @@ A list of estimated coefficients for fit on each pair of hyperparameters (\code{
 \item{beta_gxe}{matrix of estimated interactions coefficients organized by rows, size (\code{lambda_1}*\code{lambda_2}) by \code{p}}
 \item{num_iterations}{number of iterations until convergence for each fit}
 \item{working_set_size}{maximum number of variables in working set for each fit}
-\item{num_fitered_by_safe_g}
-\item{num_fitered_by_safe_gxe}
+\item{num_fitered_by_safe_g}{}
+\item{num_fitered_by_safe_gxe}{}
 \item{objective_value}{objective function (loss) value for each fit}
 \item{grid}{vector of values used for hyperparameters tuning}
 \item{beta_g_nonzero}{number of estimated non-zero main effects for each fit}
