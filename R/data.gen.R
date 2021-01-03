@@ -109,6 +109,7 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
   E_valid = E[index_valid]
   E_test = E[index_test]
   
+  Y = as.numeric(Y)
   Y_train = Y[index_train]
   Y_valid = Y[index_valid]
   Y_test = Y[index_test]

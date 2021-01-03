@@ -2,8 +2,11 @@
 #include <RcppEigen.h>
 #include <string.h>
 
-#include "Solver.h"
 #include "SolverTypes.h"
+#include "Solver.h"
+#include "GaussianSolver.h"
+#include "BinomialSolver.h"
+
 
 template <typename TG>
 Rcpp::List fitModelRcpp(const TG& G,
@@ -16,9 +19,20 @@ Rcpp::List fitModelRcpp(const TG& G,
                         double tolerance,
                         int max_iterations,
                         int min_working_set_size) {
-  Solver<TG> solver(G, E, Y, weights, normalize[0]);
+  
+  std::unique_ptr<Solver<TG> > solver;
+
+  if (family == "gaussian") {
+    solver.reset(
+      new GaussianSolver<TG>(G, E, Y, weights, normalize[0]));
+  } 
+  else if (family == "binomial") {
+    solver.reset(
+      new BinomialSolver<TG>(G, E, Y, weights, normalize[0]));
+  }
   
   const int grid_size_squared = grid.size() * grid.size();
+  //const int grid_size_squared = 1;
 
   Eigen::VectorXd beta_0(grid_size_squared);
   Eigen::VectorXd beta_e(grid_size_squared);
@@ -41,19 +55,19 @@ Rcpp::List fitModelRcpp(const TG& G,
   int curr_solver_iterations;
   for (int i = 0; i < grid.size(); ++i) {
     for (int j = 0; j < grid.size(); ++j) {
-      curr_solver_iterations = solver.solve(grid_lambda_1[i], grid_lambda_2[j], tolerance, max_iterations, min_working_set_size);
+      curr_solver_iterations = solver->solve(grid_lambda_1[i], grid_lambda_2[j], tolerance, max_iterations, min_working_set_size);
 
-      beta_0[index] = solver.get_b_0();
-      beta_e[index] = solver.get_b_e();
-      beta_g.row(index) = solver.get_b_g();
-      beta_gxe.row(index) = solver.get_b_gxe();
+      beta_0[index] = solver->get_b_0();
+      beta_e[index] = solver->get_b_e();
+      beta_g.row(index) = solver->get_b_g();
+      beta_gxe.row(index) = solver->get_b_gxe();
       lambda_1[index] = grid_lambda_1[i];
       lambda_2[index] = grid_lambda_2[j];
       num_iterations[index] = curr_solver_iterations;
-      working_set_size[index] = solver.get_working_set_size();
-      num_fitered_by_safe_g[index] = solver.get_num_fitered_by_safe_g();
-      num_fitered_by_safe_gxe[index] = solver.get_num_fitered_by_safe_gxe();
-      objective_value[index] = solver.get_value();
+      working_set_size[index] = solver->get_working_set_size();
+      num_fitered_by_safe_g[index] = solver->get_num_fitered_by_safe_g();
+      num_fitered_by_safe_gxe[index] = solver->get_num_fitered_by_safe_gxe();
+      objective_value[index] = solver->get_value();
       index++;
       
       if (index >= grid_size_squared) {

@@ -25,7 +25,7 @@ compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio) {
 
 
 hierNetGxE.fit = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, 
-                          grid_min_ratio=1e-4, family="gaussian",
+                          grid_min_ratio=1e-4, family="gaussian", weights=NULL,
                           tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   if (is(G, "matrix")) {
     if (typeof(G) != "double")
@@ -43,7 +43,10 @@ hierNetGxE.fit = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20,
   }
   
   n = dim(G)[1]
-  weights = rep(1, n) / n
+  if (is.null(weights)) {
+    weights = rep(1, n)
+    #weights = rep(1, n) / n
+  }
   fit = fitModel(G, E, Y, weights, normalize, grid, family, 
                  tolerance, max_iterations, min_working_set_size, is_sparse_g)
   fit$beta_g_nonzero = rowSums(fit$beta_g != 0)

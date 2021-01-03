@@ -10,11 +10,12 @@
 
 #include "Solver.h"
 #include "SolverTypes.h"
+#include "GaussianSolver.h"
 
 
 template <typename TG>
 void fitModelCVRcppSingleFold(const TG& G,
-                                const Eigen::Map<Eigen::VectorXd>& E,
+                              const Eigen::Map<Eigen::VectorXd>& E,
                                 const Eigen::Map<Eigen::VectorXd>& Y,
                                 const std::vector<int>& fold_ids,
                                 const Rcpp::LogicalVector& normalize,
@@ -41,7 +42,7 @@ void fitModelCVRcppSingleFold(const TG& G,
   weights = weights / weights.sum();
   Eigen::Map<Eigen::VectorXd> weights_map(weights.data(), n);
   
-  Solver<TG> solver(G, E, Y, weights_map, normalize[0]);
+  GaussianSolver<TG> solver(G, E, Y, weights_map, normalize[0]);
   
   const int grid_size_squared = grid.size() * grid.size();
   
