@@ -49,15 +49,16 @@ hiernet.dual.loss = function(data, b_0, b_e, b_g, b_gxe) {
 tol = 1e-4
 max_iter = 10000
 family = "binomial"
+grid_size = 10
 #family = "gaussian"
 
-#data = data.gen(family=family)
+data = data.gen(family=family)
 #data = data.gen(family=family, sample_size=100, p=100)
-data = data.gen(family=family, sample_size=200, p=500)
+#data = data.gen(family=family, sample_size=200, p=500)
 
 fit = hierNetGxE.fit(data$G_train, data$E_train, data$Y_train,
                      normalize=FALSE, family=family, tol=tol,
-                     max_iterations=max_iter)
+                     grid_size=grid_size, max_iterations=max_iter)
 
 fit_cvxr = hierNetGxE.cvxr(data$G_train, data$E_train, data$G_train * data$E_train, data$Y_train,
                            fit$grid, tol=1e-5, max_iterations=10000)

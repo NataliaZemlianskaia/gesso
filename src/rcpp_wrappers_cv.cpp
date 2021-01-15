@@ -8,9 +8,10 @@
 // [[Rcpp::depends(RcppThread)]]
 #include <RcppThread.h>
 
-#include "Solver.h"
 #include "SolverTypes.h"
+#include "Solver.h"
 #include "GaussianSolver.h"
+#include "BinomialSolver.h"
 
 
 template <typename TG>
@@ -42,8 +43,16 @@ void fitModelCVRcppSingleFold(const TG& G,
   weights = weights / weights.sum();
   Eigen::Map<Eigen::VectorXd> weights_map(weights.data(), n);
   
-  GaussianSolver<TG> solver(G, E, Y, weights_map, normalize[0]);
-  
+  std::unique_ptr<Solver<TG> > solver;
+  if (family == "gaussian") {
+    solver.reset(
+      new GaussianSolver<TG>(G, E, Y, weights_map, normalize[0]));
+  } 
+  else if (family == "binomial") {
+    solver.reset(
+      new BinomialSolver<TG>(G, E, Y, weights_map, normalize[0]));
+  }
+
   const int grid_size_squared = grid.size() * grid.size();
   
   Eigen::VectorXd grid_lambda_1 = grid;
@@ -55,11 +64,11 @@ void fitModelCVRcppSingleFold(const TG& G,
   int curr_solver_iterations;
   for (int i = 0; i < grid.size(); ++i) {
     for (int j = 0; j < grid.size(); ++j) {
-      curr_solver_iterations = solver.solve(grid_lambda_1[i], grid_lambda_2[j], tolerance, max_iterations, min_working_set_size);
+      curr_solver_iterations = solver->solve(grid_lambda_1[i], grid_lambda_2[j], tolerance, max_iterations, min_working_set_size);
       
-      test_loss(test_fold_id, index) = solver.get_test_loss(test_idx) / test_idx.size();
-      beta_g_nonzero(test_fold_id, index) = solver.get_b_g_non_zero();
-      beta_gxe_nonzero(test_fold_id, index) = solver.get_b_gxe_non_zero();
+      test_loss(test_fold_id, index) = solver->get_test_loss(test_idx) / test_idx.size();
+      beta_g_nonzero(test_fold_id, index) = solver->get_b_g_non_zero();
+      beta_gxe_nonzero(test_fold_id, index) = solver->get_b_gxe_non_zero();
       index++;
       
       if (index >= grid_size_squared) {

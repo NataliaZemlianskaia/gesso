@@ -44,8 +44,7 @@ hierNetGxE.fit = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20,
   
   n = dim(G)[1]
   if (is.null(weights)) {
-    weights = rep(1, n)
-    #weights = rep(1, n) / n
+    weights = rep(1, n) / n
   }
   fit = fitModel(G, E, Y, weights, normalize, grid, family, 
                  tolerance, max_iterations, min_working_set_size, is_sparse_g)

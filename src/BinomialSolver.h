@@ -15,7 +15,7 @@
 #include "GaussianSolver.h"
 #include "SolverTypes.h"
 
-
+namespace {
 inline double xlogx(const double x) {
   return log(x) * x;
 }
@@ -28,7 +28,8 @@ double sigmoid_scalar(const double z) {
 //template<typename T>
 VecXd sigmoid(const VecXd& z) {
   return z.unaryExpr(std::ref(sigmoid_scalar));
-} 
+}
+}
 
 template <typename TG>
 class BinomialSolver : public Solver<TG> {
@@ -189,7 +190,6 @@ protected:
         temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
         norm2_G[i] = temp_n.dot(weights_user);
         temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
-        G_by_GxE[i] = temp_n.dot(weights_user);
         temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
         norm2_GxE[i] = temp_n.dot(weights_user);
       }
@@ -284,8 +284,8 @@ protected:
     
     void update_quadratic_approximation() {
       temp_n = sigmoid(xbeta); // probabilities
-      weights.array() = temp_n.array() * (1 - temp_n.array());
-      Z_w = xbeta.cwiseProduct(weights) + (Y - temp_n);
+      weights.array() = temp_n.array() * (1 - temp_n.array()) * weights_user.array();
+      Z_w = xbeta.cwiseProduct(weights) + (Y - temp_n).cwiseProduct(weights_user);
     }
     
     double compute_dual_objective() {
@@ -656,12 +656,11 @@ protected:
     
     virtual double get_test_loss(const std::vector<int>& test_idx) {
       double test_loss = 0;
-      /*int index;
-      temp_n = Z - xbeta; // res
+      int index;
       for (int i = 0; i < test_idx.size(); ++i) {
         index = test_idx[i];
-        test_loss += temp_n[index] * temp_n[index];
-      }*/
+        test_loss += -Y[index] * xbeta[index] + std::log1p(std::exp(xbeta[index]));
+      }
       return test_loss;
     }
 };

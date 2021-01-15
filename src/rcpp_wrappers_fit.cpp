@@ -21,7 +21,6 @@ Rcpp::List fitModelRcpp(const TG& G,
                         int min_working_set_size) {
   
   std::unique_ptr<Solver<TG> > solver;
-
   if (family == "gaussian") {
     solver.reset(
       new GaussianSolver<TG>(G, E, Y, weights, normalize[0]));
