@@ -2,7 +2,17 @@
 
 The package is developed to fit a regularized regression model that we call **hierNetGxE** for the joint selection of gene-environment (GxE) interactions based on the hierarchical lasso [Bien et al. (2013)]. The model focuses on a single environmental exposure and induces a "main-effect-before-interaction" hierarchical structure. Unlike the original hierarchical lasso model, which was designed for the gene-gene (GxG) interaction case, the GxE model has a simpler block-separable structure that  makes it possible to fit in large-scale applications. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
 
+<<<<<<< HEAD
 ![](man/figures/hierNet_model.png)
+=======
+$$\text{min}_{\beta}||Y - (\beta_0 + \beta_E E + \beta_G G + \beta_{G\text{x}E} G\text{x}E)||^2_2 +
+\lambda_1 (\beta_G^+ + \beta^-_G) + \lambda_2 ||\beta_{G\text{x}E} ||_1,
+$$
+$$
+\text{subject to } |\beta_{G\text{x}E}| \le \beta_G^+ + \beta^-_G,\\
+\beta_G^+ \ge 0, \ \beta_G^- \ge 0.
+$$
+>>>>>>> ecabfbf42353e0a6cf2e75d7e5370780771bbf53
 
 **hierNetGxE** model induces hierarchical selection of the (GxE) interaction terms via convex constraints added to the objective function. The model has two tuning parameters $\lambda_1$ and $\lambda_2$ responsible for the model sparsity with respect to the main effects and interactions respectively.
 
