@@ -55,6 +55,6 @@ gxe_glmnet = coef_glmnet[(p + 3): (2 * p + 2)]
 cbind(data$Beta_GxE[data$Beta_GxE != 0], gxe_glmnet[data$Beta_GxE != 0])
 cbind(data$Beta_G[data$Beta_G != 0], g_glmnet[data$Beta_G != 0])
 
-selection_glmnet = selection.metrics(data, g_glmnet, gxe_glmnet)
+selection_glmnet = selection.metrics(data$Beta_G, data$Beta_GxE, g_glmnet, gxe_glmnet)
 
 cbind(selection, selection_glmnet)

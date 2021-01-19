@@ -9,7 +9,7 @@ Generates genotypes data matrix G (\code{sample_size} by \code{p}), vector of en
 }
 \usage{
 data.gen(sample_size = 100, p = 20, n_g_non_zero = 15, n_gxe_non_zero = 10, 
-        family = "gaussian", mode = "strong_hierarchical", normalize = TRUE, 
+        family = "gaussian", mode = "strong_hierarchical", normalize = FALSE, 
         seed = 1, pG = 0.2, pE = 0.3)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -18,8 +18,9 @@ data.gen(sample_size = 100, p = 20, n_g_non_zero = 15, n_gxe_non_zero = 10,
   \item{p}{total number of main effects}
   \item{n_g_non_zero}{number of non-zero main effects to generate}
   \item{n_gxe_non_zero}{number of non-zero interaction effects to generate}
-  \item{family}{"gaussian" for continous Y and "binomial" for binary}
-  \item{mode}{either "strong_hierarchical", "hierarchical", or "anti-hierarchical"}
+  \item{family}{"gaussian" for continous outcome Y and "binomial" for binary 0/1 outcome}
+  \item{mode}{either "strong_hierarchical", "hierarchical", or "anti-hierarchical".
+  In the \emph{strong hierarchical} mode the hierarchical structure is maintained (beta_g = 0  then beta_gxe = 0) and also |beta_g| >= |beta_gxe|. In the \emph{hierarchical} mode the  hierarchical structure is maintained, but |beta_G| < |beta_gxe|. In the \emph{anti-hierarchical} mode the hierarchical structure is violated (beta_g = 0  then beta_gxe != 0).}
   \item{normalize}{\code{TRUE} to normalize matrix \code{G} and vector \code{E}}
   \item{pG}{genotypes prevalence, value from 0 to 1}
   \item{pE}{environment prevalence, value from 0 to 1}
@@ -31,8 +32,8 @@ data.gen(sample_size = 100, p = 20, n_g_non_zero = 15, n_gxe_non_zero = 10,
 \value{
 A list of simulated datasets and generating coefficients
 \item{G_train, G_valid, G_test}{generated genotypes matrices}
-\item{E_train, E_valid, E_test}{generated vectortors of environmental values}
-\item{Y_train, Y_valid, Y_test}{generated outcome vectortors}
+\item{E_train, E_valid, E_test}{generated vectors of environmental values}
+\item{Y_train, Y_valid, Y_test}{generated outcome vectors}
 \item{GxE_train, GxE_valid, GxE_test}{generated GxE matrix}
 \item{Beta_G}{main effect coefficients vector}
 \item{Beta_GxE}{interaction coefficients vector}
@@ -47,17 +48,14 @@ A list of simulated datasets and generating coefficients
 \item{n_total_non_zero}{total number of non-zero variables}
 \item{SNR_g}{signal-to-noise ratio for the main effects}
 \item{SNR_gxe}{signal-to-noise ratio for the interactions}
-\item{family}{input simulation parameters}
-\item{p}{}
-\item{sample_size}{}
-\item{mode}{}
-\item{seed}{}
+\item{family, p, sample_size, mode, seed}{input simulation parameters}
+
 }
 \references{
 %% ~put references to the literature/web site here ~
 }
 \author{
-%%  ~~who you are~~
+Natalia Zemlianskaia
 }
 \note{
 %%  ~~further notes~~

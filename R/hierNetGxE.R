@@ -135,7 +135,8 @@ hierNetGxE.coef = function(fit, lambda){
  return(list(beta_0=beta_0, beta_e=beta_e, beta_g=beta_g, beta_gxe=beta_gxe))
 }
   
-hierNetGxE.coefnum = function(fit, cv_result, target_b_gxe_non_zero){
+hierNetGxE.coefnum = function(cv_model, target_b_gxe_non_zero){
+  cv_result = cv_model$cv_result; fit = cv_model$fit
   best_lambdas = cv_result %>%
     filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
     filter(mean_loss == min(mean_loss)) %>%
@@ -144,5 +145,23 @@ hierNetGxE.coefnum = function(fit, cv_result, target_b_gxe_non_zero){
   return(hierNetGxE.coef(fit, best_lambdas))
 }
 
+hierNetGxE.predict = function(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, 
+                              family="gaussian"){
+  new_GxE = new_G * new_E
+  lp = (beta_0 + beta_e * new_E +  new_G %*% beta_g + new_GxE %*% beta_gxe)[,1]
   
-  
+  if (family == "gaussian"){
+    return(lp)
+  } else if (family == "binomial"){
+    prob = 1/(1+exp(-lp))
+    return(prob)
+  }
+}
+
+
+
+
+
+
+
+
