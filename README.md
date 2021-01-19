@@ -5,7 +5,7 @@ The package is developed to fit a regularized regression model that we call **hi
 
 ![](man/figures/hierNet_model.png)
 
-**hierNetGxE** model induces hierarchical selection of the (GxE) interaction terms via convex constraints added to the objective function. The model has two tuning parameters $\lambda_1$ and $\lambda_2$ responsible for the model sparsity with respect to the main effects and interactions respectively.
+**hierNetGxE** model induces hierarchical selection of the (GxE) interaction terms via convex constraints added to the objective function. The model has two tuning parameters λ1 and λ2 responsible for the model sparsity with respect to the main effects and interactions respectively.
 
 ## Installation
 ```R
