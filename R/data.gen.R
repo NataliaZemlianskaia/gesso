@@ -8,7 +8,7 @@ colStdp = function(x) {
 }
 
 data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, family="gaussian",
-                    mode="strong_hierarchical", normalize=TRUE, seed=1, pG=0.2, pE=0.3){
+                    mode="strong_hierarchical", normalize=FALSE, seed=1, pG=0.2, pE=0.3){
   set.seed(seed)
   n_train = sample_size
   n_valid = round(sample_size / 10)

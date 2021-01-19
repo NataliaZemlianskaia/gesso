@@ -317,12 +317,27 @@ protected:
       } else {
         x_opt = sign(x_hat) * M;
       }
+      /*nu *= x_opt;
+      double xxx_1 = compute_dual_objective();
+      nu /= x_opt;
+      std::cout << "custom x_hat=" << x_hat << ", x_opt= " << x_opt << " => " << xxx_1 << " | ";
+      
+      if (std::abs(1) <= M) {
+        x_opt = 1;
+      } else {
+        x_opt = sign(1) * M;
+      }   
+      nu *= x_opt;
+      double xxx_2 = compute_dual_objective();
+      nu /= x_opt;
+      std::cout << "custom x_hat=1, x_opt= " << x_opt << " => " << xxx_2 << "\n";*/
+      
       return x_opt;
     }
     
     double find_scalar_for_naive_projection() {
-      return 1;
-      //return triple_dot_product(nu, Y.array() - 0.5, weights_user) / triple_dot_product(nu, nu, weights_user);
+      //return 1;
+      return triple_dot_product(nu, Y.array() - 0.5, weights_user) / triple_dot_product(nu, nu, weights_user);
     }
     
     void update_nu(double lambda_1, double lambda_2) {

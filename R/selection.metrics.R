@@ -11,30 +11,36 @@ get.AUC = function(estimated_coef, true_coef){
 }
 
 
-selection.metrics = function(data, beta_g, beta_gxe) {
-  if (sum(beta_gxe != 0) == 0) {
+selection.metrics = function(true_b_g, true_b_gxe, estimated_b_g, estimated_b_gxe) {
+  index_beta_gxe_non_zero = which(true_gxe != 0)
+  index_beta_non_zero = which(true_g != 0)
+  index_beta_gxe_zero = which(true_gxe == 0)
+  index_beta_zero = which(true_g == 0)
+
+    
+  if (sum(estimated_b_gxe != 0) == 0) {
     precision_gxe = 1.0
   } else {
-    precision_gxe = sum(beta_gxe[data$index_beta_gxe_non_zero] != 0) / sum(beta_gxe != 0)
+    precision_gxe = sum(estimated_b_gxe[index_beta_gxe_non_zero] != 0) / sum(estimated_b_gxe != 0)
   }
-  if (sum(beta_g != 0) == 0) {
+  if (sum(estimated_b_g != 0) == 0) {
     precision_g = 1.0
   } else {
-    precision_g = sum(beta_g[data$index_beta_non_zero] != 0) / sum(beta_g != 0)
+    precision_g = sum(estimated_b_g[index_beta_non_zero] != 0) / sum(estimated_b_g != 0)
   }  
   
-  return(list(b_g_non_zero=sum(beta_g != 0),
-              b_gxe_non_zero=sum(beta_gxe != 0),
-              mse_beta = sqrt(mean((beta_g[data$index_beta_non_zero] - data$Beta_G[data$index_beta_non_zero])^2)),
-              mse_beta_GxE = sqrt(mean((beta_gxe[data$index_beta_gxe_non_zero] - data$Beta_GxE[data$index_beta_gxe_non_zero])^2)),
+  return(list(b_g_non_zero=sum(estimated_b_g != 0),
+              b_gxe_non_zero=sum(estimated_b_gxe != 0),
+              mse_b_g = sqrt(mean((estimated_b_g[index_beta_non_zero] - true_b_g[index_beta_non_zero])^2)),
+              mse_b_gxe = sqrt(mean((estimated_b_gxe[index_beta_gxe_non_zero] - true_b_gxe[index_beta_gxe_non_zero])^2)),
               
-              sensitivity_g = sum(abs(beta_g[data$index_beta_non_zero]) != 0)/(length(data$index_beta_non_zero) + 1e-8),
-              specificity_g = sum(abs(beta_g[data$index_beta_zero]) == 0)/(length(data$index_beta_zero) + 1e-8),
+              sensitivity_g = sum(abs(estimated_b_g[index_beta_non_zero]) != 0)/(length(index_beta_non_zero) + 1e-8),
+              specificity_g = sum(abs(estimated_b_g[index_beta_zero]) == 0)/(length(index_beta_zero) + 1e-8),
               precision_g = precision_g,
-              sensitivity_gxe = sum(abs(beta_gxe[data$index_beta_gxe_non_zero]) != 0)/(length(data$index_beta_gxe_non_zero) + 1e-8),
-              specificity_gxe = sum(abs(beta_gxe[data$index_beta_gxe_zero]) == 0)/(length(data$index_beta_gxe_zero) + 1e-8),
+              sensitivity_gxe = sum(abs(estimated_b_gxe[index_beta_gxe_non_zero]) != 0)/(length(index_beta_gxe_non_zero) + 1e-8),
+              specificity_gxe = sum(abs(estimated_b_gxe[index_beta_gxe_zero]) == 0)/(length(index_beta_gxe_zero) + 1e-8),
               precision_gxe = precision_gxe,
               
-              auc_g=get.AUC(beta_g, data$Beta_G),
-              auc_gxe=get.AUC(beta_gxe, data$Beta_GxE)))
+              auc_g=get.AUC(estimated_b_g, true_b_g),
+              auc_gxe=get.AUC(estimated_b_gxe, true_b_gxe)))
 }

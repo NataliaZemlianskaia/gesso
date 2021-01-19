@@ -2,41 +2,34 @@
 \alias{hierNetGxE.coefnum}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Get coefficients with \code{target_b_gxe_non_zero} specified to control the desired sparsity of the model.
+Get model coefficients with specified number of non-zero interactions 
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+Get coefficients with \code{target_b_gxe_non_zero} specified to control the desired sparsity of the model interactions.
 }
 \usage{
-hierNetGxE.coefnum(fit, cv_result, target_b_gxe_non_zero)
+hierNetGxE.coefnum(cv_model, target_b_gxe_non_zero)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{fit}{
-%%     ~~Describe \code{fit} here~~
-}
-  \item{cv_result}{
-%%     ~~Describe \code{cv_result} here~~
-}
-  \item{target_b_gxe_non_zero}{
-%%     ~~Describe \code{target_b_gxe_non_zero} here~~
-}
+  \item{cv_model}{cross-validated model fit object obtained by using function \code{hierNetGxE.cv}}
+  \item{target_b_gxe_non_zero}{number of \emph{at most} non-zero interactions we want to inlcude in the model}
 }
 \details{
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+A list of model coefficients corresponding to the best model that contains at most \code{target_b_gxe_non_zero} non-zero interaction terms
+  \item{beta_0 }{estimated intercept value}
+  \item{beta_e}{estimated environmental coefficient value}
+  \item{beta_g}{a vector of estimated main effect coefficients}
+  \item{beta_gxe}{a vector of estimated interaction coefficients}
 }
 \references{
 %% ~put references to the literature/web site here ~
 }
 \author{
-%%  ~~who you are~~
+Natalia Zemlianskaia
 }
 \note{
 %%  ~~further notes~~
@@ -48,18 +41,11 @@ hierNetGxE.coefnum(fit, cv_result, target_b_gxe_non_zero)
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or do  help(data=index)  for the standard data sets.
-
-## The function is currently defined as
-function (fit, cv_result, target_b_gxe_non_zero) 
-{
-    best_lambdas = cv_result \%>\% filter(mean_beta_gxe_nonzero <= 
-        target_b_gxe_non_zero) \%>\% filter(mean_loss == min(mean_loss)) \%>\% 
-        select(lambda_1, lambda_2)
-    return(hierNetGxE.coef(fit, best_lambdas))
-  }
+data = data.gen(sample_size=100, p=500)
+model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train, grid_size=20, 
+        parallel=TRUE, nfolds=3)
+model_coefficients = hierNetGxE.coefnum(model, 5)
+gxe_coefficients = model_coefficients$beta_gxe; sum(gxe_coefficients!=0)              
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
