@@ -64,12 +64,13 @@ std::vector<int> argsort(const T& array) {
 template <typename TG>
 class Solver {
   
-public:
+protected:
   const int n;
   const int p;
   TG G;
   MapVec E;
   MapVec Y;
+  MapVec weights_user;
   bool normalize;
 
   VecXd normalize_weights_g;
@@ -81,22 +82,54 @@ public:
   VecXd b_gxe;
   VecXd delta;
   
+  VecXd weights;
   VecXd xbeta;
+  VecXd Z_w;
   
   ArrayXb safe_set_g;
   ArrayXb safe_set_gxe;
   ArrayXb safe_set_zero;
   std::vector<int> working_set;  
   
+  bool abs_nu_by_G_uptodate;
+
+  // Pre-computed constants for updating b_0 and b_e
+  double sum_w;
+  double sum_E_w;
+  double norm2_E_w;
+  double denominator_E;
+  
+  // Pre-computed constants for updating b_g and b_gxe
+  VecXd norm2_G;
+  VecXd norm2_GxE;
+  VecXd G_by_GxE;
+  VecXd case1_A22_div_detA;
+  VecXd case1_A12_div_detA;  
+  VecXd case_3_A;
+  VecXd case_3_B;  
+  VecXd case_3_E;
+  VecXd case_3_F;    
+  VecXd case5_A22_div_detA;
+  VecXd case5_A12_div_detA;
+  
+  ArrayXb active_set;
+  
+  VecXd temp_p;
+  VecXd temp_n;
+  
+public:
+
   public: Solver(const MapMat& G_,
                  const Eigen::Map<Eigen::VectorXd>& E_,
                  const Eigen::Map<Eigen::VectorXd>& Y_,
+                 const Eigen::Map<Eigen::VectorXd>& weights_,
                  bool normalize_) :
     n(G_.rows()),
     p(G_.cols()),
     G(G_.data(), G_.rows(), p),
     E(E_.data(), E_.rows()),
     Y(Y_.data(), Y_.rows()),
+    weights_user(weights_.data(), weights_.rows()),
     normalize(normalize_),
     normalize_weights_g(p),
     b_0(0), 
@@ -104,10 +137,26 @@ public:
     b_g(p),
     b_gxe(p),
     delta(p),
+    weights(n),
     xbeta(n),
+    Z_w(n),
     safe_set_g(p),
     safe_set_gxe(p),
-    safe_set_zero(p) {
+    safe_set_zero(p),
+    norm2_G(p),
+    norm2_GxE(p),
+    G_by_GxE(p),
+    case1_A22_div_detA(p),
+    case1_A12_div_detA(p),
+    case_3_A(p),
+    case_3_B(p),
+    case_3_E(p),
+    case_3_F(p),
+    case5_A22_div_detA(p),
+    case5_A12_div_detA(p),
+    active_set(p),
+    temp_p(p),
+    temp_n(n) {
     
     base_init();
   }  
@@ -115,12 +164,14 @@ public:
   Solver(const MapSparseMat& G_,
          const Eigen::Map<Eigen::VectorXd>& E_,
          const Eigen::Map<Eigen::VectorXd>& Y_,
+         const Eigen::Map<Eigen::VectorXd>& weights_,
          bool normalize_) :    
     n(G_.rows()),
     p(G_.cols()),
     G(G_),
     E(E_.data(), E_.rows()),
     Y(Y_.data(), Y_.rows()),
+    weights_user(weights_.data(), weights_.rows()),
     normalize(normalize_),
     normalize_weights_g(p),
     b_0(0), 
@@ -128,10 +179,26 @@ public:
     b_g(p),
     b_gxe(p),
     delta(p),
+    weights(n),
     xbeta(n),
+    Z_w(n),
     safe_set_g(p),
     safe_set_gxe(p),
-    safe_set_zero(p) {
+    safe_set_zero(p),
+    norm2_G(p),
+    norm2_GxE(p),
+    G_by_GxE(p),
+    case1_A22_div_detA(p),
+    case1_A12_div_detA(p),
+    case_3_A(p),
+    case_3_B(p),
+    case_3_E(p),
+    case_3_F(p),
+    case5_A22_div_detA(p),
+    case5_A12_div_detA(p),
+    active_set(p),
+    temp_p(p),
+    temp_n(n) {
 
     base_init();
   }     
@@ -146,9 +213,233 @@ public:
     xbeta.setZero(n);
     
     working_set.reserve(p);
+    
+    abs_nu_by_G_uptodate = false;
   }
   
   virtual int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) = 0;
+    
+  double update_intercept() {
+      xbeta -= normalize_weights_e * E * b_e;
+      xbeta = xbeta.array() - b_0;
+      double b_0_old = b_0;
+      double b_e_old = b_e;
+      double sum_res_w = Z_w.sum() - xbeta.dot(weights);
+      b_e = (
+        sum_w * (normalize_weights_e * E.dot(Z_w) - triple_dot_product(E * normalize_weights_e, xbeta, weights))
+        - sum_E_w * sum_res_w) / denominator_E;
+      b_0 = (sum_res_w - sum_E_w * b_e) / sum_w;
+      xbeta = xbeta.array() + b_0;
+      xbeta += E * b_e * normalize_weights_e;
+      double max_diff = std::max(sum_w * sqr(b_0 - b_0_old), norm2_E_w * sqr(b_e_old - b_e));
+      if (max_diff > 0) {
+        abs_nu_by_G_uptodate = false;
+      }
+      return max_diff;
+    }      
+  
+  double update_b_for_working_set(double lambda_1, double lambda_2, bool active_set_iteration) {
+    const double plus_minus_one[] = {-1.0, 1.0};
+    double curr_diff;
+    double max_diff = update_intercept();
+    double G_by_res, GxE_by_res;
+    double delta_upperbound, delta_lowerbound;
+    bool has_solved;
+    int index;
+    double b_0_old, b_e_old, b_g_old, b_gxe_old, b_g_new;
+    double case1_B1_A22_div_detA;
+    double case1_B2, s, root_1, root_2, b_gxe_numerator;
+    double case_3_C, case_3_D;
+    double s_g, s_gxe, case_3_E_D, case_3_C_F, case_3_B_s_g, root_3, b_g_numerator;
+    double case5_B2;
+    
+    for (int k = 0; k < working_set.size(); ++k) {
+      index = working_set[k];
+      if (active_set_iteration && !active_set[index]) {
+        continue;
+      }
+      b_g_old = b_g[index];
+      b_gxe_old = b_gxe[index];
+      
+      xbeta -= normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
+      
+      temp_n = normalize_weights_g[index] * (Z_w - xbeta.cwiseProduct(weights)).cwiseProduct(G.col(index));
+      G_by_res = temp_n.sum();
+      GxE_by_res = normalize_weights_e * E.dot(temp_n);
+      
+      if (norm2_GxE[index] == 0.0 || !safe_set_gxe[index]) {
+        delta_upperbound = lambda_1 - std::abs(G_by_res);
+        delta_lowerbound = std::max(-lambda_2 + std::abs(GxE_by_res), 0.0);
+        if (delta_lowerbound <= delta_upperbound) {
+          b_g[index] = 0; b_gxe[index] = 0; delta[index] = delta_upperbound;
+          curr_diff = norm2_G[index] * sqr(b_g_old);
+          max_diff = std::max(max_diff, curr_diff);
+          if (curr_diff > 0) {
+            abs_nu_by_G_uptodate = false;
+            if (!active_set_iteration && !active_set[index]) {
+              active_set[index] = true;
+            }              
+          }
+          continue;
+        } else {
+          b_g_new = soft_threshold(G_by_res, lambda_1) / norm2_G[index];
+          b_g[index] = b_g_new; b_gxe[index] = 0; delta[index] = 0;
+          xbeta += normalize_weights_g[index] * b_g[index] * G.col(index);
+          curr_diff = norm2_G[index] * sqr(b_g_new - b_g_old);
+          max_diff = std::max(max_diff, curr_diff);
+          if (curr_diff > 0) {
+            abs_nu_by_G_uptodate = false;
+            if (!active_set_iteration && !active_set[index]) {
+              active_set[index] = true;
+            }              
+          }    
+          continue;
+        }
+      }
+      
+      // Case 2
+      delta_upperbound = lambda_1 - std::abs(G_by_res);
+      delta_lowerbound = std::max(-lambda_2 + std::abs(GxE_by_res), 0.0);
+      if (delta_lowerbound <= delta_upperbound) {
+        b_g[index] = 0; b_gxe[index] = 0; delta[index] = delta_upperbound;
+        curr_diff = std::max(norm2_G[index] * sqr(b_g_old), 
+                             norm2_GxE[index] * sqr(b_gxe_old));
+        max_diff = std::max(max_diff, curr_diff);      
+        if (curr_diff > 0) {
+          abs_nu_by_G_uptodate = false;
+          if (!active_set_iteration && !active_set[index]) {
+            active_set[index] = true;
+          }              
+        }
+        continue;
+      }
+      
+      has_solved = false;
+      // Case 1
+      case1_B1_A22_div_detA = G_by_res * case1_A22_div_detA[index];
+      for (int i = 0; i < 2; ++i) {
+        s = plus_minus_one[i];
+        case1_B2 = GxE_by_res - s * (lambda_1 + lambda_2);
+        root_1 = case1_B1_A22_div_detA - case1_B2 * case1_A12_div_detA[index];
+        root_2 = (case1_B2 - root_1 * G_by_GxE[index]) / norm2_GxE[index];
+        if (std::abs(root_2) > std::abs(root_1)) {
+          b_gxe_numerator = GxE_by_res - G_by_GxE[index]  * root_1;
+          if (s * b_gxe_numerator > lambda_1 + lambda_2) {
+            b_g[index] = root_1; b_gxe[index] = root_2; delta[index] = lambda_1;
+            xbeta += normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
+            curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
+                                 norm2_GxE[index] * sqr(b_gxe_old - root_2));
+            max_diff = std::max(max_diff, curr_diff);              
+            if (curr_diff > 0) {
+              abs_nu_by_G_uptodate = false;
+              if (!active_set_iteration && !active_set[index]) {
+                active_set[index] = true;
+              }              
+            }     
+            has_solved = true;
+            break;
+          }
+        }
+      }
+      if (has_solved) {
+        continue;
+      }
+      
+      // Case 3
+      case_3_C = GxE_by_res * G_by_GxE[index] - G_by_res * norm2_GxE[index];
+      case_3_D = GxE_by_res * norm2_G[index] - G_by_res * G_by_GxE[index];
+      for (int i = 0; i < 2; ++i) {
+        s_g = plus_minus_one[i];
+        case_3_E_D = s_g * case_3_E[index] + case_3_D;
+        case_3_C_F = s_g * case_3_C + case_3_F[index];
+        case_3_B_s_g = s_g * 2 * G_by_GxE[index];
+        for (int j = 0; j < 2; ++j) {
+          s_gxe = plus_minus_one[j];
+          root_3 = (s_gxe * case_3_E_D + case_3_C_F) / (case_3_A[index] + s_gxe * case_3_B_s_g);
+          if ((root_3 >= 0) && (root_3 < lambda_1)) {
+            root_1 = (G_by_res - s_g * (lambda_1 - root_3)) / (norm2_G[index] + s_g * s_gxe * G_by_GxE[index]);
+            root_2 = s_g * s_gxe * root_1;
+            b_gxe_numerator = GxE_by_res - G_by_GxE[index] * root_1;
+            b_g_numerator = (G_by_res - root_2 * G_by_GxE[index]);
+            if ((s_gxe * b_gxe_numerator > lambda_2 + root_3) &&
+                (s_g * b_g_numerator > lambda_1 - root_3)) {
+              b_g[index] = root_1; b_gxe[index] = root_2; delta[index] = root_3;
+              xbeta += normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
+              curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
+                                   norm2_GxE[index] * sqr(b_gxe_old - root_2));
+              max_diff = std::max(max_diff, curr_diff);               
+              if (curr_diff > 0) {
+                abs_nu_by_G_uptodate = false;
+                if (!active_set_iteration && !active_set[index]) {
+                  active_set[index] = true;
+                }              
+              }           
+              has_solved = true;
+              break;
+            }          
+          }
+        }
+        if (has_solved) {
+          break;
+        }      
+      }
+      if (has_solved) {
+        continue;
+      }  
+      
+      // Case 4
+      b_g_new = soft_threshold(G_by_res, lambda_1) / norm2_G[index];
+      b_gxe_numerator = GxE_by_res - G_by_GxE[index] * b_g_new;
+      if (std::abs(b_gxe_numerator) <= lambda_2) {
+        b_g[index] = b_g_new; b_gxe[index] = 0; delta[index] = 0;
+        xbeta += normalize_weights_g[index] * b_g[index] * G.col(index);
+        curr_diff = std::max(norm2_G[index] * sqr(b_g_old - b_g_new), 
+                             norm2_GxE[index] * sqr(b_gxe_old));
+        max_diff = std::max(max_diff, curr_diff);         
+        if (curr_diff > 0) {
+          abs_nu_by_G_uptodate = false;
+          if (!active_set_iteration && !active_set[index]) {
+            active_set[index] = true;
+          }              
+        }    
+        continue;
+      }    
+      
+      // Case 5
+      for (int i = 0; i < 2; ++i) {
+        s_g = plus_minus_one[i];
+        for (int j = 0; j < 2; ++j) {
+          s_gxe = plus_minus_one[j];
+          case5_B2 = GxE_by_res - s_gxe * lambda_2;
+          root_1 = (G_by_res - s_g * lambda_1) * case5_A22_div_detA[index] - case5_B2 * case5_A12_div_detA[index];
+          b_gxe_numerator = GxE_by_res - G_by_GxE[index] * root_1;
+          if  (s_gxe * b_gxe_numerator > lambda_2) {
+            root_2 = (case5_B2 - root_1 * G_by_GxE[index]) / norm2_GxE[index];
+            b_g_numerator = (G_by_res - root_2 * G_by_GxE[index]);
+            if (s_g * b_g_numerator > lambda_1) {
+              b_g[index] = root_1; b_gxe[index] = root_2; delta[index] = 0;
+              xbeta += normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
+              curr_diff = std::max(norm2_G[index] * sqr(b_g_old - root_1), 
+                                   norm2_GxE[index] * sqr(b_gxe_old - root_2));
+              max_diff = std::max(max_diff, curr_diff);                     
+              if (curr_diff > 0) {
+                abs_nu_by_G_uptodate = false;
+                if (!active_set_iteration && !active_set[index]) {
+                  active_set[index] = true;
+                }              
+              }       
+              has_solved = true;
+              break;
+            }
+          }
+        }
+        if (has_solved) {
+          break;
+        }      
+      }
+    }
+    return max_diff;
+  }  
     
   double get_b_0() {
     return b_0;
