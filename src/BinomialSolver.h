@@ -54,11 +54,11 @@ private:
   using Solver<TG>::safe_set_g;
   using Solver<TG>::safe_set_gxe;
   using Solver<TG>::safe_set_zero;
-  using Solver<TG>::working_set;     
+  using Solver<TG>::working_set;
+  using Solver<TG>::xbeta;
 
 protected:
   MapVec weights_user;
-  VecXd xbeta;
   
   double sum_w;
   double sum_E_w;
@@ -108,7 +108,6 @@ protected:
                  bool normalize_) :
     Solver<TG>(G_, E_, Y_, normalize_),
     weights_user(weights_.data(), weights_.rows()),
-    xbeta(n),
     norm2_G(p),
     norm_G(p),    
     norm2_GxE(p),
@@ -144,7 +143,6 @@ protected:
            bool normalize_) :
     Solver<TG>(G_, E_, Y_, normalize_),
     weights_user(weights_.data(), weights_.rows()),
-    xbeta(n),
     norm2_G(p),
     norm_G(p),    
     norm2_GxE(p),
@@ -183,8 +181,6 @@ protected:
         normalize_weights_g.setOnes(p);
         normalize_weights_e = 1;
       }      
-      
-      xbeta.setZero(n);
       
       for (int i = 0; i < G.cols(); ++i) {
         temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);

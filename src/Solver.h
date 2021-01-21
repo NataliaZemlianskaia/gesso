@@ -81,6 +81,8 @@ public:
   VecXd b_gxe;
   VecXd delta;
   
+  VecXd xbeta;
+  
   ArrayXb safe_set_g;
   ArrayXb safe_set_gxe;
   ArrayXb safe_set_zero;
@@ -96,17 +98,18 @@ public:
     E(E_.data(), E_.rows()),
     Y(Y_.data(), Y_.rows()),
     normalize(normalize_),
+    normalize_weights_g(p),
     b_0(0), 
     b_e(0),
     b_g(p),
     b_gxe(p),
     delta(p),
-    normalize_weights_g(p),
+    xbeta(n),
     safe_set_g(p),
     safe_set_gxe(p),
     safe_set_zero(p) {
     
-    init();
+    base_init();
   }  
     
   Solver(const MapSparseMat& G_,
@@ -119,25 +122,28 @@ public:
     E(E_.data(), E_.rows()),
     Y(Y_.data(), Y_.rows()),
     normalize(normalize_),
+    normalize_weights_g(p),
     b_0(0), 
     b_e(0),
     b_g(p),
     b_gxe(p),
     delta(p),
-    normalize_weights_g(p),
+    xbeta(n),
     safe_set_g(p),
     safe_set_gxe(p),
     safe_set_zero(p) {
 
-    init();
+    base_init();
   }     
     
   virtual ~Solver() {}
     
-  void init() {
+  void base_init() {
     b_g.setZero(p);
     b_gxe.setZero(p);
     delta.setZero(p);
+    
+    xbeta.setZero(n);
     
     working_set.reserve(p);
   }
