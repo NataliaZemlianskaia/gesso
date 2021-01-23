@@ -30,11 +30,15 @@ hierNetGxE.fit = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20,
   if (is(G, "matrix")) {
     if (typeof(G) != "double")
       stop("G must be of type double")
-    is_sparse_g = FALSE
+    mattype_g = 0
   } else if ("dgCMatrix" %in% class(G)) {
     if (typeof(G@x) != "double")
       stop("G must be of type double")
-    is_sparse_g = TRUE
+    mattype_g = 1
+  } else if (is.big.matrix(G)) {
+    if (bigmemory::describe(G)@description$type != "double")
+      stop("G must be of type double")
+    mattype_g = 2
   } else {
     stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
   }  
@@ -47,7 +51,7 @@ hierNetGxE.fit = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20,
     weights = rep(1, n) / n
   }
   fit = fitModel(G, E, Y, weights, normalize, grid, family, 
-                 tolerance, max_iterations, min_working_set_size, is_sparse_g)
+                 tolerance, max_iterations, min_working_set_size, mattype_g)
   fit$beta_g_nonzero = rowSums(fit$beta_g != 0)
   fit$beta_gxe_nonzero = rowSums(fit$beta_gxe != 0) 
   return(fit)
@@ -62,11 +66,15 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
   if (is(G, "matrix")) {
     if (typeof(G) != "double")
       stop("G must be of type double")
-    is_sparse_g = FALSE
+    mattype_g = 0
   } else if ("dgCMatrix" %in% class(G)) {
     if (typeof(G@x) != "double")
       stop("G must be of type double")
-    is_sparse_g = TRUE
+    mattype_g = 1
+  } else if (is.big.matrix(G)) {
+    if (bigmemory::describe(G)@description$type != "double")
+      stop("G must be of type double")
+    mattype_g = 2
   } else {
     stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
   }  
@@ -84,12 +92,12 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
     print("Parallel cv")
     start_parallel = Sys.time()
     result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
-                        max_iterations, min_working_set_size, nfolds, seed, nfolds, is_sparse_g)
+                        max_iterations, min_working_set_size, nfolds, seed, nfolds, mattype_g)
     print(Sys.time() - start_parallel)
   } else {
     print("Non-parallel cv")
     result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
-                        max_iterations, min_working_set_size, nfolds, seed, 1, is_sparse_g)
+                        max_iterations, min_working_set_size, nfolds, seed, 1, mattype_g)
   }
   result_ = colMeans(result$test_loss)
   mean_beta_g_nonzero = colMeans(result$beta_g_nonzero)
@@ -100,7 +108,7 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
   print("fit on full data")
   start_all = Sys.time()
   fit_all_data = fitModel(G, E, Y, weights, normalize, grid, family,
-                          tolerance, max_iterations, min_working_set_size, is_sparse_g)
+                          tolerance, max_iterations, min_working_set_size, mattype_g)
   print(Sys.time() - start_all)
   
   lambda_min_index = which.min(result_)
@@ -122,7 +130,7 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
   
   return(list(cv_result=result, lambda_min=lambda_min, 
               lambda_se=lambda_se, 
-              fit=fit_all_data, grid=grid))
+              fit=fit_all_data, grid=grid, foldid=foldid))
 }
 
 hierNetGxE.coef = function(fit, lambda){

@@ -11,5 +11,5 @@ Description: The model focuses on a single environmental exposure and induces
 License: MIT + file LICENSE
 Imports: Rcpp (>= 1.0.3)
 Depends: dplyr
-Suggests: Matrix
-LinkingTo: Rcpp, RcppEigen, RcppThread
+Suggests: Matrix, glmnet, CVXR
+LinkingTo: Rcpp, RcppEigen, RcppThread, BH, bigmemory

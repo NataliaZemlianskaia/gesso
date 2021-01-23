@@ -1,3 +1,4 @@
+#include <bigmemory/MatrixAccessor.hpp>
 #include <Rcpp.h>
 #include <RcppEigen.h>
 #include <string>
@@ -5,7 +6,6 @@
 #include <iostream>
 #include <algorithm>
 
-// [[Rcpp::depends(RcppThread)]]
 #include <RcppThread.h>
 
 #include "SolverTypes.h"
@@ -13,6 +13,7 @@
 #include "GaussianSolver.h"
 #include "BinomialSolver.h"
 
+// [[Rcpp::depends(RcppEigen, RcppThread, BH, bigmemory)]]
 
 template <typename TG>
 void fitModelCVRcppSingleFold(const TG& G,
@@ -145,12 +146,19 @@ Rcpp::List fitModelCV(SEXP G,
                       int nfolds,
                       int seed,
                       int ncores,
-                               bool sparse_g) {
-  if (sparse_g) {
+                      int mattype_g) {
+  if (mattype_g == 1) {
     return fitModelCVRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y,
                                     normalize, grid,
                                     family, tolerance, max_iterations, min_working_set_size,
                                     nfolds, seed, ncores);    
+  } if (mattype_g == 2) {
+    Rcpp::S4 G_info(G);
+    Rcpp::XPtr<BigMatrix> xptr((SEXP) G_info.slot("address"));
+    MapMat Gmap((const double *)xptr->matrix(), xptr->nrow(), xptr->ncol());
+    return fitModelCVRcpp<MapMat>(Gmap, E, Y, normalize, grid,
+                                  family, tolerance, max_iterations, min_working_set_size,
+                                  nfolds, seed, ncores);
   } else {
     Rcpp::NumericMatrix G_mat(G);
     MapMat Gmap((const double *) &G_mat[0], G_mat.rows(), G_mat.cols());

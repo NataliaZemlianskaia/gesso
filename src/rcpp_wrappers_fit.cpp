@@ -1,3 +1,4 @@
+#include <bigmemory/MatrixAccessor.hpp>
 #include <Rcpp.h>
 #include <RcppEigen.h>
 #include <string.h>
@@ -7,6 +8,7 @@
 #include "GaussianSolver.h"
 #include "BinomialSolver.h"
 
+// [[Rcpp::depends(RcppEigen, BH, bigmemory)]]
 
 template <typename TG>
 Rcpp::List fitModelRcpp(const TG& G,
@@ -108,11 +110,17 @@ Rcpp::List fitModel(SEXP G,
                     double tolerance,
                     int max_iterations,
                     int min_working_set_size,
-                    bool sparse_g) {
-  if (sparse_g) {
+                    int mattype_g) {
+  if (mattype_g == 1) {
     return fitModelRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y,
                                             weights, normalize, grid,
                                             family, tolerance, max_iterations, min_working_set_size);    
+  } if (mattype_g == 2) {
+    Rcpp::S4 G_info(G);
+    Rcpp::XPtr<BigMatrix> xptr((SEXP) G_info.slot("address"));
+    MapMat Gmap((const double *)xptr->matrix(), xptr->nrow(), xptr->ncol());
+    return fitModelRcpp<MapMat>(Gmap, E, Y, weights, normalize, grid,
+                                family, tolerance, max_iterations, min_working_set_size);
   } else {
     Rcpp::NumericMatrix G_mat(G);
     MapMat Gmap((const double *) &G_mat[0], G_mat.rows(), G_mat.cols());

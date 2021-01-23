@@ -1,8 +1,8 @@
 #ifndef SOLVER_TYPES_H
 #define SOLVER_TYPES_H
 
-// [[Rcpp::depends(RcppEigen)]]
 #include <RcppEigen.h>
+// [[Rcpp::depends(RcppEigen)]]
 
 typedef Eigen::Map<const Eigen::MatrixXd> MapMat;
 typedef Eigen::Map<const Eigen::VectorXd> MapVec;
