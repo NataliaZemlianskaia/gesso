@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <random>
 
 #include <RcppThread.h>
 
@@ -106,11 +107,8 @@ Rcpp::List fitModelCVRcpp(const TG& G,
   for (int i = 0; i < G.rows(); ++i) {
     fold_ids.push_back(i % nfolds);
   }
-  srand(seed);
-  std::random_shuffle(fold_ids.begin(), fold_ids.end());
-  
-  
-  
+  std::shuffle(fold_ids.begin(), fold_ids.end(), std::default_random_engine(seed));
+
   if (ncores == 1) {
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, normalize, grid, family,

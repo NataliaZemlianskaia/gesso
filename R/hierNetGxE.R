@@ -86,7 +86,6 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
   if (nfolds < 2) {
     stop("number of folds (nfolds) must be at least 2")
   }
-  foldid = sample(rep(seq(nfolds), length=n))
 
   if (parallel) {
     print("Parallel cv")
@@ -130,7 +129,7 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
   
   return(list(cv_result=result, lambda_min=lambda_min, 
               lambda_se=lambda_se, 
-              fit=fit_all_data, grid=grid, foldid=foldid))
+              fit=fit_all_data, grid=grid))
 }
 
 hierNetGxE.coef = function(fit, lambda){
