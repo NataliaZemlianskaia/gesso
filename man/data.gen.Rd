@@ -19,8 +19,8 @@ data.gen(sample_size = 100, p = 20, n_g_non_zero = 15, n_gxe_non_zero = 10,
   \item{n_g_non_zero}{number of non-zero main effects to generate}
   \item{n_gxe_non_zero}{number of non-zero interaction effects to generate}
   \item{family}{"gaussian" for continous outcome Y and "binomial" for binary 0/1 outcome}
-  \item{mode}{either "strong_hierarchical", "hierarchical", or "anti-hierarchical".
-  In the \emph{strong hierarchical} mode the hierarchical structure is maintained (beta_g = 0  then beta_gxe = 0) and also |beta_g| >= |beta_gxe|. In the \emph{hierarchical} mode the  hierarchical structure is maintained, but |beta_G| < |beta_gxe|. In the \emph{anti-hierarchical} mode the hierarchical structure is violated (beta_g = 0  then beta_gxe != 0).}
+  \item{mode}{either "strong_hierarchical", "hierarchical", or "anti_hierarchical".
+  In the \emph{strong hierarchical} mode the hierarchical structure is maintained (beta_g = 0  then beta_gxe = 0) and also |beta_g| >= |beta_gxe|. In the \emph{hierarchical} mode the  hierarchical structure is maintained, but |beta_G| < |beta_gxe|. In the \emph{anti_hierarchical} mode the hierarchical structure is violated (beta_g = 0  then beta_gxe != 0).}
   \item{normalize}{\code{TRUE} to normalize matrix \code{G} and vector \code{E}}
   \item{pG}{genotypes prevalence, value from 0 to 1}
   \item{pE}{environment prevalence, value from 0 to 1}

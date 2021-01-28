@@ -89,7 +89,7 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
                     controls[(n_train_2 + 1): (n_train_2 + n_valid_2)])
     index_test = c(cases[(n_train_2 + n_valid_2 + 1):(n_train_2 + n_valid_2 + n_test_2)],
                    controls[(n_train_2 + n_valid_2 + 1):(n_train_2 + n_valid_2 + n_test_2)])
-    SNR = NULL; SNR_g=NULL; SNR_gxe=NULL
+    SNR_g=NULL; SNR_gxe=NULL
   } else {
     lp = beta_0 + G %*% Beta_G + beta_E*E + GxE %*% Beta_GxE
     error_var = 0.5

@@ -12,10 +12,10 @@ get.AUC = function(estimated_coef, true_coef){
 
 
 selection.metrics = function(true_b_g, true_b_gxe, estimated_b_g, estimated_b_gxe) {
-  index_beta_gxe_non_zero = which(true_gxe != 0)
-  index_beta_non_zero = which(true_g != 0)
-  index_beta_gxe_zero = which(true_gxe == 0)
-  index_beta_zero = which(true_g == 0)
+  index_beta_gxe_non_zero = which(true_b_gxe != 0)
+  index_beta_non_zero = which(true_b_g != 0)
+  index_beta_gxe_zero = which(true_b_gxe == 0)
+  index_beta_zero = which(true_b_g == 0)
 
     
   if (sum(estimated_b_gxe != 0) == 0) {

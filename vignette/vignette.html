@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Natalia Zemlianskaia" />
+
+<meta name="date" content="2021-01-27" />
+
+<title>Getting started with hierNetGxE</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Getting started with <code>hierNetGxE</code></h1>
+<h4 class="author">Natalia Zemlianskaia</h4>
+<h4 class="date">2021-01-27</h4>
+
+
+
+<div id="purpose-of-this-vignette" class="section level3">
+<h3>Purpose of this vignette</h3>
+<p>This vignette is a tutorial about how to use the <code>hierNetGxE</code> package</p>
+<ul>
+<li>for the selection of the gene-environment interaction terms in a joint “main-effect-before-interaction” hierarchical manner</li>
+<li>for building a <em>correctly spesified</em> prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model</li>
+<li>to show how to convert data to sparse/bigmatrix format for more efficient and flexible use of the package</li>
+</ul>
+</div>
+<div id="overview" class="section level3">
+<h3>Overview</h3>
+<p>The package is developed to fit a regularized regression model that we call <strong>hierNetGxE</strong> for the joint selection of gene-environment (GxE) interactions based on the hierarchical lasso [Bien et al. (2013)]. The model focuses on a single environmental exposure and induces a “main-effect-before-interaction” hierarchical structure. Unlike the original hierarchical lasso model, which was designed for the gene-gene (GxG) interaction case, the GxE model has a simpler block-separable structure that makes it possible to fit in large-scale applications. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.</p>
+<p><strong>hierNetGxE</strong> model induces hierarchical selection of the (GxE) interaction terms via convex constraints added to the objective function. The model has two tuning parameters <span class="math inline">\(\lambda_1\)</span> and <span class="math inline">\(\lambda_2\)</span> responsible for the model sparsity with respect to main effects and interactions respectively.</p>
+<p>Response (outcome) variable can be either quantitative of binary 0/1 variable. For a binary response IRLS procedure is used with custom screening rules we developed.</p>
+</div>
+<div id="installation" class="section level3">
+<h3>Installation</h3>
+<p>Installation can take a couple of minutes because of the requirement to install dependent packages (<code>dplyr</code>, <code>Rcpp</code>, <code>RcppEigen</code>, <code>RcppThread</code>, <code>BH</code>, <code>bigmemory</code>)</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co">## install.packages(&quot;devtools&quot;)</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">library</span>(devtools)</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;NataliaZemlianskaia/hierNetGxE&quot;</span>)</a></code></pre></div>
+<p>Attaching libraries for the examples below</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">library</span>(hierNetGxE)</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="kw">library</span>(glmnet)</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw">library</span>(ggplot2)</a></code></pre></div>
+</div>
+<div id="data-generation" class="section level3">
+<h3>Data generation</h3>
+<p>First, we generate the dataset using <code>data.gen()</code> funtion from the package. The function allows us to generate a binary (0/1) matrix of genotypes <code>G</code> of a given <code>sample_size</code> and <code>p</code> number of features, binary vector <code>E</code> of environmental measurments, and a response variable <code>Y</code> <span class="math inline">\(\sim g(\beta_0 + \beta_E E + \beta_G G + \beta_{G\times E} G\times E\)</span> (either quantitative or binary depending of the <code>family</code> parameter) .</p>
+<p>We can specify the number of non-zero main effects (<code>n_g_non_zero</code>) and interactions (<code>n_gxe_non_zero</code>) we want to generate. We also specified a <em>“strong_hierarchical”</em> mode for our dataset, which means that (1) if interaction effect is generated as non-zero, it’s respective genetic main effect is also generated as non-zero (<span class="math inline">\(\beta_{G\times E} \ne 0 \longrightarrow \beta_G \ne 0\)</span>), and (2) effect sizes of the main effects are larger than that of interaction effects (<span class="math inline">\(|\beta_G| \ge |\beta_{G\times E}|\)</span>).</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">family =<span class="st"> &quot;gaussian&quot;</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">sample_size =<span class="st"> </span><span class="dv">150</span>; p =<span class="st"> </span><span class="dv">400</span>; n_g_non_zero =<span class="st"> </span><span class="dv">10</span>; n_gxe_non_zero =<span class="st"> </span><span class="dv">5</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">data =<span class="st"> </span><span class="kw">data.gen</span>(<span class="dt">seed=</span><span class="dv">1</span>, <span class="dt">sample_size=</span>sample_size, <span class="dt">p=</span>p, </a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">                <span class="dt">n_g_non_zero=</span>n_g_non_zero, <span class="dt">n_gxe_non_zero=</span>n_gxe_non_zero, </a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">                <span class="dt">mode=</span><span class="st">&quot;strong_hierarchical&quot;</span>,</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">                <span class="dt">family=</span>family)</a></code></pre></div>
+<p>Let’s look at the dataset we generated <code>data$G_train</code>, <code>data$E_train</code>, and <code>data$Y_train</code></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">dim</span>(data<span class="op">$</span>G_train)</a></code></pre></div>
+<pre><code>## [1] 150 400</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">head</span>(data<span class="op">$</span>G_train[,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>])</a></code></pre></div>
+<pre><code>##      [,1] [,2] [,3] [,4] [,5]
+## [1,]    0    0    0    0    0
+## [2,]    0    0    1    0    0
+## [3,]    0    0    0    0    0
+## [4,]    1    0    1    1    0
+## [5,]    0    1    0    0    0
+## [6,]    1    0    0    0    0</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1">data<span class="op">$</span>E_train[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</a></code></pre></div>
+<pre><code>##  [1] 0 0 0 0 0 0 0 0 1 1</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="kw">head</span>(data<span class="op">$</span>Y_train)</a></code></pre></div>
+<pre><code>## [1]  2.1951026 -0.2859079 -2.8515097 -2.6861760 -5.9169406  2.0882565</code></pre>
+<p>We generated model coefficients <code>data$Beta_G</code> and <code>data$Beta_GxE</code> such that we got <code>sum(data$Beta_G != 0)</code> = 10 non-zero main effects and <code>sum(data$Beta_GxE != 0)</code> = 5 non-zero interaction effects as we specified.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">c</span>(<span class="kw">sum</span>(data<span class="op">$</span>Beta_G <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>), <span class="kw">sum</span>(data<span class="op">$</span>Beta_GxE <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>))</a></code></pre></div>
+<pre><code>## [1] 10  5</code></pre>
+<p>We also imposed <em>strong_hierarchical</em> relationships between main and interaction effect sizes</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="kw">cbind</span>(data<span class="op">$</span>Beta_G[data<span class="op">$</span>Beta_G <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>], data<span class="op">$</span>Beta_GxE[data<span class="op">$</span>Beta_G <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>])</a></code></pre></div>
+<pre><code>##       [,1] [,2]
+##  [1,]   -3  0.0
+##  [2,]   -3  1.5
+##  [3,]   -3 -1.5
+##  [4,]    3  0.0
+##  [5,]   -3  0.0
+##  [6,]    3 -1.5
+##  [7,]    3  0.0
+##  [8,]   -3  0.0
+##  [9,]   -3 -1.5
+## [10,]   -3  1.5</code></pre>
+</div>
+<div id="selection-example" class="section level3">
+<h3>Selection example</h3>
+<p>To tune the model over a 2D grid of hyper-parameters (lambda_1 and lambda_2) we use function <code>hierNetGxE.cv()</code>, where we specify</p>
+<ul>
+<li>our data <code>G, E, Y</code> and <code>family</code> parameter for the response varable; matrix <code>G</code> should be a numeric matrix, vector <code>E</code> shold be a numeric vector. Vector <code>Y</code> could either be a numeric or binary 0/1 vector</li>
+<li><code>tolerance</code> for the convergence of the fitting algorithm</li>
+<li><code>grid_size</code> to automatically generate grid values for cross-validation</li>
+<li><code>nfolds</code> to specify how many folds we want to use in cross-validation</li>
+<li><code>parallel</code> TRUE to enable parallel cross-validation</li>
+<li><code>seed</code> set random seed to control random folds assignments</li>
+<li><code>normalize</code> TRUE to normalize matrix <code>G</code> (such that column-wise sd is eqial to 1)</li>
+</ul>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1">tolerance =<span class="st"> </span><span class="fl">1e-4</span></a>
+<a class="sourceLine" id="cb16-2" data-line-number="2">start =<span class="st"> </span><span class="kw">Sys.time</span>()</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3">tune_model =<span class="st"> </span><span class="kw">hierNetGxE.cv</span>(<span class="dt">G=</span>data<span class="op">$</span>G_train, <span class="dt">E=</span>data<span class="op">$</span>E_train, <span class="dt">Y=</span>data<span class="op">$</span>Y_train, </a>
+<a class="sourceLine" id="cb16-4" data-line-number="4">                           <span class="dt">family=</span>family, <span class="dt">grid_size=</span><span class="dv">20</span>, <span class="dt">tolerance=</span>tolerance,</a>
+<a class="sourceLine" id="cb16-5" data-line-number="5">                           <span class="dt">parallel=</span><span class="ot">TRUE</span>, <span class="dt">nfold=</span><span class="dv">3</span>,</a>
+<a class="sourceLine" id="cb16-6" data-line-number="6">                           <span class="dt">normalize=</span><span class="ot">TRUE</span>,</a>
+<a class="sourceLine" id="cb16-7" data-line-number="7">                           <span class="dt">seed=</span><span class="dv">1</span>)</a></code></pre></div>
+<pre><code>## [1] &quot;Parallel cv&quot;
+## Time difference of 8.332144 secs
+## [1] &quot;fit on full data&quot;
+## Time difference of 10.56141 secs</code></pre>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start</a></code></pre></div>
+<pre><code>## Time difference of 18.91692 secs</code></pre>
+<div id="obtain-best-model-with-hiernetgxe.coef-function" class="section level4">
+<h4>Obtain best model with <code>hierNetGxE.coef()</code> function</h4>
+<p>To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters using <code>hierNetGxE.coef()</code> function. We need to specify a model fit object and a pair of lambda = (lambda_1, lambda_2) values organized in a tibble (ex: <code>lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])</code>).</p>
+<p>Here we set <code>fit=tune_model$fit</code> - model fit on the full dataset and <code>lambda=tune_model$lambda_min</code> - the pair of tuning parameters corresponding to the minimum cross-validation error that <code>hierNetGxE.cv()</code> function returns.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" data-line-number="1">coefficients =<span class="st"> </span><span class="kw">hierNetGxE.coef</span>(<span class="dt">fit=</span>tune_model<span class="op">$</span>fit, <span class="dt">lambda=</span>tune_model<span class="op">$</span>lambda_min)</a>
+<a class="sourceLine" id="cb20-2" data-line-number="2">gxe_coefficients =<span class="st"> </span>coefficients<span class="op">$</span>beta_gxe                      </a>
+<a class="sourceLine" id="cb20-3" data-line-number="3">g_coefficients =<span class="st"> </span>coefficients<span class="op">$</span>beta_g   </a></code></pre></div>
+<p>Check if all non-zero interaction features were recovered by the model</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">cbind</span>(data<span class="op">$</span>Beta_GxE[data<span class="op">$</span>Beta_GxE <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>], gxe_coefficients[data<span class="op">$</span>Beta_GxE <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>])</a></code></pre></div>
+<pre><code>##      [,1]       [,2]
+## [1,]  1.5  0.8485495
+## [2,] -1.5 -1.8750650
+## [3,] -1.5 -0.7304513
+## [4,] -1.5 -1.8583926
+## [5,]  1.5  0.9657081</code></pre>
+<p>Check that the largest estimated interaction effect sizes correspond to the true non-zero coefficients</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb23-1" data-line-number="1">(data<span class="op">$</span>Beta_GxE[<span class="kw">order</span>(<span class="kw">abs</span>(gxe_coefficients), <span class="dt">decreasing=</span><span class="ot">TRUE</span>)])[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</a></code></pre></div>
+<pre><code>##  [1] -1.5 -1.5  1.5  1.5 -1.5  0.0  0.0  0.0  0.0  0.0</code></pre>
+<p>Calculate principal selection metrics with <code>selection.metrics()</code> funciton available in the package</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" data-line-number="1">selection_hierNetGxE =<span class="st"> </span><span class="kw">selection.metrics</span>(<span class="dt">true_b_g=</span>data<span class="op">$</span>Beta_G, <span class="dt">true_b_gxe=</span>data<span class="op">$</span>Beta_GxE, </a>
+<a class="sourceLine" id="cb25-2" data-line-number="2">                              <span class="dt">estimated_b_g=</span>g_coefficients, <span class="dt">estimated_b_gxe=</span>gxe_coefficients)</a>
+<a class="sourceLine" id="cb25-3" data-line-number="3"><span class="kw">cbind</span>(selection_hierNetGxE)</a></code></pre></div>
+<pre><code>##                 selection_hierNetGxE
+## b_g_non_zero    45                  
+## b_gxe_non_zero  32                  
+## mse_b_g         0.319372            
+## mse_b_gxe       0.5605675           
+## sensitivity_g   1                   
+## specificity_g   0.9102564           
+## precision_g     0.2222222           
+## sensitivity_gxe 1                   
+## specificity_gxe 0.9316456           
+## precision_gxe   0.15625             
+## auc_g           0.999999            
+## auc_gxe         0.999998</code></pre>
+<p>Compare with the standart Lasso model (we use <code>glmnet</code> package)</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb27-2" data-line-number="2">tune_model_glmnet =<span class="st"> </span><span class="kw">cv.glmnet</span>(<span class="dt">x=</span><span class="kw">cbind</span>(data<span class="op">$</span>E_train, data<span class="op">$</span>G_train, data<span class="op">$</span>G_train <span class="op">*</span><span class="st"> </span>data<span class="op">$</span>E_train),</a>
+<a class="sourceLine" id="cb27-3" data-line-number="3">                              <span class="dt">y=</span>data<span class="op">$</span>Y_train,</a>
+<a class="sourceLine" id="cb27-4" data-line-number="4">                              <span class="dt">nfolds=</span><span class="dv">3</span>,</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5">                              <span class="dt">family=</span>family)</a>
+<a class="sourceLine" id="cb27-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb27-7" data-line-number="7">coef_glmnet =<span class="st"> </span><span class="kw">coef</span>(tune_model_glmnet, <span class="dt">s=</span>tune_model_glmnet<span class="op">$</span>lambda.min)</a>
+<a class="sourceLine" id="cb27-8" data-line-number="8">g_glmnet =<span class="st"> </span>coef_glmnet[<span class="dv">3</span><span class="op">:</span><span class="st"> </span>(p <span class="op">+</span><span class="st"> </span><span class="dv">2</span>)]</a>
+<a class="sourceLine" id="cb27-9" data-line-number="9">gxe_glmnet =<span class="st"> </span>coef_glmnet[(p <span class="op">+</span><span class="st"> </span><span class="dv">3</span>)<span class="op">:</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>p <span class="op">+</span><span class="st"> </span><span class="dv">2</span>)]   </a>
+<a class="sourceLine" id="cb27-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb27-11" data-line-number="11"><span class="kw">cbind</span>(data<span class="op">$</span>Beta_GxE[data<span class="op">$</span>Beta_GxE <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>], gxe_glmnet[data<span class="op">$</span>Beta_GxE <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>])</a></code></pre></div>
+<pre><code>##      [,1]      [,2]
+## [1,]  1.5 0.0000000
+## [2,] -1.5 0.0000000
+## [3,] -1.5 0.0000000
+## [4,] -1.5 0.0000000
+## [5,]  1.5 0.9937375</code></pre>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" data-line-number="1">(data<span class="op">$</span>Beta_GxE[<span class="kw">order</span>(<span class="kw">abs</span>(gxe_glmnet), <span class="dt">decreasing=</span><span class="ot">TRUE</span>)])[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>]</a></code></pre></div>
+<pre><code>##  [1] 1.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</code></pre>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb31-1" data-line-number="1">selection_glmnet =<span class="st"> </span><span class="kw">selection.metrics</span>(data<span class="op">$</span>Beta_G, data<span class="op">$</span>Beta_GxE, g_glmnet, gxe_glmnet)</a>
+<a class="sourceLine" id="cb31-2" data-line-number="2"><span class="kw">cbind</span>(selection_hierNetGxE, selection_glmnet)</a></code></pre></div>
+<pre><code>##                 selection_hierNetGxE selection_glmnet
+## b_g_non_zero    45                   50              
+## b_gxe_non_zero  32                   25              
+## mse_b_g         0.319372             0.2532511       
+## mse_b_gxe       0.5605675            1.36061         
+## sensitivity_g   1                    1               
+## specificity_g   0.9102564            0.8974359       
+## precision_g     0.2222222            0.2             
+## sensitivity_gxe 1                    0.2             
+## specificity_gxe 0.9316456            0.9392405       
+## precision_gxe   0.15625              0.04            
+## auc_g           0.999999             0.999999        
+## auc_gxe         0.999998             0.6146823</code></pre>
+<p>We see that hierNetGxE model outperforms the Lasso model in terms of selection of interaction terms in all important selection metrics, including GxE detection AUC (<code>auc_gxe</code>), sensitivity (<code>sensitivity_gxe</code>), and precision(<code>precision_gxe</code>). Estimation bias of the interaction coefficients is also lower for the hierNetGxE model (<code>mse_b_gxe</code>).</p>
+</div>
+<div id="obtain-target-model-with-hiernetgxe.coefnum-function" class="section level4">
+<h4>Obtain target model with <code>hierNetGxE.coefnum()</code> function</h4>
+<p>To control how parsimonious is our model with respect to the selected non-zero interaction terms we can use <code>hierNetGxE.coefnum()</code> function. We obtain interaction and main effect coefficients corresponding to the target GxE model, where instead of specifing tuning parameters <code>lambda</code> we set <code>target_b_gxe_non_zero</code> parameter which is the number of at most non-zero interactions we want to inlcude in the model.</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb33-1" data-line-number="1">coefficients =<span class="st"> </span><span class="kw">hierNetGxE.coefnum</span>(<span class="dt">cv_model=</span>tune_model, <span class="dt">target_b_gxe_non_zero=</span><span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb33-2" data-line-number="2">gxe_coefficients =<span class="st"> </span>coefficients<span class="op">$</span>beta_gxe                      </a>
+<a class="sourceLine" id="cb33-3" data-line-number="3">g_coefficients =<span class="st"> </span>coefficients<span class="op">$</span>beta_g   </a></code></pre></div>
+<p>Calculate principal selection metrics</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb34-1" data-line-number="1">selection_hierNetGxE =<span class="st"> </span><span class="kw">selection.metrics</span>(data<span class="op">$</span>Beta_G, data<span class="op">$</span>Beta_GxE, g_coefficients, gxe_coefficients)</a>
+<a class="sourceLine" id="cb34-2" data-line-number="2"><span class="kw">cbind</span>(selection_hierNetGxE, selection_glmnet)</a></code></pre></div>
+<pre><code>##                 selection_hierNetGxE selection_glmnet
+## b_g_non_zero    21                   50              
+## b_gxe_non_zero  8                    25              
+## mse_b_g         0.4366771            0.2532511       
+## mse_b_gxe       1.043102             1.36061         
+## sensitivity_g   1                    1               
+## specificity_g   0.9717949            0.8974359       
+## precision_g     0.4761905            0.2             
+## sensitivity_gxe 0.8                  0.2             
+## specificity_gxe 0.9898734            0.9392405       
+## precision_gxe   0.5                  0.04            
+## auc_g           0.999999             0.999999        
+## auc_gxe         0.9665803            0.6146823</code></pre>
+<p>Here we see that the number of non-zero interactions in the model (<code>b_gxe_non_zero</code>) is 8 (vs 32 non-zero terms in the model corresponding to the minimal cross-validated error), leading to increased precision and slightly decreased sensitivity.</p>
+</div>
+</div>
+<div id="prediction-example" class="section level3">
+<h3>Prediction example</h3>
+<p>With <code>hierNetGxE.coef()</code> we, again, obtain coefficients corresponding to the best model in terms of minimal cross-validated error and use <code>hierNetGxE.predict()</code> function to apply our estimated model to a new test dataset that can also be generated by the function <code>data.gen()</code>.</p>
+<p>We calculate test R-squared to compare model perfomance.</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb36-1" data-line-number="1">coefficients =<span class="st"> </span><span class="kw">hierNetGxE.coef</span>(tune_model<span class="op">$</span>fit, tune_model<span class="op">$</span>lambda_min)</a>
+<a class="sourceLine" id="cb36-2" data-line-number="2">beta_<span class="dv">0</span> =<span class="st"> </span>coefficients<span class="op">$</span>beta_<span class="dv">0</span>; beta_e =<span class="st"> </span>coefficients<span class="op">$</span>beta_e                   </a>
+<a class="sourceLine" id="cb36-3" data-line-number="3">beta_g =<span class="st"> </span>coefficients<span class="op">$</span>beta_g; beta_gxe =<span class="st"> </span>coefficients<span class="op">$</span>beta_gxe     </a>
+<a class="sourceLine" id="cb36-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb36-5" data-line-number="5">new_G =<span class="st"> </span>data<span class="op">$</span>G_test; new_E =<span class="st"> </span>data<span class="op">$</span>E_test</a>
+<a class="sourceLine" id="cb36-6" data-line-number="6">new_Y =<span class="st"> </span><span class="kw">hierNetGxE.predict</span>(beta_<span class="dv">0</span>, beta_e, beta_g, beta_gxe, new_G, new_E)</a>
+<a class="sourceLine" id="cb36-7" data-line-number="7">test_R2_hierNetGxE =<span class="st"> </span><span class="kw">cor</span>(new_Y, data<span class="op">$</span>Y_test)<span class="op">^</span><span class="dv">2</span></a></code></pre></div>
+<p>Compare with the standart Lasso (we use <code>glmnet</code> package)</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb37-1" data-line-number="1">new_Y_glmnet =<span class="st"> </span><span class="kw">predict</span>(tune_model_glmnet, <span class="dt">newx=</span><span class="kw">cbind</span>(new_E, new_G, new_G <span class="op">*</span><span class="st"> </span>new_E), </a>
+<a class="sourceLine" id="cb37-2" data-line-number="2">                       <span class="dt">s=</span>tune_model_glmnet<span class="op">$</span>lambda.min)</a>
+<a class="sourceLine" id="cb37-3" data-line-number="3">test_R2_glmnet =<span class="st"> </span><span class="kw">cor</span>(new_Y_glmnet[,<span class="dv">1</span>], data<span class="op">$</span>Y_test)<span class="op">^</span><span class="dv">2</span></a>
+<a class="sourceLine" id="cb37-4" data-line-number="4"><span class="kw">cbind</span>(test_R2_hierNetGxE, test_R2_glmnet)</a></code></pre></div>
+<pre><code>##      test_R2_hierNetGxE test_R2_glmnet
+## [1,]          0.9773027      0.9286629</code></pre>
+</div>
+<div id="sparce-matrix-option-example" class="section level3">
+<h3>Sparce matrix option example</h3>
+<p>We generate large highly sparse genotype matrix <code>G</code> by setting genotype prevalence parameter <code>pG</code> to 0.03 and measure how long does it take to fit the model.</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" data-line-number="1">sample_size =<span class="st"> </span><span class="dv">600</span>; p =<span class="st"> </span><span class="dv">30000</span></a>
+<a class="sourceLine" id="cb39-2" data-line-number="2">pG =<span class="st"> </span><span class="fl">0.03</span></a>
+<a class="sourceLine" id="cb39-3" data-line-number="3">data =<span class="st"> </span><span class="kw">data.gen</span>(<span class="dt">seed=</span><span class="dv">1</span>, <span class="dt">sample_size=</span>sample_size, <span class="dt">p=</span>p, </a>
+<a class="sourceLine" id="cb39-4" data-line-number="4">                <span class="dt">n_g_non_zero=</span>n_g_non_zero, <span class="dt">n_gxe_non_zero=</span>n_gxe_non_zero, </a>
+<a class="sourceLine" id="cb39-5" data-line-number="5">                <span class="dt">mode =</span> <span class="st">&quot;strong_hierarchical&quot;</span>,</a>
+<a class="sourceLine" id="cb39-6" data-line-number="6">                <span class="dt">pG=</span>pG,</a>
+<a class="sourceLine" id="cb39-7" data-line-number="7">                <span class="dt">family=</span>family)</a>
+<a class="sourceLine" id="cb39-8" data-line-number="8"><span class="kw">sum</span>(data<span class="op">$</span>G_train <span class="op">!=</span><span class="st"> </span><span class="dv">0</span>) <span class="op">/</span><span class="st"> </span>(sample_size <span class="op">*</span><span class="st"> </span>p)</a></code></pre></div>
+<pre><code>## [1] 0.03005317</code></pre>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb41-1" data-line-number="1">start =<span class="st"> </span><span class="kw">Sys.time</span>()</a>
+<a class="sourceLine" id="cb41-2" data-line-number="2">fit =<span class="st"> </span><span class="kw">hierNetGxE.fit</span>(<span class="dt">G=</span>data<span class="op">$</span>G_train, <span class="dt">E=</span>data<span class="op">$</span>E_train, <span class="dt">Y=</span>data<span class="op">$</span>Y_train, </a>
+<a class="sourceLine" id="cb41-3" data-line-number="3">                     <span class="dt">tolerance=</span>tolerance,</a>
+<a class="sourceLine" id="cb41-4" data-line-number="4">                     <span class="dt">normalize=</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb41-5" data-line-number="5">time_non_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_non_sparse</a></code></pre></div>
+<pre><code>## Time difference of 1.246369 mins</code></pre>
+<p>We then convert our generated matrix to sparse format and measure fitting time again.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb43-1" data-line-number="1">G_train_sparse =<span class="st"> </span><span class="kw">as</span>(data<span class="op">$</span>G_train, <span class="st">&quot;dgCMatrix&quot;</span>)</a>
+<a class="sourceLine" id="cb43-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb43-3" data-line-number="3">start =<span class="st"> </span><span class="kw">Sys.time</span>()</a>
+<a class="sourceLine" id="cb43-4" data-line-number="4">fit =<span class="st"> </span><span class="kw">hierNetGxE.fit</span>(<span class="dt">G=</span>G_train_sparse, <span class="dt">E=</span>data<span class="op">$</span>E_train, <span class="dt">Y=</span>data<span class="op">$</span>Y_train, </a>
+<a class="sourceLine" id="cb43-5" data-line-number="5">                     <span class="dt">tolerance=</span>tolerance,</a>
+<a class="sourceLine" id="cb43-6" data-line-number="6">                     <span class="dt">normalize=</span><span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb43-7" data-line-number="7">time_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_sparse</a></code></pre></div>
+<pre><code>## Time difference of 40.06886 secs</code></pre>
+<p>We see that sparse option enables more efficient fitting, however, the speed-up works only for substantially sparse matrices.</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb45-1" data-line-number="1">(<span class="kw">as.numeric</span>(time_non_sparse) <span class="op">*</span><span class="st"> </span><span class="dv">60</span>) <span class="op">/</span><span class="st"> </span><span class="kw">as.numeric</span>(time_sparse)</a></code></pre></div>
+<pre><code>## [1] 1.866341</code></pre>
+</div>
+<div id="bigmatrix-bigmemory-package-option-example" class="section level3">
+<h3>Bigmatrix (<code>bigmemory</code> package) option example</h3>
+<p>Here we show how to convert data into <code>bigmatrix</code> format. This format should be used for a very large datasets that barely fit in RAM.</p>
+<p>For out of RAM objects function <code>attach.big.matrix(&quot;g_train.desc&quot;)</code> should be used given that the files already exist in a correct format (<code>g_train.desc</code>, <code>g_train.bin</code>).</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb47-1" data-line-number="1">grid =<span class="st"> </span><span class="kw">compute.grid</span>(data<span class="op">$</span>G_train, data<span class="op">$</span>E_train, data<span class="op">$</span>Y_train,</a>
+<a class="sourceLine" id="cb47-2" data-line-number="2">                    <span class="dt">normalize=</span><span class="ot">TRUE</span>, <span class="dt">grid_size=</span>grid_size, <span class="dt">grid_min_ratio=</span><span class="fl">1e-4</span>)</a>
+<a class="sourceLine" id="cb47-3" data-line-number="3">                    </a>
+<a class="sourceLine" id="cb47-4" data-line-number="4">G_train =<span class="st"> </span><span class="kw">as.big.matrix</span>(data<span class="op">$</span>G_train,</a>
+<a class="sourceLine" id="cb47-5" data-line-number="5">                        <span class="dt">backingfile=</span><span class="st">&quot;g_train.bin&quot;</span>,</a>
+<a class="sourceLine" id="cb47-6" data-line-number="6">                        <span class="dt">descriptorfile=</span><span class="st">&quot;g_train.desc&quot;</span>)</a>
+<a class="sourceLine" id="cb47-7" data-line-number="7"><span class="kw">is.filebacked</span>(G_train)</a>
+<a class="sourceLine" id="cb47-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb47-9" data-line-number="9">fit_bm =<span class="st"> </span><span class="kw">hierNetGxE.fit</span>(G_train, data<span class="op">$</span>E_train, data<span class="op">$</span>Y_train,</a>
+<a class="sourceLine" id="cb47-10" data-line-number="10">                     <span class="dt">tolerance=</span>tolerance, <span class="dt">grid=</span>grid, <span class="dt">family=</span>family)</a>
+<a class="sourceLine" id="cb47-11" data-line-number="11">                     </a>
+<a class="sourceLine" id="cb47-12" data-line-number="12">tune_model_bm =<span class="st"> </span><span class="kw">hierNetGxE.cv</span>(G_train, data<span class="op">$</span>E_train, data<span class="op">$</span>Y_train, </a>
+<a class="sourceLine" id="cb47-13" data-line-number="13">                              <span class="dt">family=</span>family, <span class="dt">grid=</span>grid, <span class="dt">tolerance=</span>tolerance,</a>
+<a class="sourceLine" id="cb47-14" data-line-number="14">                              <span class="dt">parallel=</span><span class="ot">TRUE</span>, <span class="dt">nfold=</span><span class="dv">3</span>,</a>
+<a class="sourceLine" id="cb47-15" data-line-number="15">                              <span class="dt">normalize=</span><span class="ot">TRUE</span>, <span class="dt">seed=</span><span class="dv">1</span>)                     </a></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

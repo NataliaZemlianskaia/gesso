@@ -4,8 +4,8 @@ library(hierNetGxE)
 family = "gaussian"
 #family = "binomial"
 seed = 1
-p = 1000
-sample_size = 300
+p = 500
+sample_size = 100
 n_g_non_zero = 15
 n_gxe_non_zero = 10
 
@@ -46,7 +46,7 @@ summary(fit$objective_value - fit_bm$objective_value)
 
 # CV
 start = Sys.time()
-tune_model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train, 
+tune_model_ = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train, 
                            family=family, grid=grid, tolerance=tolerance,
                            parallel=TRUE, nfold=3,
                            normalize=TRUE, seed=1)
