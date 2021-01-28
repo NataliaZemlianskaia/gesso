@@ -17,6 +17,15 @@
 <title>Getting started with hierNetGxE</title>
 
 
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
@@ -104,6 +113,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
+
 
 
 
@@ -334,7 +344,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </div>
 <div id="data-generation" class="section level3">
 <h3>Data generation</h3>
-<p>First, we generate the dataset using <code>data.gen()</code> funtion from the package. The function allows us to generate a binary (0/1) matrix of genotypes <code>G</code> of a given <code>sample_size</code> and <code>p</code> number of features, binary vector <code>E</code> of environmental measurments, and a response variable <code>Y</code> <span class="math inline">\(\sim g(\beta_0 + \beta_E E + \beta_G G + \beta_{G\times E} G\times E\)</span> (either quantitative or binary depending of the <code>family</code> parameter) .</p>
+<p>First, we generate the dataset using <code>data.gen()</code> function from the package. The function allows us to generate a binary (0/1) matrix of genotypes <code>G</code> of a given <code>sample_size</code> and <code>p</code> number of features, binary vector <code>E</code> of environmental measurements, and a response variable <code>Y</code> <span class="math inline">\(\sim g(\beta_0 + \beta_E E + \beta_G G + \beta_{G\times E} G\times E\)</span> (either quantitative or binary depending of the <code>family</code> parameter) .</p>
 <p>We can specify the number of non-zero main effects (<code>n_g_non_zero</code>) and interactions (<code>n_gxe_non_zero</code>) we want to generate. We also specified a <em>“strong_hierarchical”</em> mode for our dataset, which means that (1) if interaction effect is generated as non-zero, it’s respective genetic main effect is also generated as non-zero (<span class="math inline">\(\beta_{G\times E} \ne 0 \longrightarrow \beta_G \ne 0\)</span>), and (2) effect sizes of the main effects are larger than that of interaction effects (<span class="math inline">\(|\beta_G| \ge |\beta_{G\times E}|\)</span>).</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">family =<span class="st"> &quot;gaussian&quot;</span></a>
 <a class="sourceLine" id="cb3-2" data-line-number="2">sample_size =<span class="st"> </span><span class="dv">150</span>; p =<span class="st"> </span><span class="dv">400</span>; n_g_non_zero =<span class="st"> </span><span class="dv">10</span>; n_gxe_non_zero =<span class="st"> </span><span class="dv">5</span></a>
@@ -379,7 +389,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h3>Selection example</h3>
 <p>To tune the model over a 2D grid of hyper-parameters (lambda_1 and lambda_2) we use function <code>hierNetGxE.cv()</code>, where we specify</p>
 <ul>
-<li>our data <code>G, E, Y</code> and <code>family</code> parameter for the response varable; matrix <code>G</code> should be a numeric matrix, vector <code>E</code> shold be a numeric vector. Vector <code>Y</code> could either be a numeric or binary 0/1 vector</li>
+<li>our data <code>G, E, Y</code> and <code>family</code> parameter for the response variable; matrix <code>G</code> should be a numeric matrix, vector <code>E</code> should be a numeric vector. Vector <code>Y</code> could either be a numeric or binary 0/1 vector</li>
 <li><code>tolerance</code> for the convergence of the fitting algorithm</li>
 <li><code>grid_size</code> to automatically generate grid values for cross-validation</li>
 <li><code>nfolds</code> to specify how many folds we want to use in cross-validation</li>
@@ -395,11 +405,11 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb16-6" data-line-number="6">                           <span class="dt">normalize=</span><span class="ot">TRUE</span>,</a>
 <a class="sourceLine" id="cb16-7" data-line-number="7">                           <span class="dt">seed=</span><span class="dv">1</span>)</a></code></pre></div>
 <pre><code>## [1] &quot;Parallel cv&quot;
-## Time difference of 8.332144 secs
+## Time difference of 8.149458 secs
 ## [1] &quot;fit on full data&quot;
-## Time difference of 10.56141 secs</code></pre>
+## Time difference of 9.883202 secs</code></pre>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start</a></code></pre></div>
-<pre><code>## Time difference of 18.91692 secs</code></pre>
+<pre><code>## Time difference of 18.05552 secs</code></pre>
 <div id="obtain-best-model-with-hiernetgxe.coef-function" class="section level4">
 <h4>Obtain best model with <code>hierNetGxE.coef()</code> function</h4>
 <p>To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters using <code>hierNetGxE.coef()</code> function. We need to specify a model fit object and a pair of lambda = (lambda_1, lambda_2) values organized in a tibble (ex: <code>lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])</code>).</p>
@@ -435,7 +445,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## precision_gxe   0.15625             
 ## auc_g           0.999999            
 ## auc_gxe         0.999998</code></pre>
-<p>Compare with the standart Lasso model (we use <code>glmnet</code> package)</p>
+<p>Compare with the standard Lasso model (we use <code>glmnet</code> package)</p>
 <div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="kw">set.seed</span>(<span class="dv">1</span>)</a>
 <a class="sourceLine" id="cb27-2" data-line-number="2">tune_model_glmnet =<span class="st"> </span><span class="kw">cv.glmnet</span>(<span class="dt">x=</span><span class="kw">cbind</span>(data<span class="op">$</span>E_train, data<span class="op">$</span>G_train, data<span class="op">$</span>G_train <span class="op">*</span><span class="st"> </span>data<span class="op">$</span>E_train),</a>
 <a class="sourceLine" id="cb27-3" data-line-number="3">                              <span class="dt">y=</span>data<span class="op">$</span>Y_train,</a>
@@ -474,7 +484,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </div>
 <div id="obtain-target-model-with-hiernetgxe.coefnum-function" class="section level4">
 <h4>Obtain target model with <code>hierNetGxE.coefnum()</code> function</h4>
-<p>To control how parsimonious is our model with respect to the selected non-zero interaction terms we can use <code>hierNetGxE.coefnum()</code> function. We obtain interaction and main effect coefficients corresponding to the target GxE model, where instead of specifing tuning parameters <code>lambda</code> we set <code>target_b_gxe_non_zero</code> parameter which is the number of at most non-zero interactions we want to inlcude in the model.</p>
+<p>To control how parsimonious is our model with respect to the selected non-zero interaction terms we can use <code>hierNetGxE.coefnum()</code> function. We obtain interaction and main effect coefficients corresponding to the target GxE model, where instead of specifying tuning parameters <code>lambda</code> we set <code>target_b_gxe_non_zero</code> parameter which is the number of at most non-zero interactions we want to include in the model.</p>
 <div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb33-1" data-line-number="1">coefficients =<span class="st"> </span><span class="kw">hierNetGxE.coefnum</span>(<span class="dt">cv_model=</span>tune_model, <span class="dt">target_b_gxe_non_zero=</span><span class="dv">10</span>)</a>
 <a class="sourceLine" id="cb33-2" data-line-number="2">gxe_coefficients =<span class="st"> </span>coefficients<span class="op">$</span>beta_gxe                      </a>
 <a class="sourceLine" id="cb33-3" data-line-number="3">g_coefficients =<span class="st"> </span>coefficients<span class="op">$</span>beta_g   </a></code></pre></div>
@@ -500,7 +510,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="prediction-example" class="section level3">
 <h3>Prediction example</h3>
 <p>With <code>hierNetGxE.coef()</code> we, again, obtain coefficients corresponding to the best model in terms of minimal cross-validated error and use <code>hierNetGxE.predict()</code> function to apply our estimated model to a new test dataset that can also be generated by the function <code>data.gen()</code>.</p>
-<p>We calculate test R-squared to compare model perfomance.</p>
+<p>We calculate test R-squared to compare model performance.</p>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb36-1" data-line-number="1">coefficients =<span class="st"> </span><span class="kw">hierNetGxE.coef</span>(tune_model<span class="op">$</span>fit, tune_model<span class="op">$</span>lambda_min)</a>
 <a class="sourceLine" id="cb36-2" data-line-number="2">beta_<span class="dv">0</span> =<span class="st"> </span>coefficients<span class="op">$</span>beta_<span class="dv">0</span>; beta_e =<span class="st"> </span>coefficients<span class="op">$</span>beta_e                   </a>
 <a class="sourceLine" id="cb36-3" data-line-number="3">beta_g =<span class="st"> </span>coefficients<span class="op">$</span>beta_g; beta_gxe =<span class="st"> </span>coefficients<span class="op">$</span>beta_gxe     </a>
@@ -508,7 +518,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb36-5" data-line-number="5">new_G =<span class="st"> </span>data<span class="op">$</span>G_test; new_E =<span class="st"> </span>data<span class="op">$</span>E_test</a>
 <a class="sourceLine" id="cb36-6" data-line-number="6">new_Y =<span class="st"> </span><span class="kw">hierNetGxE.predict</span>(beta_<span class="dv">0</span>, beta_e, beta_g, beta_gxe, new_G, new_E)</a>
 <a class="sourceLine" id="cb36-7" data-line-number="7">test_R2_hierNetGxE =<span class="st"> </span><span class="kw">cor</span>(new_Y, data<span class="op">$</span>Y_test)<span class="op">^</span><span class="dv">2</span></a></code></pre></div>
-<p>Compare with the standart Lasso (we use <code>glmnet</code> package)</p>
+<p>Compare with the standard Lasso (we use <code>glmnet</code> package)</p>
 <div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb37-1" data-line-number="1">new_Y_glmnet =<span class="st"> </span><span class="kw">predict</span>(tune_model_glmnet, <span class="dt">newx=</span><span class="kw">cbind</span>(new_E, new_G, new_G <span class="op">*</span><span class="st"> </span>new_E), </a>
 <a class="sourceLine" id="cb37-2" data-line-number="2">                       <span class="dt">s=</span>tune_model_glmnet<span class="op">$</span>lambda.min)</a>
 <a class="sourceLine" id="cb37-3" data-line-number="3">test_R2_glmnet =<span class="st"> </span><span class="kw">cor</span>(new_Y_glmnet[,<span class="dv">1</span>], data<span class="op">$</span>Y_test)<span class="op">^</span><span class="dv">2</span></a>
@@ -516,8 +526,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <pre><code>##      test_R2_hierNetGxE test_R2_glmnet
 ## [1,]          0.9773027      0.9286629</code></pre>
 </div>
-<div id="sparce-matrix-option-example" class="section level3">
-<h3>Sparce matrix option example</h3>
+<div id="sparse-matrix-option-example" class="section level3">
+<h3>Sparse matrix option example</h3>
 <p>We generate large highly sparse genotype matrix <code>G</code> by setting genotype prevalence parameter <code>pG</code> to 0.03 and measure how long does it take to fit the model.</p>
 <div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" data-line-number="1">sample_size =<span class="st"> </span><span class="dv">600</span>; p =<span class="st"> </span><span class="dv">30000</span></a>
 <a class="sourceLine" id="cb39-2" data-line-number="2">pG =<span class="st"> </span><span class="fl">0.03</span></a>
@@ -533,7 +543,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb41-3" data-line-number="3">                     <span class="dt">tolerance=</span>tolerance,</a>
 <a class="sourceLine" id="cb41-4" data-line-number="4">                     <span class="dt">normalize=</span><span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb41-5" data-line-number="5">time_non_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_non_sparse</a></code></pre></div>
-<pre><code>## Time difference of 1.246369 mins</code></pre>
+<pre><code>## Time difference of 1.273677 mins</code></pre>
 <p>We then convert our generated matrix to sparse format and measure fitting time again.</p>
 <div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb43-1" data-line-number="1">G_train_sparse =<span class="st"> </span><span class="kw">as</span>(data<span class="op">$</span>G_train, <span class="st">&quot;dgCMatrix&quot;</span>)</a>
 <a class="sourceLine" id="cb43-2" data-line-number="2"></a>
@@ -542,10 +552,10 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb43-5" data-line-number="5">                     <span class="dt">tolerance=</span>tolerance,</a>
 <a class="sourceLine" id="cb43-6" data-line-number="6">                     <span class="dt">normalize=</span><span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb43-7" data-line-number="7">time_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_sparse</a></code></pre></div>
-<pre><code>## Time difference of 40.06886 secs</code></pre>
+<pre><code>## Time difference of 40.62844 secs</code></pre>
 <p>We see that sparse option enables more efficient fitting, however, the speed-up works only for substantially sparse matrices.</p>
 <div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb45-1" data-line-number="1">(<span class="kw">as.numeric</span>(time_non_sparse) <span class="op">*</span><span class="st"> </span><span class="dv">60</span>) <span class="op">/</span><span class="st"> </span><span class="kw">as.numeric</span>(time_sparse)</a></code></pre></div>
-<pre><code>## [1] 1.866341</code></pre>
+<pre><code>## [1] 1.880964</code></pre>
 </div>
 <div id="bigmatrix-bigmemory-package-option-example" class="section level3">
 <h3>Bigmatrix (<code>bigmemory</code> package) option example</h3>
