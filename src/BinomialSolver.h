@@ -21,8 +21,8 @@ inline double xlogx(const double x) {
 }
 
 double sigmoid_scalar(const double z) {
-  return 1.0 / (1.0 + exp(-z));
-  //return abs(z) < 9 ? 1.0 / (1.0 + exp(-z)) : (z < 0 ? 0.0 : 1.0);
+  //return 1.0 / (1.0 + exp(-z));
+  return abs(z) < 9 ? 1.0 / (1.0 + exp(-z)) : (z < 0 ? 0.0 : 1.0);
 }
 
 //template<typename T>
