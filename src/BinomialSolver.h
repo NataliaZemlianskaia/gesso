@@ -33,7 +33,6 @@ double sigmoid_scalar(const double z) {
   }
 }
 
-//template<typename T>
 VecXd sigmoid(const VecXd& z) {
   return z.unaryExpr(std::ref(sigmoid_scalar));
 }
@@ -96,13 +95,9 @@ private:
   using Solver<TG>::G_by_GxE;
   using Solver<TG>::case1_A22_div_detA;
   using Solver<TG>::case1_A12_div_detA;  
-  using Solver<TG>::case_3_A;
-  using Solver<TG>::case_3_B;  
   using Solver<TG>::case_3_E;
   using Solver<TG>::case_3_F;    
-  using Solver<TG>::case5_A22_div_detA;
-  using Solver<TG>::case5_A12_div_detA;    
-  
+
   using Solver<TG>::active_set;
   
   using Solver<TG>::temp_p;
@@ -207,12 +202,6 @@ protected:
       temp_p = norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE); 
       case1_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
       case1_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p);
-      case_3_A = (norm2_G + norm2_GxE);
-      case_3_B = 2 * G_by_GxE;
-      // const VecXd case5_detA
-      temp_p = (norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE));
-      case5_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
-      case5_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p);
     }
     
     int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) {
@@ -241,24 +230,32 @@ protected:
         working_set_size = std::min(2 * working_set_size, p);
         
         active_set.setZero(p);
-        //max_diff_tolerance = tolerance * 10;
         max_diff_tolerance = tolerance;
+        int num_updates_b_for_working_set = 0;
+        bool is_first_iteration = true;
         while (num_passes < max_iterations) {
           inner_duality_gap = check_duality_gap(lambda_1, lambda_2, true);
           if (inner_duality_gap < tolerance) {
             break;
           } else {
-            update_quadratic_approximation();
-            update_weighted_variables();
+            if (!is_first_iteration && num_updates_b_for_working_set <= 1) {
+              max_diff_tolerance /= 4;
+            } else {
+              update_quadratic_approximation();
+              update_weighted_variables();
             
-            case_3_E = G_by_GxE * (lambda_1 - lambda_2);
-            case_3_F = (lambda_1 * norm2_GxE - lambda_2 * norm2_G);            
+              case_3_E = G_by_GxE * (lambda_1 - lambda_2);
+              case_3_F = (lambda_1 * norm2_GxE - lambda_2 * norm2_G);
+            }
+            num_updates_b_for_working_set = 0;
+            is_first_iteration = false;
           }
           
           while (num_passes < max_iterations) {
             max_diff = update_b_for_working_set(lambda_1, lambda_2, false);
             num_passes += 1;
-
+            ++num_updates_b_for_working_set;
+            
             if (max_diff < max_diff_tolerance) {
               break;
             }

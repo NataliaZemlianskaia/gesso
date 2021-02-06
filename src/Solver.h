@@ -106,7 +106,7 @@ protected:
   VecXd case1_A22_div_detA;
   VecXd case1_A12_div_detA;  
   VecXd case_3_A;
-  VecXd case_3_B;  
+  VecXd case_3_B;
   VecXd case_3_E;
   VecXd case_3_F;    
   VecXd case5_A22_div_detA;
@@ -355,7 +355,7 @@ public:
         case_3_B_s_g = s_g * 2 * G_by_GxE[index];
         for (int j = 0; j < 2; ++j) {
           s_gxe = plus_minus_one[j];
-          root_3 = (s_gxe * case_3_E_D + case_3_C_F) / (case_3_A[index] + s_gxe * case_3_B_s_g);
+          root_3 = (s_gxe * case_3_E_D + case_3_C_F) / (norm2_G[index] + norm2_GxE[index] + s_gxe * case_3_B_s_g);
           if ((root_3 >= 0) && (root_3 < lambda_1)) {
             root_1 = (G_by_res - s_g * (lambda_1 - root_3)) / (norm2_G[index] + s_g * s_gxe * G_by_GxE[index]);
             root_2 = s_g * s_gxe * root_1;
@@ -411,7 +411,7 @@ public:
         for (int j = 0; j < 2; ++j) {
           s_gxe = plus_minus_one[j];
           case5_B2 = GxE_by_res - s_gxe * lambda_2;
-          root_1 = (G_by_res - s_g * lambda_1) * case5_A22_div_detA[index] - case5_B2 * case5_A12_div_detA[index];
+          root_1 = (G_by_res - s_g * lambda_1) * case1_A22_div_detA[index] - case5_B2 * case1_A12_div_detA[index];
           b_gxe_numerator = GxE_by_res - G_by_GxE[index] * root_1;
           if  (s_gxe * b_gxe_numerator > lambda_2) {
             root_2 = (case5_B2 - root_1 * G_by_GxE[index]) / norm2_GxE[index];
