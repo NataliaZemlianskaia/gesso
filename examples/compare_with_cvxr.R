@@ -126,16 +126,15 @@ hierNetGxE.cvxr = function(G, E, GxE, Y, grid, tol=1e-5, max_iterations=10000, f
 }
 
 tol = 1e-4
-family = "gaussian"
-data = data.gen(seed=123, family=family)
+family = "binomial"
+data = data.gen(seed=123, family=family, normalize=TRUE)
 # data = data.gen(sample_size=500, p=1000, n_g_non_zero=20, n_gxe_non_zero=10, seed=31415)
 
 grid = 10^seq(-4, log10(1), length.out=10) 
 
 start = Sys.time()
 fit = hierNetGxE.fit(data$G_train, data$E_train, data$Y_train,
-                     tolerance=tol, grid=grid, family=family,
-                     normalize=FALSE)
+                     tolerance=tol, grid=grid, family=family, normalize=FALSE)
 stop_cd = Sys.time() - start; stop_cd
 
 cvxr_fit = hierNetGxE.cvxr(data$G_train, data$E_train, data$GxE_train, data$Y_train,

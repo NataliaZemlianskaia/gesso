@@ -21,14 +21,37 @@ inline double xlogx(const double x) {
 }
 
 double sigmoid_scalar(const double z) {
-  //return 1.0 / (1.0 + exp(-z));
-  return abs(z) < 9 ? 1.0 / (1.0 + exp(-z)) : (z < 0 ? 0.0 : 1.0);
+  /*if (std::fabs(z) > 9) {
+    return z < 0 ? 0 : 1;
+  }*/
+  // https://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick
+  if (z >= 0) {
+    return 1 / (1 + std::exp(-z));
+  } else {
+    const double exp_z = std::exp(z);
+    return exp_z / (1 + exp_z);
+  }
 }
 
 //template<typename T>
 VecXd sigmoid(const VecXd& z) {
   return z.unaryExpr(std::ref(sigmoid_scalar));
 }
+  
+double log_one_plus_exp_scalar(const double z) {
+  // http://sachinashanbhag.blogspot.com/2014/05/numerically-approximation-of-log-1-expy.html
+  if (z > 35) {
+    return z;
+  } else if (z > -10) {
+    return std::log1p(std::exp(z));
+  } else {
+    return std::exp(z);
+  }
+}
+  
+VecXd log_one_plus_exp(const VecXd& z) {
+  return z.unaryExpr(std::ref(log_one_plus_exp_scalar));
+}  
 }
 
 template <typename TG>
@@ -181,7 +204,7 @@ protected:
         norm2_GxE[i] = temp_n.dot(weights);
       }
       // const VecXd case1_detA
-      temp_p = norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE);
+      temp_p = norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE); 
       case1_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
       case1_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p);
       case_3_A = (norm2_G + norm2_GxE);
@@ -189,7 +212,7 @@ protected:
       // const VecXd case5_detA
       temp_p = (norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE));
       case5_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
-      case5_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p); 
+      case5_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p);
     }
     
     int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) {
@@ -252,6 +275,23 @@ protected:
     void update_quadratic_approximation() {
       temp_n = sigmoid(xbeta); // probabilities
       weights.array() = temp_n.array() * (1 - temp_n.array()) * weights_user.array();
+      int mis_classifications = 0;
+      for (int i = 0; i < n; ++i) {
+        if (temp_n[i] >= 0.5 && Y[i] == 0) {
+          mis_classifications += 1;
+        }
+        if (temp_n[i] < 0.5 && Y[i] == 1) {
+          mis_classifications += 1;
+        }        
+      }
+      /*std::cout << "- weights= ";
+      for (int i = 0; i < n; ++i) {
+        std::cout << weights[i] << ", ";
+        if (weights[i] < 1e-7) {
+          weights[i] = 1e-7;
+        }
+      }
+      std::cout << "\n";*/
       Z_w = xbeta.cwiseProduct(weights) + (Y - temp_n).cwiseProduct(weights_user);
     }
     
@@ -284,21 +324,6 @@ protected:
       } else {
         x_opt = sign(x_hat) * M;
       }
-      /*nu *= x_opt;
-      double xxx_1 = compute_dual_objective();
-      nu /= x_opt;
-      std::cout << "custom x_hat=" << x_hat << ", x_opt= " << x_opt << " => " << xxx_1 << " | ";
-      
-      if (std::abs(1) <= M) {
-        x_opt = 1;
-      } else {
-        x_opt = sign(1) * M;
-      }   
-      nu *= x_opt;
-      double xxx_2 = compute_dual_objective();
-      nu /= x_opt;
-      std::cout << "custom x_hat=1, x_opt= " << x_opt << " => " << xxx_2 << "\n";*/
-      
       return x_opt;
     }
     
@@ -345,7 +370,7 @@ protected:
         update_nu(lambda_1, lambda_2);  
       }
       dual_objective = compute_dual_objective();
-      primal_objective = (-Y.cwiseProduct(xbeta) + (xbeta.array().exp().log1p()).matrix()).dot(weights_user) + lambda_1 * (b_g.cwiseAbs().cwiseMax(b_gxe.cwiseAbs())).sum() + lambda_2 * b_gxe.cwiseAbs().sum();
+      primal_objective = (-Y.cwiseProduct(xbeta) + log_one_plus_exp(xbeta)).dot(weights_user) + lambda_1 * (b_g.cwiseAbs().cwiseMax(b_gxe.cwiseAbs())).sum() + lambda_2 * b_gxe.cwiseAbs().sum();
       return primal_objective - dual_objective;
     }
     
@@ -414,6 +439,7 @@ protected:
       int index;
       for (int i = 0; i < test_idx.size(); ++i) {
         index = test_idx[i];
+        // TODO: fix below
         test_loss += -Y[index] * xbeta[index] + std::log1p(std::exp(xbeta[index]));
       }
       return test_loss;

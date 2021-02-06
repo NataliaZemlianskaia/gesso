@@ -4,8 +4,8 @@ library(glmnet)
 library(ggplot2)
 
 
-family = "gaussian"
-sample_size = 150; p = 400; n_g_non_zero = 10; n_gxe_non_zero = 5
+family = "binomial"
+sample_size = 500; p = 400; n_g_non_zero = 10; n_gxe_non_zero = 5
 
 data = data.gen(seed=1, sample_size=sample_size, p=p, 
                 n_g_non_zero=n_g_non_zero, n_gxe_non_zero=n_gxe_non_zero, 

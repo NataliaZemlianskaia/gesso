@@ -142,12 +142,19 @@ hierNetGxE.coef = function(fit, lambda){
  return(list(beta_0=beta_0, beta_e=beta_e, beta_g=beta_g, beta_gxe=beta_gxe))
 }
   
-hierNetGxE.coefnum = function(cv_model, target_b_gxe_non_zero){
+hierNetGxE.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
   cv_result = cv_model$cv_result; fit = cv_model$fit
+  if (less_than){
   best_lambdas = cv_result %>%
     filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
     filter(mean_loss == min(mean_loss)) %>%
     select(lambda_1, lambda_2)
+  } else {
+    best_lambdas = cv_result %>%
+      filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
+      filter(mean_loss == min(mean_loss)) %>%
+      select(lambda_1, lambda_2)
+  }
   
   return(hierNetGxE.coef(fit, best_lambdas))
 }

@@ -33,7 +33,6 @@ Rcpp::List fitModelRcpp(const TG& G,
   }
   
   const int grid_size_squared = grid.size() * grid.size();
-  //const int grid_size_squared = 1;
 
   Eigen::VectorXd beta_0(grid_size_squared);
   Eigen::VectorXd beta_e(grid_size_squared);
