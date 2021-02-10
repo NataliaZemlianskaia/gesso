@@ -112,7 +112,7 @@ hierNetGxE.cvxr = function(G, E, GxE, Y, grid, tol=1e-5, max_iterations=10000, f
   index = 0
   for (lambda_1 in grid) {
     for (lambda_2 in grid_lambda_2) {
-      cat(lambda_1, " ", lambda_2, "\n")
+      #cat(lambda_1, " ", lambda_2, "\n")
       fit = hierNetGxE.cvxr.fit(p, 1, X, Y, lambda_1, lambda_2, penalty="hierNet2", 
                                      tol=tol, max_iterations=max_iterations, family=family)
       index = index + 1
@@ -125,22 +125,27 @@ hierNetGxE.cvxr = function(G, E, GxE, Y, grid, tol=1e-5, max_iterations=10000, f
   return(list(objective_value=objective_value, original_objective_value=original_objective_value))
 }
 
-tol = 1e-4
-family = "binomial"
-data = data.gen(seed=123, family=family, normalize=TRUE)
+tol = 1e-5
+#family = "binomial"
+family = "gaussian"
+data = data.gen(seed=1, family=family, normalize=TRUE,
+                sample_size=200, p=200, n_g_non_zero=10, n_gxe_non_zero=5)
 # data = data.gen(sample_size=500, p=1000, n_g_non_zero=20, n_gxe_non_zero=10, seed=31415)
 
 grid = 10^seq(-4, log10(1), length.out=10) 
 
 start = Sys.time()
 fit = hierNetGxE.fit(data$G_train, data$E_train, data$Y_train,
-                     tolerance=tol, grid=grid, family=family, normalize=FALSE)
+                     tolerance=tol, grid=grid, family=family, normalize=FALSE,
+                     max_iterations = 1000000)
 stop_cd = Sys.time() - start; stop_cd
 
 cvxr_fit = hierNetGxE.cvxr(data$G_train, data$E_train, data$GxE_train, data$Y_train,
                            grid=grid, tol=tol, family=family)
 
 summary(fit$objective_value - cvxr_fit$objective_value)
+summary(fit$objective_value - cvxr_fit$original_objective_value)
+
 
 (fit$objective_value - cvxr_fit$objective_value) < tol
 (fit$objective_value - cvxr_fit$original_objective_value) < tol

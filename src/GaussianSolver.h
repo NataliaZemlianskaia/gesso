@@ -56,13 +56,9 @@ private:
   using Solver<TG>::G_by_GxE;
   using Solver<TG>::case1_A22_div_detA;
   using Solver<TG>::case1_A12_div_detA;  
-  using Solver<TG>::case_3_A;
-  using Solver<TG>::case_3_B;  
   using Solver<TG>::case_3_E;
   using Solver<TG>::case_3_F;    
-  using Solver<TG>::case5_A22_div_detA;
-  using Solver<TG>::case5_A12_div_detA;    
-  
+
   using Solver<TG>::active_set;
   
   using Solver<TG>::temp_p;
@@ -161,12 +157,6 @@ protected:
       temp_p = norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE);
       case1_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
       case1_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p);
-      case_3_A = (norm2_G + norm2_GxE);
-      case_3_B = 2 * G_by_GxE;
-      // const VecXd case5_detA
-      temp_p = (norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE));
-      case5_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
-      case5_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p); 
     }
     
     virtual int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) {

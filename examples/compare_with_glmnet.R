@@ -42,6 +42,7 @@ g_coefficients = coefficients$beta_g
 
 ## calculate principal selection metrics
 selection = selection.metrics(data$Beta_G, data$Beta_GxE, g_coefficients, gxe_coefficients)
+cbind(selection)
 
 ## compare with glmnet selection
 set.seed(seed)
