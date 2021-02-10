@@ -90,14 +90,9 @@ private:
   using Solver<TG>::norm2_E_w;
   using Solver<TG>::denominator_E;  
   
-  using Solver<TG>::norm2_G;
-  using Solver<TG>::norm2_GxE;
-  using Solver<TG>::G_by_GxE;
-  using Solver<TG>::case1_A22_div_detA;
-  using Solver<TG>::case1_A12_div_detA;  
-  using Solver<TG>::case_3_E;
-  using Solver<TG>::case_3_F;    
-
+  using Solver<TG>::norm_G;
+  using Solver<TG>::norm_GxE;
+  
   using Solver<TG>::active_set;
   
   using Solver<TG>::temp_p;
@@ -105,11 +100,9 @@ private:
   
   using Solver<TG>::update_intercept;
   using Solver<TG>::update_b_for_working_set;
+  using Solver<TG>::update_weighted_variables;
 
 protected:
-  VecXd norm_G;
-  VecXd norm_GxE;  
-
   double primal_objective;
   VecXd abs_nu_by_G;
   VecXd abs_nu_by_GxE;
@@ -128,18 +121,13 @@ protected:
                          const Eigen::Map<Eigen::VectorXd>& weights_,
                          bool normalize_) :
     Solver<TG>(G_, E_, Y_, weights_, normalize_),
-    norm_G(p),    
-    norm_GxE(p),    
     abs_nu_by_G(p),
     abs_nu_by_GxE(p),
     upperbound_nu_by_G(p),
     upperbound_nu_by_GxE(p),
     abs_inner_nu_by_G(p),
     abs_inner_nu_by_GxE(p),
-    nu(n) {
-    
-    init();
-  }
+    nu(n) {}
     
     BinomialSolver(const MapSparseMat& G_,
                    const Eigen::Map<Eigen::VectorXd>& E_,
@@ -147,62 +135,15 @@ protected:
                    const Eigen::Map<Eigen::VectorXd>& weights_,
                    bool normalize_) :
     Solver<TG>(G_, E_, Y_, weights_, normalize_),
-    norm_G(p),    
-    norm_GxE(p),    
     abs_nu_by_G(p),
     abs_nu_by_GxE(p),
     upperbound_nu_by_G(p),
     upperbound_nu_by_GxE(p),
     abs_inner_nu_by_G(p),
     abs_inner_nu_by_GxE(p),
-    nu(n) {
-      init();
-    }
-    
-    void init() {
-      abs_nu_by_G_uptodate = false;
-      if (normalize) {
-        for (int i = 0; i < p; ++i) {
-          normalize_weights_g[i] = 1.0 / std::sqrt(G.col(i).cwiseProduct(G.col(i)).dot(weights_user) - sqr(G.col(i).dot(weights_user)));
-        }
-        normalize_weights_e = 1.0 / std::sqrt(E.cwiseProduct(E).dot(weights_user) - sqr(E.dot(weights_user)));
-      } else {
-        normalize_weights_g.setOnes(p);
-        normalize_weights_e = 1;
-      }      
-      
-      for (int i = 0; i < G.cols(); ++i) {
-        temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
-        norm2_G[i] = temp_n.dot(weights_user);
-        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
-        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
-        norm2_GxE[i] = temp_n.dot(weights_user);
-      }
-      norm_G = norm2_G.cwiseSqrt();
-      norm_GxE = norm2_GxE.cwiseSqrt();
-    }
+    nu(n) {}
     
     virtual ~BinomialSolver() {}
-    
-    void update_weighted_variables() {
-      sum_w = weights.sum();
-      sum_E_w = normalize_weights_e * E.dot(weights);
-      norm2_E_w = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights);
-      denominator_E = sum_w * norm2_E_w - sqr(sum_E_w);
-      
-      for (int i = 0; i < G.cols(); ++i) {
-        temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
-        norm2_G[i] = temp_n.dot(weights);
-        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
-        G_by_GxE[i] = temp_n.dot(weights);
-        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
-        norm2_GxE[i] = temp_n.dot(weights);
-      }
-      // const VecXd case1_detA
-      temp_p = norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE); 
-      case1_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
-      case1_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p);
-    }
     
     int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) {
       safe_set_g.setOnes(p);
@@ -243,9 +184,6 @@ protected:
             } else {
               update_quadratic_approximation();
               update_weighted_variables();
-            
-              case_3_E = G_by_GxE * (lambda_1 - lambda_2);
-              case_3_F = (lambda_1 * norm2_GxE - lambda_2 * norm2_G);
             }
             num_updates_b_for_working_set = 0;
             is_first_iteration = false;

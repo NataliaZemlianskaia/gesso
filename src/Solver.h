@@ -105,12 +105,10 @@ protected:
   VecXd G_by_GxE;
   VecXd case1_A22_div_detA;
   VecXd case1_A12_div_detA;  
-  VecXd case_3_A;
-  VecXd case_3_B;
-  VecXd case_3_E;
-  VecXd case_3_F;    
-  VecXd case5_A22_div_detA;
-  VecXd case5_A12_div_detA;
+
+  // Pre-computed constants for dual computations
+  VecXd norm_G;
+  VecXd norm_GxE;
   
   ArrayXb active_set;
   
@@ -148,12 +146,8 @@ public:
     G_by_GxE(p),
     case1_A22_div_detA(p),
     case1_A12_div_detA(p),
-    case_3_A(p),
-    case_3_B(p),
-    case_3_E(p),
-    case_3_F(p),
-    case5_A22_div_detA(p),
-    case5_A12_div_detA(p),
+    norm_G(p),    
+    norm_GxE(p),    
     active_set(p),
     temp_p(p),
     temp_n(n) {
@@ -190,12 +184,8 @@ public:
     G_by_GxE(p),
     case1_A22_div_detA(p),
     case1_A12_div_detA(p),
-    case_3_A(p),
-    case_3_B(p),
-    case_3_E(p),
-    case_3_F(p),
-    case5_A22_div_detA(p),
-    case5_A12_div_detA(p),
+    norm_G(p),
+    norm_GxE(p),
     active_set(p),
     temp_p(p),
     temp_n(n) {
@@ -210,6 +200,26 @@ public:
     b_gxe.setZero(p);
     delta.setZero(p);
     
+    if (normalize) {
+      for (int i = 0; i < p; ++i) {
+        normalize_weights_g[i] = 1.0 / std::sqrt(G.col(i).cwiseProduct(G.col(i)).dot(weights_user) - sqr(G.col(i).dot(weights_user)));
+      }
+      normalize_weights_e = 1.0 / std::sqrt(E.cwiseProduct(E).dot(weights_user) - sqr(E.dot(weights_user)));
+    } else {
+      normalize_weights_g.setOnes(p);
+      normalize_weights_e = 1;
+    }
+    
+    for (int i = 0; i < G.cols(); ++i) {
+      temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
+      norm2_G[i] = temp_n.dot(weights_user);
+      temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+      temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+      norm2_GxE[i] = temp_n.dot(weights_user);
+    }
+    norm_G = norm2_G.cwiseSqrt();
+    norm_GxE = norm2_GxE.cwiseSqrt();
+    
     xbeta.setZero(n);
     
     working_set.reserve(p);
@@ -219,6 +229,27 @@ public:
   
   virtual int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) = 0;
     
+  void update_weighted_variables() {
+    sum_w = weights.sum();
+    sum_E_w = normalize_weights_e * E.dot(weights);
+    norm2_E_w = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights);
+    denominator_E = sum_w * norm2_E_w - sqr(sum_E_w);
+    
+    for (int i = 0; i < G.cols(); ++i) {
+      temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
+      norm2_G[i] = temp_n.dot(weights);
+      temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+      G_by_GxE[i] = temp_n.dot(weights);
+      temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+      norm2_GxE[i] = temp_n.dot(weights);
+    }
+
+    // const VecXd case1_detA
+    temp_p = norm2_G.cwiseProduct(norm2_GxE) - G_by_GxE.cwiseProduct(G_by_GxE);
+    case1_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
+    case1_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p);
+  }
+  
   double update_intercept() {
       xbeta -= normalize_weights_e * E * b_e;
       xbeta = xbeta.array() - b_0;
@@ -249,7 +280,7 @@ public:
     double b_0_old, b_e_old, b_g_old, b_gxe_old, b_g_new;
     double case1_B1_A22_div_detA;
     double case1_B2, s, root_1, root_2, b_gxe_numerator;
-    double case_3_C, case_3_D;
+    double case_3_C, case_3_D, case_3_E, case_3_F;
     double s_g, s_gxe, case_3_E_D, case_3_C_F, case_3_B_s_g, root_3, b_g_numerator;
     double case5_B2;
     
@@ -348,10 +379,12 @@ public:
       // Case 3
       case_3_C = GxE_by_res * G_by_GxE[index] - G_by_res * norm2_GxE[index];
       case_3_D = GxE_by_res * norm2_G[index] - G_by_res * G_by_GxE[index];
+      case_3_E = G_by_GxE[index] * (lambda_1 - lambda_2);
+      case_3_F = (lambda_1 * norm2_GxE[index] - lambda_2 * norm2_G[index]);
       for (int i = 0; i < 2; ++i) {
         s_g = plus_minus_one[i];
-        case_3_E_D = s_g * case_3_E[index] + case_3_D;
-        case_3_C_F = s_g * case_3_C + case_3_F[index];
+        case_3_E_D = s_g * case_3_E + case_3_D;
+        case_3_C_F = s_g * case_3_C + case_3_F;
         case_3_B_s_g = s_g * 2 * G_by_GxE[index];
         for (int j = 0; j < 2; ++j) {
           s_gxe = plus_minus_one[j];
