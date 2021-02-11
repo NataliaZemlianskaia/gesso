@@ -221,10 +221,9 @@ public:
     norm_GxE = norm2_GxE.cwiseSqrt();
     
     xbeta.setZero(n);
+    abs_nu_by_G_uptodate = false;
     
     working_set.reserve(p);
-    
-    abs_nu_by_G_uptodate = false;
   }
   
   virtual int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) = 0;

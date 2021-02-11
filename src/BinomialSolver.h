@@ -114,6 +114,7 @@ protected:
   VecXd abs_inner_nu_by_GxE;
   
   VecXd nu;
+  VecXd inner_nu;
   
   public: BinomialSolver(const MapMat& G_,
                          const Eigen::Map<Eigen::VectorXd>& E_,
@@ -127,7 +128,8 @@ protected:
     upperbound_nu_by_GxE(p),
     abs_inner_nu_by_G(p),
     abs_inner_nu_by_GxE(p),
-    nu(n) {}
+    nu(n),
+    inner_nu(n) {}
     
     BinomialSolver(const MapSparseMat& G_,
                    const Eigen::Map<Eigen::VectorXd>& E_,
@@ -141,7 +143,8 @@ protected:
     upperbound_nu_by_GxE(p),
     abs_inner_nu_by_G(p),
     abs_inner_nu_by_GxE(p),
-    nu(n) {}
+    nu(n),
+    inner_nu(n) {}
     
     virtual ~BinomialSolver() {}
     
@@ -162,7 +165,7 @@ protected:
       
       double duality_gap, inner_duality_gap, max_diff_tolerance, max_diff;
       while (num_passes < max_iterations) {
-        duality_gap = check_duality_gap(lambda_1, lambda_2, false);
+        duality_gap = check_duality_gap(lambda_1, lambda_2);
         if (duality_gap < tolerance) {
           break;
         }
@@ -175,7 +178,7 @@ protected:
         int num_updates_b_for_working_set = 0;
         bool is_first_iteration = true;
         while (num_passes < max_iterations) {
-          inner_duality_gap = check_duality_gap(lambda_1, lambda_2, true);
+          inner_duality_gap = check_inner_duality_gap(lambda_1, lambda_2);
           if (inner_duality_gap < tolerance) {
             break;
           } else {
@@ -230,7 +233,7 @@ protected:
       Z_w = xbeta.cwiseProduct(weights) + (Y - temp_n).cwiseProduct(weights_user);
     }
     
-    double compute_dual_objective() {
+    double compute_dual_objective(const VecXd& nu) {
       double result = 0;
       temp_n = Y - nu;
       for (int i = 0; i < n; ++i) {
@@ -268,12 +271,15 @@ protected:
     }
     
     void update_nu(double lambda_1, double lambda_2) {
-      //if (!abs_nu_by_G_uptodate) {
-      abs_nu_by_G = (nu.cwiseProduct(weights_user).transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g);
-      abs_nu_by_GxE = (nu.cwiseProduct(weights_user).cwiseProduct(E).transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g) * normalize_weights_e;
-      //}
+      if (!abs_nu_by_G_uptodate) {
+        abs_nu_by_G = (nu.cwiseProduct(weights_user).transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g);
+        abs_nu_by_GxE = (nu.cwiseProduct(weights_user).cwiseProduct(E).transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g) * normalize_weights_e;
+        abs_nu_by_G_uptodate = true;
+      }
       x_opt = naive_projection(lambda_1, lambda_2, abs_nu_by_G, abs_nu_by_GxE);
       nu *= x_opt;
+      abs_nu_by_G *= x_opt;
+      abs_nu_by_GxE *= x_opt;
     }
     
     void update_inner_nu(double lambda_1, double lambda_2) {
@@ -286,30 +292,36 @@ protected:
       abs_inner_nu_by_G.setZero(working_set.size());
       abs_inner_nu_by_GxE.setZero(working_set.size());
       //VecXd res_w
-      temp_n = nu.cwiseProduct(weights_user);
+      temp_n = inner_nu.cwiseProduct(weights_user);
       for (int i = 0; i < working_set.size(); ++i) {
         abs_inner_nu_by_G[i] = std::abs(G.col(working_set[i]).dot(temp_n)) * normalize_weights_g[working_set[i]];
         abs_inner_nu_by_GxE[i] = std::abs(G.col(working_set[i]).dot(temp_n.cwiseProduct(E))) * normalize_weights_g[working_set[i]] * normalize_weights_e;
       }
       double x_opt = naive_projection(lambda_1, lambda_2, abs_inner_nu_by_G, abs_inner_nu_by_GxE);
-      nu *= x_opt;
+      inner_nu *= x_opt;
     }
     
-    double check_duality_gap(double lambda_1, double lambda_2, bool use_working_set) {
-      nu = Y - sigmoid(xbeta);
-      update_nu_for_intercept();
-      double dual_objective;
-      if (use_working_set) {
-        update_inner_nu(lambda_1, lambda_2);  
-      } else {
-        update_nu(lambda_1, lambda_2);  
+    double check_duality_gap(double lambda_1, double lambda_2) {
+      if (!abs_nu_by_G_uptodate) {
+        nu = Y - sigmoid(xbeta);
+        update_nu_for_intercept(nu);
       }
-      dual_objective = compute_dual_objective();
+      update_nu(lambda_1, lambda_2);  
+      double dual_objective = compute_dual_objective(nu);
       primal_objective = (-Y.cwiseProduct(xbeta) + log_one_plus_exp(xbeta)).dot(weights_user) + lambda_1 * (b_g.cwiseAbs().cwiseMax(b_gxe.cwiseAbs())).sum() + lambda_2 * b_gxe.cwiseAbs().sum();
       return primal_objective - dual_objective;
     }
     
-    void update_nu_for_intercept() {
+    double check_inner_duality_gap(double lambda_1, double lambda_2) {
+      inner_nu = Y - sigmoid(xbeta);
+      update_nu_for_intercept(inner_nu);
+      update_inner_nu(lambda_1, lambda_2);  
+      double dual_objective = compute_dual_objective(inner_nu);
+      primal_objective = (-Y.cwiseProduct(xbeta) + log_one_plus_exp(xbeta)).dot(weights_user) + lambda_1 * (b_g.cwiseAbs().cwiseMax(b_gxe.cwiseAbs())).sum() + lambda_2 * b_gxe.cwiseAbs().sum();
+      return primal_objective - dual_objective;
+    }    
+    
+    void update_nu_for_intercept(VecXd& nu) {
       double sum_w = weights_user.sum();
       double sum_E_w = normalize_weights_e * E.dot(weights_user);
       double norm2_E_w = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights_user);
@@ -319,7 +331,6 @@ protected:
       double b = (sum_w * triple_dot_product(E * normalize_weights_e, nu, weights_user) - 
         sum_E_w * sum_nu_w) / denominator_E;
       double a = (sum_nu_w - sum_E_w * b) / sum_w;
-      
       nu = nu.array() - a;
       nu -= E * b * normalize_weights_e;
     }
