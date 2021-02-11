@@ -114,22 +114,25 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
   loss_min = result_[lambda_min_index]
   loss_se = sd(result_)/sqrt(length(result_))
   
-  result = tibble(lambda_1=fit_all_data$lambda_1,
+  result_table = tibble(lambda_1=fit_all_data$lambda_1,
                   lambda_2=fit_all_data$lambda_2, 
                   mean_loss=result_,
                   mean_beta_g_nonzero=mean_beta_g_nonzero,
                   mean_beta_gxe_nonzero=mean_beta_gxe_nonzero) 
   
-  lambda_se = (result %>%
+  lambda_se = (result_table %>%
     filter(mean_loss <= loss_min + loss_se) %>%
     arrange(desc(lambda_1), desc(lambda_2)) %>%
     slice(1))[1:2]
   
-  lambda_min = result[lambda_min_index, 1:2]
+  lambda_min = result_table[lambda_min_index, 1:2]
   
-  return(list(cv_result=result, lambda_min=lambda_min, 
+  return(list(cv_result=result_table,
+              lambda_min=lambda_min, 
               lambda_se=lambda_se, 
-              fit=fit_all_data, grid=grid))
+              fit=fit_all_data,
+              grid=grid,
+              full_cv_result=result))
 }
 
 hierNetGxE.coef = function(fit, lambda){

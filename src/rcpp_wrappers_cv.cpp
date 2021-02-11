@@ -20,7 +20,7 @@ template <typename TG>
 void fitModelCVRcppSingleFold(const TG& G,
                               const Eigen::Map<Eigen::VectorXd>& E,
                                 const Eigen::Map<Eigen::VectorXd>& Y,
-                                const std::vector<int>& fold_ids,
+                                const VecXd& fold_ids,
                                 const Rcpp::LogicalVector& normalize,
                                 const Eigen::VectorXd& grid,
                                 const std::string& family,
@@ -30,7 +30,8 @@ void fitModelCVRcppSingleFold(const TG& G,
                                 int test_fold_id,
                                 Eigen::MatrixXd& test_loss,
                                 Eigen::MatrixXi& beta_g_nonzero,
-                                Eigen::MatrixXi& beta_gxe_nonzero) {
+                                Eigen::MatrixXi& beta_gxe_nonzero,
+                                Eigen::MatrixXi& has_converged) {
   const int n = fold_ids.size();
   Eigen::VectorXd weights(n);
   std::vector<int> test_idx;
@@ -71,6 +72,7 @@ void fitModelCVRcppSingleFold(const TG& G,
       test_loss(test_fold_id, index) = solver->get_test_loss(test_idx) / test_idx.size();
       beta_g_nonzero(test_fold_id, index) = solver->get_b_g_non_zero();
       beta_gxe_nonzero(test_fold_id, index) = solver->get_b_gxe_non_zero();
+      has_converged(test_fold_id, index) = int(curr_solver_iterations < max_iterations);
       index++;
       
       if (index >= grid_size_squared) {
@@ -102,32 +104,35 @@ Rcpp::List fitModelCVRcpp(const TG& G,
   Eigen::MatrixXd test_loss(nfolds, grid_size_squared);
   Eigen::MatrixXi beta_g_nonzero(nfolds, grid_size_squared);
   Eigen::MatrixXi beta_gxe_nonzero(nfolds, grid_size_squared);
+  Eigen::MatrixXi has_converged(nfolds, grid_size_squared);
 
-  std::vector<int> fold_ids;
+  VecXd fold_ids(G.rows());
   for (int i = 0; i < G.rows(); ++i) {
-    fold_ids.push_back(i % nfolds);
+    fold_ids[i] = i % nfolds;
   }
-  std::shuffle(fold_ids.begin(), fold_ids.end(), std::default_random_engine(seed));
+  std::shuffle(fold_ids.data(), fold_ids.data() + fold_ids.size(), std::default_random_engine(seed));
 
   if (ncores == 1) {
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, normalize, grid, family,
                            tolerance, max_iterations, min_working_set_size,
-                           test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero);
+                           test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
   } else {
     RcppThread::ThreadPool pool(ncores);
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       pool.push([&, test_fold_id] {
         fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, normalize, grid,
                              family, tolerance, max_iterations, min_working_set_size,
-                             test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero);
+                             test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
       });
     pool.join();
   }
   return Rcpp::List::create(
     Rcpp::Named("test_loss") = test_loss,
     Rcpp::Named("beta_g_nonzero") = beta_g_nonzero,
-    Rcpp::Named("beta_gxe_nonzero") = beta_gxe_nonzero
+    Rcpp::Named("beta_gxe_nonzero") = beta_gxe_nonzero,
+    Rcpp::Named("has_converged") = has_converged,
+    Rcpp::Named("fold_ids") = fold_ids
   );  
 }
 

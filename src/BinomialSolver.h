@@ -385,8 +385,7 @@ protected:
       int index;
       for (int i = 0; i < test_idx.size(); ++i) {
         index = test_idx[i];
-        // TODO: fix below
-        test_loss += -Y[index] * xbeta[index] + std::log1p(std::exp(xbeta[index]));
+        test_loss += -Y[index] * xbeta[index] + log_one_plus_exp_scalar(xbeta[index]);
       }
       return test_loss;
     }
