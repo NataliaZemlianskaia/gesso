@@ -22,9 +22,9 @@ hierNetGxE.coefnum(cv_model, target_b_gxe_non_zero, less_than = TRUE)
 \value{
 A list of model coefficients corresponding to the best model that contains at most or at least \code{target_b_gxe_non_zero} non-zero interaction terms. 
 
-The best model is selected based on the averaged cross-validation (cv) results: for each pair of  parameters \code{lambda}=(lambda_1, lambda_2) in the grid and for each cv fold we obtain a number of non-zero estimated interaction terms, then average cv results by \code{lambda} and choose the tuning parameters corresponding to the minimum average cv loss that have at most or at least \code{target_b_gxe_non_zero} non-zero interaction terms. Returned coefficients are obtained by fitting the model on the full data with the selected tuning parameters. 
+The target model is selected based on the averaged cross-validation (cv) results: for each pair of  parameters \code{lambda}=(lambda_1, lambda_2) in the grid and for each cv fold we obtain a number of non-zero estimated interaction terms, then average cv results by \code{lambda} and choose the tuning parameters corresponding to the minimum average cv loss that have \emph{at most} or \emph{at least} \code{target_b_gxe_non_zero} non-zero interaction terms. Returned coefficients are obtained by fitting the model on the full data with the selected tuning parameters. 
 
-Note that the number of estimated non-zero interactions will only approximately reflect the numbers obtained on cv data.
+Note that the number of estimated non-zero interactions will only approximately reflect the numbers obtained on cv datasets.
   \item{beta_0 }{estimated intercept value}
   \item{beta_e}{estimated environmental coefficient value}
   \item{beta_g}{a vector of estimated main effect coefficients}

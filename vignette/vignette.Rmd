@@ -49,9 +49,11 @@ library(ggplot2)
 
 ### Data generation
 
-First, we generate the dataset using `data.gen()` function from the package. The function allows us to generate a binary (0/1) matrix of genotypes `G` of a given `sample_size` and `p` number of features, binary vector `E` of environmental measurements, and a response variable `Y` $\sim g(\beta_0 + \beta_E E + \beta_G G + \beta_{G\times E} G\times E$ (either quantitative or binary depending of the `family` parameter) . 
+First, we generate the dataset using `data.gen()` function from the package. The function allows us to generate a binary (0/1) matrix of genotypes `G` of a given `sample_size` and `p` number of features, binary vector `E` of environmental measurements, and a response variable `Y` $\sim g(\beta_0 + \beta_E E + \beta_G G + \beta_{G\times E} G\times E)$ - either quantitative or binary depending of the `family` parameter. 
 
-We can specify the number of non-zero main effects (`n_g_non_zero`) and interactions (`n_gxe_non_zero`) we want to generate. We also specified a *"strong_hierarchical"* mode for our dataset, which means that (1) if interaction effect is generated as non-zero, it's respective genetic main effect is also generated as non-zero  ($\beta_{G\times E} \ne 0 \longrightarrow \beta_G \ne 0$), and (2) effect sizes of the main effects are larger than that of interaction effects  ($|\beta_G| \ge |\beta_{G\times E}|$). 
+We can specify the number of non-zero main effects (`n_g_non_zero`) and interactions (`n_gxe_non_zero`) we want to generate. We also specified a *strong_hierarchical* mode for our dataset, which means that (1) if interaction effect is generated as non-zero, it's respective genetic main effect is also generated as non-zero 
+$(\beta_{G\times E} \ne 0 \longrightarrow \beta_G \ne 0)$, and (2) effect sizes of the main effects are larger than that of interaction effects 
+$(|\beta_G| \ge |\beta_{G\times E}|)$. 
 
 ```{r}
 family = "gaussian"
@@ -78,7 +80,7 @@ We generated model coefficients `data$Beta_G` and `data$Beta_GxE` such that we g
 c(sum(data$Beta_G != 0), sum(data$Beta_GxE != 0))
 ```
 
-We also imposed *strong_hierarchical* relationships between main and interaction effect sizes
+We also imposed *strong_hierarchical* relationships between main effects and interaction effects
 ```{r}
 cbind(data$Beta_G[data$Beta_G != 0], data$Beta_GxE[data$Beta_G != 0])
 ```
@@ -108,9 +110,9 @@ Sys.time() - start
 
 #### Obtain best model with `hierNetGxE.coef()` function
 
-To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters using `hierNetGxE.coef()` function. We need to specify a model fit object and a pair of lambda = (lambda_1, lambda_2) values organized in a tibble (ex: `lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])`).
+To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters we use `hierNetGxE.coef()` function. We need to specify a model fit object and a pair of lambda = (lambda_1, lambda_2) values organized in a tibble (ex: `lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])`).
 
-Here we set `fit=tune_model$fit` - model fit on the full dataset and `lambda=tune_model$lambda_min` - the pair of tuning parameters corresponding to the minimum cross-validation error that `hierNetGxE.cv()` function returns.
+Below we set `fit = tune_model$fit` - model fit on the full dataset and `lambda = tune_model$lambda_min` - the pair of tuning parameters corresponding to the minimum cross-validation error that `hierNetGxE.cv()` function returns.
 
 ```{r}
 coefficients = hierNetGxE.coef(fit=tune_model$fit, lambda=tune_model$lambda_min)
@@ -123,7 +125,7 @@ Check if all non-zero interaction features were recovered by the model
 cbind(data$Beta_GxE[data$Beta_GxE != 0], gxe_coefficients[data$Beta_GxE != 0])
 ```
 
-Check that the largest estimated interaction effect sizes correspond to the true non-zero coefficients
+Check that the largest estimated interaction effects correspond to the true non-zero coefficients
 ```{r}
 (data$Beta_GxE[order(abs(gxe_coefficients), decreasing=TRUE)])[1:10]
 ```
@@ -154,12 +156,16 @@ selection_glmnet = selection.metrics(data$Beta_G, data$Beta_GxE, g_glmnet, gxe_g
 cbind(selection_hierNetGxE, selection_glmnet)
 ```
 
-We see that hierNetGxE model outperforms the Lasso model in terms of selection of interaction terms in all important selection metrics, including GxE detection AUC (`auc_gxe`), sensitivity (`sensitivity_gxe`), and precision(`precision_gxe`). Estimation bias of the interaction coefficients is also lower for the hierNetGxE model (`mse_b_gxe`).
+We see that hierNetGxE model outperforms the Lasso model in terms of detection of interaction terms in all important selection metrics, including GxE detection AUC (`auc_gxe`), sensitivity (`sensitivity_gxe`), and precision(`precision_gxe`). Estimation bias of the interaction coefficients is also substantially lower for the hierNetGxE model (`mse_b_gxe`).
 
 
 #### Obtain target model with `hierNetGxE.coefnum()` function
 
-To control how parsimonious is our model with respect to the selected non-zero interaction terms we can use `hierNetGxE.coefnum()` function. We obtain interaction and main effect coefficients corresponding to the target GxE model, where instead of specifying tuning parameters `lambda` we set `target_b_gxe_non_zero` parameter which is the number of at most non-zero interactions we want to include in the model. 
+To control how parsimonious is our model with respect to the selected non-zero interaction terms we can use `hierNetGxE.coefnum()` function. We obtain interaction and main effect coefficients corresponding to the target GxE model, where instead of specifying tuning parameters `lambda`, we set `target_b_gxe_non_zero` parameter which is the number of *at most* (specify `less_than=TRUE` - default value) or *at leats* (specify `less_than=FALSE`) non-zero interactions we want to include in the model, depending on the parameter `less_than`. 
+
+The target model is selected based on the averaged cross-validation (cv) results (tune_model$cv_result): for each pair of parameters lambda=(lambda_1, lambda_2) in the grid and for each cv fold we obtain a number of non-zero estimated interaction terms, then average cv results by lambda and choose the tuning parameters corresponding to the minimum average cv loss that have *at most* or *at least* `target_b_gxe_non_zero` non-zero interaction terms. Returned coefficients are obtained by fitting the model on the full dataset with the selected tuning parameters.
+
+Note that the number of estimated non-zero interactions will only approximately reflect the numbers obtained on cv datasets.
 
 ```{r}
 coefficients = hierNetGxE.coefnum(cv_model=tune_model, target_b_gxe_non_zero=10)
@@ -179,7 +185,7 @@ Here we see that the number of non-zero interactions in the model (`b_gxe_non_ze
 
 With `hierNetGxE.coef()` we, again, obtain coefficients corresponding to the best model in terms of minimal cross-validated error and use `hierNetGxE.predict()` function to apply our estimated model to a new test dataset that can also be generated by the function `data.gen()`. 
 
-We calculate test R-squared to compare model performance.
+We calculate test R-squared to assess model performance.
 
 ```{r}
 coefficients = hierNetGxE.coef(tune_model$fit, tune_model$lambda_min)
@@ -203,7 +209,7 @@ cbind(test_R2_hierNetGxE, test_R2_glmnet)
 
 ### Sparse matrix option example
 
-We generate large highly sparse genotype matrix `G` by setting genotype prevalence parameter `pG` to 0.03 and measure how long does it take to fit the model.
+We generate a large highly sparse genotype matrix `G` by setting genotype prevalence parameter `pG` to 0.03 and measure how long does it take to fit the model.
 
 ```{r}
 sample_size = 600; p = 30000
@@ -239,6 +245,7 @@ We see that sparse option enables more efficient fitting, however, the speed-up 
 (as.numeric(time_non_sparse) * 60) / as.numeric(time_sparse)
 ```
 
+
 ### Bigmatrix (`bigmemory` package) option example
 
 Here we show how to convert data into `bigmatrix` format. This format should be used for a very large datasets that barely fit in RAM. 
@@ -252,7 +259,7 @@ grid = compute.grid(data$G_train, data$E_train, data$Y_train,
 G_train = as.big.matrix(data$G_train,
                         backingfile="g_train.bin",
                         descriptorfile="g_train.desc")
-is.filebacked(G_train)
+## is.filebacked(G_train) should return TRUE
 
 fit_bm = hierNetGxE.fit(G_train, data$E_train, data$Y_train,
                      tolerance=tolerance, grid=grid, family=family)
@@ -263,3 +270,34 @@ tune_model_bm = hierNetGxE.cv(G_train, data$E_train, data$Y_train,
                               normalize=TRUE, seed=1)                     
 ```
 
+### Working sets
+
+We use the same large dataset that we generated for the sparse matrices example to demonstrate how our screening rules work
+
+```{r fig.height = 3, fig.width = 5, fig.align = "center"}
+plot(fit$beta_g_nonzero, pch=19, cex=0.4, 
+     ylab="num of non-zero features", xlab="lambdas path")
+points(fit$beta_gxe_nonzero, pch=19, cex=0.4, col="red")
+legend("topleft", legend=c("G features", "GxE features"), col=c("black", "red"), pch=19)
+```
+
+```{r}
+sum(fit$working_set_size > 3000)/ length(fit$working_set_size)
+```
+
+```{r fig.height = 3, fig.width = 4, fig.align = "center"}
+df = data.frame(lambda_1_factor = factor(fit$lambda_1),
+                lambda_2_factor = factor(fit$lambda_2),
+                ws = fit$working_set_size)
+
+log_0 = function(x){
+  return(ifelse(x == 0, 0, log10(x)))
+}
+
+ggplot(df, aes(lambda_1_factor, lambda_2_factor, fill=log_0(ws))) + 
+  scale_fill_distiller(palette = "RdBu") +
+  scale_x_discrete("lambda_1", breaks=c(1)) +
+  scale_y_discrete("lambda_2", breaks=c(1)) +
+  labs(fill='log WS') +
+  geom_tile()
+```
