@@ -42,6 +42,7 @@ Rcpp::List fitModelRcpp(const TG& G,
   Eigen::VectorXd lambda_2(grid_size_squared);
   Eigen::VectorXd working_set_size(grid_size_squared);
   Eigen::VectorXd num_iterations(grid_size_squared);
+  Eigen::VectorXd has_converged(grid_size_squared);
   Eigen::VectorXd num_fitered_by_safe_g(grid_size_squared);
   Eigen::VectorXd num_fitered_by_safe_gxe(grid_size_squared);
   Eigen::VectorXd objective_value(grid_size_squared);
@@ -68,6 +69,7 @@ Rcpp::List fitModelRcpp(const TG& G,
       num_fitered_by_safe_g[index] = solver->get_num_fitered_by_safe_g();
       num_fitered_by_safe_gxe[index] = solver->get_num_fitered_by_safe_gxe();
       objective_value[index] = solver->get_value();
+      has_converged[index] = int(curr_solver_iterations < max_iterations);
       index++;
       
       if (index >= grid_size_squared) {
@@ -90,6 +92,7 @@ Rcpp::List fitModelRcpp(const TG& G,
     Rcpp::Named("lambda_1") = lambda_1,
     Rcpp::Named("lambda_2") = lambda_2,
     Rcpp::Named("num_iterations") = num_iterations,
+    Rcpp::Named("has_converged") = has_converged,
     Rcpp::Named("working_set_size") = working_set_size,
     Rcpp::Named("num_fitered_by_safe_g") = num_fitered_by_safe_g,
     Rcpp::Named("num_fitered_by_safe_gxe") = num_fitered_by_safe_gxe,

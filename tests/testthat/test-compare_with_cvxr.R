@@ -17,8 +17,7 @@ test_that("training loss is similar to the fit by CVXR", {
         fit = hierNetGxE.fit(data$G_train, data$E_train, data$Y_train,
                              tolerance=tol, grid=grid, family=family, 
                              normalize=FALSE)
-      
-      
+        expect_equal(sum(fit$has_converged != 1), 0)
         expect_lt(max(fit$objective_value - cvxr_fit), tol)
       }
     }

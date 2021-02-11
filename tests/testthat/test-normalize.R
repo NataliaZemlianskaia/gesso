@@ -17,6 +17,7 @@ test_that("data normalization inside hierNetGxE.fit as if data was normalized", 
                                            family=family,
                                            max_iterations=max_iterations,
                                            normalize=FALSE)
+      expect_equal(sum(fit_data_normalized$has_converged != 1), 0)
       
       fit_normalized = hierNetGxE.fit(data_not_normalized$G_train,
                                       data_not_normalized$E_train,
@@ -26,6 +27,7 @@ test_that("data normalization inside hierNetGxE.fit as if data was normalized", 
                                       family=family,
                                       max_iterations=max_iterations,
                                       normalize=TRUE)
+      expect_equal(sum(fit_normalized$has_converged != 1), 0)
       
       expect_lt(max(abs(fit_data_normalized$grid - fit_normalized$grid)), 1e-12)
       expect_lt(max(abs(fit_data_normalized$objective_value - fit_normalized$objective_value)), 1e-12)
