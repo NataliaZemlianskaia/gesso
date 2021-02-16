@@ -12,7 +12,7 @@
 
 <meta name="author" content="Natalia Zemlianskaia" />
 
-<meta name="date" content="2021-02-10" />
+<meta name="date" content="2021-02-11" />
 
 <title>Getting started with hierNetGxE</title>
 
@@ -311,7 +311,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Getting started with <code>hierNetGxE</code></h1>
 <h4 class="author">Natalia Zemlianskaia</h4>
-<h4 class="date">2021-02-10</h4>
+<h4 class="date">2021-02-11</h4>
 
 
 
@@ -401,15 +401,15 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb16-2" data-line-number="2">start =<span class="st"> </span><span class="kw">Sys.time</span>()</a>
 <a class="sourceLine" id="cb16-3" data-line-number="3">tune_model =<span class="st"> </span><span class="kw">hierNetGxE.cv</span>(<span class="dt">G=</span>data<span class="op">$</span>G_train, <span class="dt">E=</span>data<span class="op">$</span>E_train, <span class="dt">Y=</span>data<span class="op">$</span>Y_train, </a>
 <a class="sourceLine" id="cb16-4" data-line-number="4">                           <span class="dt">family=</span>family, <span class="dt">grid_size=</span><span class="dv">20</span>, <span class="dt">tolerance=</span>tolerance,</a>
-<a class="sourceLine" id="cb16-5" data-line-number="5">                           <span class="dt">parallel=</span><span class="ot">TRUE</span>, <span class="dt">nfold=</span><span class="dv">3</span>,</a>
+<a class="sourceLine" id="cb16-5" data-line-number="5">                           <span class="dt">parallel=</span><span class="ot">TRUE</span>, <span class="dt">nfolds=</span><span class="dv">3</span>,</a>
 <a class="sourceLine" id="cb16-6" data-line-number="6">                           <span class="dt">normalize=</span><span class="ot">TRUE</span>,</a>
 <a class="sourceLine" id="cb16-7" data-line-number="7">                           <span class="dt">seed=</span><span class="dv">1</span>)</a></code></pre></div>
 <pre><code>## [1] &quot;Parallel cv&quot;
-## Time difference of 9.586878 secs
+## Time difference of 8.790556 secs
 ## [1] &quot;fit on full data&quot;
-## Time difference of 10.89613 secs</code></pre>
+## Time difference of 10.38221 secs</code></pre>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start</a></code></pre></div>
-<pre><code>## Time difference of 20.50438 secs</code></pre>
+<pre><code>## Time difference of 19.19634 secs</code></pre>
 <div id="obtain-best-model-with-hiernetgxe.coef-function" class="section level4">
 <h4>Obtain best model with <code>hierNetGxE.coef()</code> function</h4>
 <p>To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters we use <code>hierNetGxE.coef()</code> function. We need to specify a model fit object and a pair of lambda = (lambda_1, lambda_2) values organized in a tibble (ex: <code>lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])</code>).</p>
@@ -545,7 +545,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb41-3" data-line-number="3">                     <span class="dt">tolerance=</span>tolerance,</a>
 <a class="sourceLine" id="cb41-4" data-line-number="4">                     <span class="dt">normalize=</span><span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb41-5" data-line-number="5">time_non_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_non_sparse</a></code></pre></div>
-<pre><code>## Time difference of 1.26936 mins</code></pre>
+<pre><code>## Time difference of 1.310731 mins</code></pre>
 <p>We then convert our generated matrix to sparse format and measure fitting time again.</p>
 <div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb43-1" data-line-number="1">G_train_sparse =<span class="st"> </span><span class="kw">as</span>(data<span class="op">$</span>G_train, <span class="st">&quot;dgCMatrix&quot;</span>)</a>
 <a class="sourceLine" id="cb43-2" data-line-number="2"></a>
@@ -554,10 +554,10 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb43-5" data-line-number="5">                     <span class="dt">tolerance=</span>tolerance,</a>
 <a class="sourceLine" id="cb43-6" data-line-number="6">                     <span class="dt">normalize=</span><span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb43-7" data-line-number="7">time_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_sparse</a></code></pre></div>
-<pre><code>## Time difference of 41.29649 secs</code></pre>
+<pre><code>## Time difference of 41.87052 secs</code></pre>
 <p>We see that sparse option enables more efficient fitting, however, the speed-up works only for substantially sparse matrices.</p>
 <div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb45-1" data-line-number="1">(<span class="kw">as.numeric</span>(time_non_sparse) <span class="op">*</span><span class="st"> </span><span class="dv">60</span>) <span class="op">/</span><span class="st"> </span><span class="kw">as.numeric</span>(time_sparse)</a></code></pre></div>
-<pre><code>## [1] 1.844263</code></pre>
+<pre><code>## [1] 1.878264</code></pre>
 </div>
 <div id="bigmatrix-bigmemory-package-option-example" class="section level3">
 <h3>Bigmatrix (<code>bigmemory</code> package) option example</h3>
@@ -576,7 +576,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb47-11" data-line-number="11">                     </a>
 <a class="sourceLine" id="cb47-12" data-line-number="12">tune_model_bm =<span class="st"> </span><span class="kw">hierNetGxE.cv</span>(G_train, data<span class="op">$</span>E_train, data<span class="op">$</span>Y_train, </a>
 <a class="sourceLine" id="cb47-13" data-line-number="13">                              <span class="dt">family=</span>family, <span class="dt">grid=</span>grid, <span class="dt">tolerance=</span>tolerance,</a>
-<a class="sourceLine" id="cb47-14" data-line-number="14">                              <span class="dt">parallel=</span><span class="ot">TRUE</span>, <span class="dt">nfold=</span><span class="dv">3</span>,</a>
+<a class="sourceLine" id="cb47-14" data-line-number="14">                              <span class="dt">parallel=</span><span class="ot">TRUE</span>, <span class="dt">nfolds=</span><span class="dv">3</span>,</a>
 <a class="sourceLine" id="cb47-15" data-line-number="15">                              <span class="dt">normalize=</span><span class="ot">TRUE</span>, <span class="dt">seed=</span><span class="dv">1</span>)                     </a></code></pre></div>
 </div>
 <div id="working-sets" class="section level3">
