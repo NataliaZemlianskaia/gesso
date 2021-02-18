@@ -22,9 +22,9 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
       beta_gxe = 1.5
     }
     if (mode == "hierarchical"){
-      beta_G = 1.5
-      beta_E = 1.5
-      beta_gxe = 3
+      beta_G = 1.5 / 2
+      beta_E = 1.5 / 2
+      beta_gxe = 1.5
     }
   } else {
     if (family == "binomial"){
@@ -32,7 +32,6 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
       beta_0 = -1
       
       if (mode == "strong_hierarchical" || mode == "anti_hierarchical"){
-        
         beta_G = 0.8
         beta_E = 0.8
         beta_gxe = 0.6
