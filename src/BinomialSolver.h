@@ -338,10 +338,10 @@ protected:
     void update_working_set(double lambda_1, double lambda_2, double dual_gap, int working_set_size) {
       double r = std::sqrt(dual_gap / 2);
       //ArrayXd d_j = ((lambda_1 - abs_nu_by_G.array()) + (r * norm_GxE).array().max(lambda_2 - abs_nu_by_GxE.array())) / (norm_GxE + norm_G).array();
-      ArrayXd d_j = (lambda_1 - lambda_2 - (x_opt * abs_nu_by_G).array() - (lambda_2 - r * norm_GxE.array()).max((x_opt * abs_nu_by_GxE).array())) / (norm_GxE + norm_G).array();
+      ArrayXd d_j = (lambda_1 - lambda_2 - (abs_nu_by_G).array() - (lambda_2 - r * norm_GxE.array()).max((abs_nu_by_GxE).array())) / (norm_GxE + norm_G).array();
       
-      upperbound_nu_by_G = x_opt * abs_nu_by_G + r * norm_G;
-      upperbound_nu_by_GxE = x_opt * abs_nu_by_GxE + r * norm_GxE;
+      upperbound_nu_by_G = abs_nu_by_G + r * norm_G;
+      upperbound_nu_by_GxE = abs_nu_by_GxE + r * norm_GxE;
       safe_set_zero = (upperbound_nu_by_GxE.array() - lambda_2).max(0) < (lambda_1 - upperbound_nu_by_G.array());
       for (int i = 0; i < p; ++i) {
         safe_set_gxe[i] = safe_set_gxe[i] && (!safe_set_zero[i]) && (upperbound_nu_by_GxE[i] >= lambda_2);
