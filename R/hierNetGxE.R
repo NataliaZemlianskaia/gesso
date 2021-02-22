@@ -37,7 +37,7 @@ compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio=1e-4) {
 }
 
 
-hierNetGxE.fit = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, 
+hierNetGxE.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, 
                           grid_min_ratio=1e-4, family="gaussian", weights=NULL,
                           tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   if (is(G, "matrix")) {
@@ -63,14 +63,21 @@ hierNetGxE.fit = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20,
   if (is.null(weights)) {
     weights = rep(1, n) / n
   }
-  fit = fitModel(G, E, Y, weights, normalize, grid, family, 
-                 tolerance, max_iterations, min_working_set_size, mattype_g)
+  if (is.null(C)) {
+    C = matrix(numeric(0), nrow=length(Y), ncol=0)
+  }
+  fit = fitModel(G=G, E=E, Y=Y, C=C,
+                 weights=weights, normalize=normalize,
+                 grid=grid, family=family,
+                 tolerance=tolerance,
+                 max_iterations=max_iterations, min_working_set_size=min_working_set_size,
+                 mattype_g=mattype_g)
   fit$beta_g_nonzero = rowSums(fit$beta_g != 0)
   fit$beta_gxe_nonzero = rowSums(fit$beta_gxe != 0) 
   return(fit)
 }
 
-hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_min_ratio=1e-4, 
+hierNetGxE.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, grid_min_ratio=1e-4, 
                          family="gaussian",
                          nfolds=4, parallel=TRUE, seed=42,
                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
@@ -99,16 +106,20 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
   if (nfolds < 2) {
     stop("number of folds (nfolds) must be at least 2")
   }
+  
+  if (is.null(C)) {
+    C = matrix(numeric(0), nrow=length(Y), ncol=0)
+  }
 
   if (parallel) {
     print("Parallel cv")
     start_parallel = Sys.time()
-    result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
+    result = fitModelCV(G, E, Y, C, normalize, grid, family, tolerance,
                         max_iterations, min_working_set_size, nfolds, seed, nfolds, mattype_g)
     print(Sys.time() - start_parallel)
   } else {
     print("Non-parallel cv")
-    result = fitModelCV(G, E, Y, normalize, grid, family, tolerance,
+    result = fitModelCV(G, E, Y, C, normalize, grid, family, tolerance,
                         max_iterations, min_working_set_size, nfolds, seed, 1, mattype_g)
   }
   result_ = colMeans(result$test_loss)
@@ -119,8 +130,13 @@ hierNetGxE.cv = function(G, E, Y, normalize=TRUE, grid=NULL, grid_size=20, grid_
   weights = weights / sum(weights)
   print("fit on full data")
   start_all = Sys.time()
-  fit_all_data = fitModel(G, E, Y, weights, normalize, grid, family,
-                          tolerance, max_iterations, min_working_set_size, mattype_g)
+  
+  fit_all_data = fitModel(G=G, E=E, Y=Y, C=C,
+                          weights=weights, normalize=normalize,
+                          grid=grid, family=family,
+                          tolerance=tolerance,
+                          max_iterations=max_iterations, min_working_set_size=min_working_set_size,
+                          mattype_g=mattype_g)
   print(Sys.time() - start_all)
   
   lambda_min_index = which.min(result_)

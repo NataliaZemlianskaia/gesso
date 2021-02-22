@@ -14,6 +14,7 @@ template <typename TG>
 Rcpp::List fitModelRcpp(const TG& G,
                         const Eigen::Map<Eigen::VectorXd>& E,
                         const Eigen::Map<Eigen::VectorXd>& Y,
+                        const Eigen::Map<Eigen::MatrixXd>& C,
                         const Eigen::Map<Eigen::VectorXd>& weights,
                         const Rcpp::LogicalVector& normalize,
                         const Eigen::VectorXd& grid,
@@ -25,17 +26,18 @@ Rcpp::List fitModelRcpp(const TG& G,
   std::unique_ptr<Solver<TG> > solver;
   if (family == "gaussian") {
     solver.reset(
-      new GaussianSolver<TG>(G, E, Y, weights, normalize[0]));
+      new GaussianSolver<TG>(G, E, Y, C, weights, normalize[0]));
   } 
   else if (family == "binomial") {
     solver.reset(
-      new BinomialSolver<TG>(G, E, Y, weights, normalize[0]));
+      new BinomialSolver<TG>(G, E, Y, C, weights, normalize[0]));
   }
   
   const int grid_size_squared = grid.size() * grid.size();
 
   Eigen::VectorXd beta_0(grid_size_squared);
   Eigen::VectorXd beta_e(grid_size_squared);
+  Eigen::MatrixXd beta_c(grid_size_squared, C.cols());
   Eigen::MatrixXd beta_g(grid_size_squared, G.cols());
   Eigen::MatrixXd beta_gxe(grid_size_squared, G.cols());
   Eigen::VectorXd lambda_1(grid_size_squared);
@@ -60,6 +62,9 @@ Rcpp::List fitModelRcpp(const TG& G,
 
       beta_0[index] = solver->get_b_0();
       beta_e[index] = solver->get_b_e();
+      if (C.cols() > 0) {
+        beta_c.row(index) = solver->get_b_c(); 
+      }
       beta_g.row(index) = solver->get_b_g();
       beta_gxe.row(index) = solver->get_b_gxe();
       lambda_1[index] = grid_lambda_1[i];
@@ -87,6 +92,7 @@ Rcpp::List fitModelRcpp(const TG& G,
   return Rcpp::List::create(
     Rcpp::Named("beta_0") = beta_0,
     Rcpp::Named("beta_e") = beta_e,
+    Rcpp::Named("beta_c") = beta_c,
     Rcpp::Named("beta_g") = beta_g,
     Rcpp::Named("beta_gxe") = beta_gxe,
     Rcpp::Named("lambda_1") = lambda_1,
@@ -105,6 +111,7 @@ Rcpp::List fitModelRcpp(const TG& G,
 Rcpp::List fitModel(SEXP G,
                     const Eigen::Map<Eigen::VectorXd>& E,
                     const Eigen::Map<Eigen::VectorXd>& Y,
+                    const Eigen::Map<Eigen::MatrixXd>& C,
                     const Eigen::Map<Eigen::VectorXd>& weights,
                     const Rcpp::LogicalVector& normalize,
                     const Eigen::VectorXd& grid,
@@ -114,19 +121,19 @@ Rcpp::List fitModel(SEXP G,
                     int min_working_set_size,
                     int mattype_g) {
   if (mattype_g == 1) {
-    return fitModelRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y,
+    return fitModelRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y, C,
                                             weights, normalize, grid,
                                             family, tolerance, max_iterations, min_working_set_size);    
   } if (mattype_g == 2) {
     Rcpp::S4 G_info(G);
     Rcpp::XPtr<BigMatrix> xptr((SEXP) G_info.slot("address"));
     MapMat Gmap((const double *)xptr->matrix(), xptr->nrow(), xptr->ncol());
-    return fitModelRcpp<MapMat>(Gmap, E, Y, weights, normalize, grid,
+    return fitModelRcpp<MapMat>(Gmap, E, Y, C, weights, normalize, grid,
                                 family, tolerance, max_iterations, min_working_set_size);
   } else {
     Rcpp::NumericMatrix G_mat(G);
     MapMat Gmap((const double *) &G_mat[0], G_mat.rows(), G_mat.cols());
-    return fitModelRcpp<MapMat>(Gmap, E, Y, weights, normalize, grid,
+    return fitModelRcpp<MapMat>(Gmap, E, Y, C, weights, normalize, grid,
                                 family, tolerance, max_iterations, min_working_set_size);
   }
 }

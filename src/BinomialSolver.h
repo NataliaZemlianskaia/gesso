@@ -85,10 +85,8 @@ private:
   
   using Solver<TG>::abs_nu_by_G_uptodate;
   
-  using Solver<TG>::sum_w;
-  using Solver<TG>::sum_E_w;
-  using Solver<TG>::norm2_E_w;
-  using Solver<TG>::denominator_E;  
+  using Solver<TG>::intercept_system_A_weights_user;
+  using Solver<TG>::intercept_system_B_weights_user;
   
   using Solver<TG>::norm_G;
   using Solver<TG>::norm_GxE;
@@ -119,9 +117,10 @@ protected:
   public: BinomialSolver(const MapMat& G_,
                          const Eigen::Map<Eigen::VectorXd>& E_,
                          const Eigen::Map<Eigen::VectorXd>& Y_,
+                         const Eigen::Map<Eigen::MatrixXd>& C_,
                          const Eigen::Map<Eigen::VectorXd>& weights_,
                          bool normalize_) :
-    Solver<TG>(G_, E_, Y_, weights_, normalize_),
+    Solver<TG>(G_, E_, Y_, C_, weights_, normalize_),
     abs_nu_by_G(p),
     abs_nu_by_GxE(p),
     upperbound_nu_by_G(p),
@@ -134,9 +133,10 @@ protected:
     BinomialSolver(const MapSparseMat& G_,
                    const Eigen::Map<Eigen::VectorXd>& E_,
                    const Eigen::Map<Eigen::VectorXd>& Y_,
+                   const Eigen::Map<Eigen::MatrixXd>& C_,
                    const Eigen::Map<Eigen::VectorXd>& weights_,
                    bool normalize_) :
-    Solver<TG>(G_, E_, Y_, weights_, normalize_),
+    Solver<TG>(G_, E_, Y_, C_, weights_, normalize_),
     abs_nu_by_G(p),
     abs_nu_by_GxE(p),
     upperbound_nu_by_G(p),
@@ -322,17 +322,11 @@ protected:
     }    
     
     void update_nu_for_intercept(VecXd& nu) {
-      double sum_w = weights_user.sum();
-      double sum_E_w = normalize_weights_e * E.dot(weights_user);
-      double norm2_E_w = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights_user);
-      double denominator_E = sum_w * norm2_E_w - sqr(sum_E_w);
-      double sum_nu_w = nu.dot(weights_user);
-      
-      double b = (sum_w * triple_dot_product(E * normalize_weights_e, nu, weights_user) - 
-        sum_E_w * sum_nu_w) / denominator_E;
-      double a = (sum_nu_w - sum_E_w * b) / sum_w;
-      nu = nu.array() - a;
-      nu -= E * b * normalize_weights_e;
+      intercept_system_B_weights_user(0) = nu.dot(weights_user);
+      intercept_system_B_weights_user(1) = triple_dot_product(E * normalize_weights_e, nu, weights_user);
+      VecXd x = intercept_system_A_weights_user.fullPivHouseholderQr().solve(intercept_system_B_weights_user);
+      nu = nu.array() - x(0);
+      nu -= E * x(1) * normalize_weights_e;
     }
     
     void update_working_set(double lambda_1, double lambda_2, double dual_gap, int working_set_size) {

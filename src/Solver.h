@@ -70,6 +70,7 @@ protected:
   TG G;
   MapVec E;
   MapVec Y;
+  MapMat C;
   MapVec weights_user;
   bool normalize;
 
@@ -78,6 +79,7 @@ protected:
   
   double b_0;
   double b_e;
+  VecXd b_c;
   VecXd b_g;
   VecXd b_gxe;
   VecXd delta;
@@ -94,10 +96,15 @@ protected:
   bool abs_nu_by_G_uptodate;
 
   // Pre-computed constants for updating b_0 and b_e
-  double sum_w;
-  double sum_E_w;
-  double norm2_E_w;
-  double denominator_E;
+  // that depend on weights_user
+  MatXd intercept_system_A_weights_user;
+  VecXd intercept_system_B_weights_user;
+  Eigen::ColPivHouseholderQR<MatXd> intercept_system_A_weights_user_qr;
+  
+  // that depend on weights
+  MatXd intercept_system_A;
+  VecXd intercept_system_B;
+  Eigen::ColPivHouseholderQR	<MatXd> intercept_system_A_qr;
   
   // Pre-computed constants for updating b_g and b_gxe
   VecXd norm2_G;
@@ -120,6 +127,7 @@ public:
   public: Solver(const MapMat& G_,
                  const Eigen::Map<Eigen::VectorXd>& E_,
                  const Eigen::Map<Eigen::VectorXd>& Y_,
+                 const Eigen::Map<Eigen::MatrixXd>& C_,
                  const Eigen::Map<Eigen::VectorXd>& weights_,
                  bool normalize_) :
     n(G_.rows()),
@@ -127,11 +135,13 @@ public:
     G(G_.data(), G_.rows(), p),
     E(E_.data(), E_.rows()),
     Y(Y_.data(), Y_.rows()),
+    C(C_.data(), C_.rows(), C_.cols()),
     weights_user(weights_.data(), weights_.rows()),
     normalize(normalize_),
     normalize_weights_g(p),
     b_0(0), 
     b_e(0),
+    b_c(C_.cols()),
     b_g(p),
     b_gxe(p),
     delta(p),
@@ -141,6 +151,10 @@ public:
     safe_set_g(p),
     safe_set_gxe(p),
     safe_set_zero(p),
+    intercept_system_A_weights_user(2 + C_.cols(), 2 + C_.cols()),
+    intercept_system_B_weights_user(2 + C_.cols()),
+    intercept_system_A(2 + C_.cols(), 2 + C_.cols()),
+    intercept_system_B(2 + C_.cols()),
     norm2_G(p),
     norm2_GxE(p),
     G_by_GxE(p),
@@ -158,6 +172,7 @@ public:
   Solver(const MapSparseMat& G_,
          const Eigen::Map<Eigen::VectorXd>& E_,
          const Eigen::Map<Eigen::VectorXd>& Y_,
+         const Eigen::Map<Eigen::MatrixXd>& C_,
          const Eigen::Map<Eigen::VectorXd>& weights_,
          bool normalize_) :    
     n(G_.rows()),
@@ -165,11 +180,13 @@ public:
     G(G_),
     E(E_.data(), E_.rows()),
     Y(Y_.data(), Y_.rows()),
+    C(C_.data(), C_.rows(), C_.cols()),
     weights_user(weights_.data(), weights_.rows()),
     normalize(normalize_),
     normalize_weights_g(p),
     b_0(0), 
     b_e(0),
+    b_c(C_.cols()),
     b_g(p),
     b_gxe(p),
     delta(p),
@@ -179,6 +196,10 @@ public:
     safe_set_g(p),
     safe_set_gxe(p),
     safe_set_zero(p),
+    intercept_system_A_weights_user(2 + C_.cols(), 2 + C_.cols()),
+    intercept_system_B_weights_user(2 + C_.cols()),
+    intercept_system_A(2 + C_.cols(), 2 + C_.cols()),
+    intercept_system_B(2 + C_.cols()),
     norm2_G(p),
     norm2_GxE(p),
     G_by_GxE(p),
@@ -196,6 +217,7 @@ public:
   virtual ~Solver() {}
     
   void base_init() {
+    b_c.setZero(C.cols());
     b_g.setZero(p);
     b_gxe.setZero(p);
     delta.setZero(p);
@@ -209,6 +231,9 @@ public:
       normalize_weights_g.setOnes(p);
       normalize_weights_e = 1;
     }
+    
+    update_intercept_system_A(weights_user, intercept_system_A_weights_user);
+    intercept_system_A_weights_user_qr = intercept_system_A_weights_user.colPivHouseholderQr();
     
     for (int i = 0; i < G.cols(); ++i) {
       temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
@@ -228,12 +253,30 @@ public:
   
   virtual int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) = 0;
     
-  void update_weighted_variables() {
-    sum_w = weights.sum();
-    sum_E_w = normalize_weights_e * E.dot(weights);
-    norm2_E_w = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights);
-    denominator_E = sum_w * norm2_E_w - sqr(sum_E_w);
+  void update_intercept_system_A(const MapVec weights, MatXd& intercept_system_A) {
+    intercept_system_A(0, 0) = weights.sum();
+    intercept_system_A(0, 1) = normalize_weights_e * E.dot(weights);
+    intercept_system_A(1, 0) = intercept_system_A(0, 1);
+    intercept_system_A(1, 1) = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights);
+    for (int i = 0; i < C.cols(); ++i) {
+      intercept_system_A(0, i + 2) = C.col(i).dot(weights);
+      intercept_system_A(i + 2, 0) = intercept_system_A(0, i + 2);
+      intercept_system_A(1, i + 2) = normalize_weights_e * triple_dot_product(E, C.col(i), weights);
+      intercept_system_A(i + 2, 1) = intercept_system_A(1, i + 2);
+      for (int j = 0; j <= i; ++j) {
+        intercept_system_A(i + 2, j + 2) = triple_dot_product(C.col(i), C.col(j), weights);
+        if (i != j) {
+          intercept_system_A(j + 2, i + 2) = intercept_system_A(i + 2, j + 2);
+        }
+      }
+    }
+  }
     
+  void update_weighted_variables() {
+    MapVec weights_map(weights.data(), weights.rows());
+    update_intercept_system_A(weights_map, intercept_system_A);
+    intercept_system_A_qr = intercept_system_A.colPivHouseholderQr();
+
     for (int i = 0; i < G.cols(); ++i) {
       temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
       norm2_G[i] = temp_n.dot(weights);
@@ -252,16 +295,27 @@ public:
   double update_intercept() {
       xbeta -= normalize_weights_e * E * b_e;
       xbeta = xbeta.array() - b_0;
-      double b_0_old = b_0;
-      double b_e_old = b_e;
-      double sum_res_w = Z_w.sum() - xbeta.dot(weights);
-      b_e = (
-        sum_w * (normalize_weights_e * E.dot(Z_w) - triple_dot_product(E * normalize_weights_e, xbeta, weights))
-        - sum_E_w * sum_res_w) / denominator_E;
-      b_0 = (sum_res_w - sum_E_w * b_e) / sum_w;
+      for (int i = 0; i < C.cols(); ++i) {
+        xbeta -= C.col(i) * b_c[i];
+      }
+      intercept_system_B(0) = Z_w.sum() - xbeta.dot(weights);
+      intercept_system_B(1) = normalize_weights_e * E.dot(Z_w) - triple_dot_product(E * normalize_weights_e, xbeta, weights);
+      for (int i = 0; i < C.cols(); ++i) {
+        intercept_system_B(i + 2) = C.col(i).dot(Z_w) - triple_dot_product(C.col(i), xbeta, weights);
+      }
+      VecXd x = intercept_system_A_qr.solve(intercept_system_B);
+      double max_diff = std::max(intercept_system_A(0, 0) * sqr(b_0 - x(0)), intercept_system_A(1, 1) * sqr(b_e - x(1)));
+      b_0 = x(0);
+      b_e = x(1);
       xbeta = xbeta.array() + b_0;
       xbeta += E * b_e * normalize_weights_e;
-      double max_diff = std::max(sum_w * sqr(b_0 - b_0_old), norm2_E_w * sqr(b_e_old - b_e));
+      
+      for (int i = 0; i < C.cols(); ++i) {
+        max_diff = std::max(max_diff, intercept_system_A(i + 2, i + 2) * sqr(b_c[i] - x(i + 2)));
+        b_c[i] = x(i + 2);
+        xbeta += C.col(i) * b_c[i];
+      }
+      
       if (max_diff > 0) {
         abs_nu_by_G_uptodate = false;
       }
@@ -480,6 +534,10 @@ public:
   double get_b_e() {
     return b_e * normalize_weights_e;
   }
+  
+  VecXd get_b_c() {
+    return b_c;
+  }  
     
   VecXd get_b_g() {
     return b_g.cwiseProduct(normalize_weights_g);

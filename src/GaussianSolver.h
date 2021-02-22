@@ -73,9 +73,10 @@ protected:
     GaussianSolver(const MapMat& G_,
                    const Eigen::Map<Eigen::VectorXd>& E_,
                    const Eigen::Map<Eigen::VectorXd>& Y_,
+                   const Eigen::Map<Eigen::MatrixXd>& C_,
                    const Eigen::Map<Eigen::VectorXd>& weights_,
                    bool normalize_) :
-      Solver<TG>(G_, E_, Y_, weights_, normalize_),
+      Solver<TG>(G_, E_, Y_, C_, weights_, normalize_),
       abs_res_by_G(p),
       abs_res_by_GxE(p),
       upperbound_nu_by_G(p),
@@ -88,9 +89,10 @@ protected:
     GaussianSolver(const MapSparseMat& G_,
                    const Eigen::Map<Eigen::VectorXd>& E_,
                    const Eigen::Map<Eigen::VectorXd>& Y_,
+                   const Eigen::Map<Eigen::MatrixXd>& C_,
                    const Eigen::Map<Eigen::VectorXd>& weights_,
                    bool normalize_) :
-    Solver<TG>(G_, E_, Y_, weights_, normalize_),
+    Solver<TG>(G_, E_, Y_, C_, weights_, normalize_),
     abs_res_by_G(p),
     abs_res_by_GxE(p),
     upperbound_nu_by_G(p),
@@ -101,7 +103,6 @@ protected:
     } 
 
     void init() {
-      abs_nu_by_G_uptodate = false;
       weights = weights_user;
       update_weighted_variables();
       Z_w = Y.cwiseProduct(weights);
@@ -130,18 +131,17 @@ protected:
         if (duality_gap < tolerance) {
           break;
         }
-        
         update_working_set(lambda_1, lambda_2, duality_gap, working_set_size);
         working_set_size = std::min(2 * working_set_size, p);
         
         active_set.setZero(p);
-        max_diff_tolerance = tolerance * 10;
+        max_diff_tolerance = tolerance * 4;
         while (num_passes < max_iterations) {
           inner_duality_gap = check_duality_gap(lambda_1, lambda_2, true);
           if (inner_duality_gap < tolerance) {
             break;
           } else {
-            max_diff_tolerance /= 10;
+            max_diff_tolerance /= 4;
           }
           
           while (num_passes < max_iterations) {

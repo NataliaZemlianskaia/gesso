@@ -19,19 +19,20 @@
 template <typename TG>
 void fitModelCVRcppSingleFold(const TG& G,
                               const Eigen::Map<Eigen::VectorXd>& E,
-                                const Eigen::Map<Eigen::VectorXd>& Y,
-                                const VecXd& fold_ids,
-                                const Rcpp::LogicalVector& normalize,
-                                const Eigen::VectorXd& grid,
-                                const std::string& family,
-                                double tolerance,
-                                int max_iterations,
-                                int min_working_set_size,
-                                int test_fold_id,
-                                Eigen::MatrixXd& test_loss,
-                                Eigen::MatrixXi& beta_g_nonzero,
-                                Eigen::MatrixXi& beta_gxe_nonzero,
-                                Eigen::MatrixXi& has_converged) {
+                              const Eigen::Map<Eigen::VectorXd>& Y,
+                              const Eigen::Map<Eigen::MatrixXd>& C,
+                              const VecXd& fold_ids,
+                              const Rcpp::LogicalVector& normalize,
+                              const Eigen::VectorXd& grid,
+                              const std::string& family,
+                              double tolerance,
+                              int max_iterations,
+                              int min_working_set_size,
+                              int test_fold_id,
+                              Eigen::MatrixXd& test_loss,
+                              Eigen::MatrixXi& beta_g_nonzero,
+                              Eigen::MatrixXi& beta_gxe_nonzero,
+                              Eigen::MatrixXi& has_converged) {
   const int n = fold_ids.size();
   Eigen::VectorXd weights(n);
   std::vector<int> test_idx;
@@ -49,11 +50,11 @@ void fitModelCVRcppSingleFold(const TG& G,
   std::unique_ptr<Solver<TG> > solver;
   if (family == "gaussian") {
     solver.reset(
-      new GaussianSolver<TG>(G, E, Y, weights_map, normalize[0]));
+      new GaussianSolver<TG>(G, E, Y, C, weights_map, normalize[0]));
   } 
   else if (family == "binomial") {
     solver.reset(
-      new BinomialSolver<TG>(G, E, Y, weights_map, normalize[0]));
+      new BinomialSolver<TG>(G, E, Y, C, weights_map, normalize[0]));
   }
 
   const int grid_size_squared = grid.size() * grid.size();
@@ -91,6 +92,7 @@ template <typename TG>
 Rcpp::List fitModelCVRcpp(const TG& G,
                           const Eigen::Map<Eigen::VectorXd>& E,
                           const Eigen::Map<Eigen::VectorXd>& Y,
+                          const Eigen::Map<Eigen::MatrixXd>& C,
                           const Rcpp::LogicalVector& normalize,
                           const Eigen::VectorXd& grid,
                           const std::string& family,
@@ -114,14 +116,14 @@ Rcpp::List fitModelCVRcpp(const TG& G,
 
   if (ncores == 1) {
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
-      fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, normalize, grid, family,
+      fitModelCVRcppSingleFold<TG>(G, E, Y, C, fold_ids, normalize, grid, family,
                            tolerance, max_iterations, min_working_set_size,
                            test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
   } else {
     RcppThread::ThreadPool pool(ncores);
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       pool.push([&, test_fold_id] {
-        fitModelCVRcppSingleFold<TG>(G, E, Y, fold_ids, normalize, grid,
+        fitModelCVRcppSingleFold<TG>(G, E, Y, C, fold_ids, normalize, grid,
                              family, tolerance, max_iterations, min_working_set_size,
                              test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
       });
@@ -140,6 +142,7 @@ Rcpp::List fitModelCVRcpp(const TG& G,
 Rcpp::List fitModelCV(SEXP G,
                       const Eigen::Map<Eigen::VectorXd>& E,
                       const Eigen::Map<Eigen::VectorXd>& Y,
+                      const Eigen::Map<Eigen::MatrixXd>& C,
                       const Rcpp::LogicalVector& normalize,
                       const Eigen::VectorXd& grid,
                       const std::string& family,
@@ -151,7 +154,7 @@ Rcpp::List fitModelCV(SEXP G,
                       int ncores,
                       int mattype_g) {
   if (mattype_g == 1) {
-    return fitModelCVRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y,
+    return fitModelCVRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y, C,
                                     normalize, grid,
                                     family, tolerance, max_iterations, min_working_set_size,
                                     nfolds, seed, ncores);    
@@ -159,13 +162,13 @@ Rcpp::List fitModelCV(SEXP G,
     Rcpp::S4 G_info(G);
     Rcpp::XPtr<BigMatrix> xptr((SEXP) G_info.slot("address"));
     MapMat Gmap((const double *)xptr->matrix(), xptr->nrow(), xptr->ncol());
-    return fitModelCVRcpp<MapMat>(Gmap, E, Y, normalize, grid,
+    return fitModelCVRcpp<MapMat>(Gmap, E, Y, C, normalize, grid,
                                   family, tolerance, max_iterations, min_working_set_size,
                                   nfolds, seed, ncores);
   } else {
     Rcpp::NumericMatrix G_mat(G);
     MapMat Gmap((const double *) &G_mat[0], G_mat.rows(), G_mat.cols());
-    return fitModelCVRcpp<MapMat>(Gmap, E, Y, normalize, grid,
+    return fitModelCVRcpp<MapMat>(Gmap, E, Y, C, normalize, grid,
                                   family, tolerance, max_iterations, min_working_set_size,
                                   nfolds, seed, ncores);
   }
