@@ -12,25 +12,36 @@ compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio=1e-4) {
   max_G_by_Yn_abs = 0 
   max_GxE_by_Yn_abs = 0
   
-  for (i in 1:p) {
-    cur_G_by_Yn_abs = abs(Y %*% G[,i])[1,1] / n
-    cur_GxE_by_Yn_abs = abs((Y * E) %*% G[,i])[1,1] / n
-    
+  if (is.big.matrix(G)){
+    for (i in 1:p) {
+      cur_G_by_Yn_abs = abs(Y %*% G[,i])[1,1] / n
+      cur_GxE_by_Yn_abs = abs((Y * E) %*% G[,i])[1,1] / n
+      
+      if (normalize) {
+        std_G = std(G[,i])
+        cur_G_by_Yn_abs = cur_G_by_Yn_abs / std_G
+        cur_GxE_by_Yn_abs = cur_GxE_by_Yn_abs / (std_G * std_E)
+      }
+      
+      if (cur_G_by_Yn_abs > max_G_by_Yn_abs) {
+        max_G_by_Yn_abs = cur_G_by_Yn_abs
+      }
+      if (cur_GxE_by_Yn_abs > max_GxE_by_Yn_abs) {
+        max_GxE_by_Yn_abs = cur_GxE_by_Yn_abs
+      }
+    }
+    lambda_max = max(c(max_G_by_Yn_abs, max_GxE_by_Yn_abs))
+  } else {
+    G_by_Yn_abs = abs(Y %*% G)[1,] / n
+    GxE_by_Yn_abs = abs((Y * E) %*% G)[1,] / n  
     if (normalize) {
-      std_G = std(G[,i])
-      cur_G_by_Yn_abs = cur_G_by_Yn_abs / std_G
-      cur_GxE_by_Yn_abs = cur_GxE_by_Yn_abs / (std_G * std_E)
+      std_G = colStd(G)
+      G_by_Yn_abs = G_by_Yn_abs / std_G
+      GxE_by_Yn_abs = GxE_by_Yn_abs / (std_G * std(E))
     }
-    
-    if (cur_G_by_Yn_abs > max_G_by_Yn_abs) {
-      max_G_by_Yn_abs = cur_G_by_Yn_abs
-    }
-    if (cur_GxE_by_Yn_abs > max_GxE_by_Yn_abs) {
-      max_GxE_by_Yn_abs = cur_GxE_by_Yn_abs
-    }
+    lambda_max = max(c(G_by_Yn_abs, GxE_by_Yn_abs))
   }
   
-  lambda_max = max(c(max_G_by_Yn_abs, max_GxE_by_Yn_abs))
   lambda_min = grid_min_ratio * lambda_max
   grid = 10^seq(log10(lambda_min), log10(lambda_max), length.out=grid_size)
   return(grid)
