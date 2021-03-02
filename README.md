@@ -6,6 +6,16 @@ The package is developed to fit a regularized regression model that we call **hi
 
 **hierNetGxE** model induces hierarchical selection of the (GxE) interaction terms via convex constraints added to the objective function. The model has two tuning parameters λ1 and λ2 responsible for the model sparsity with respect to main effects and interactions respectively.
 
+## Introduction
+`hierNetGxE` package can be used
+
+ * for the selection of the gene-environment interaction terms in a joint "main-effect-before-interaction" hierarchical manner
+ * for building a joint *correctly spesified* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
+ 
+The package supports sparse matrices `dgCMatrix` and (filebacked) bigmatrix format from the `bigmemory` package for large or out of RAM datasets. 
+
+For more information and examples please see package vignette.
+
 ## Installation
 ```R
 ## install.packages("devtools")
