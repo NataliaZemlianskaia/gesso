@@ -1,9 +1,8 @@
 context("weighted fit")
 
 test_that("fit with half zero weights", {
-  tol = 1e-4
   grid_size = 20
-  max_iterations = 2000
+  max_iterations = 20000
   sample_size = 300
   n_g_non_zero = 10
   n_gxe_non_zero = 5
@@ -11,8 +10,10 @@ test_that("fit with half zero weights", {
     for (family in c("gaussian", "binomial")) {
       if (family == "gaussian") {
         p = 30
+        tol = 1e-4
       } else {
         p = 100
+        tol = 1e-3
       }
       data = data.gen(seed=seed, family=family,
                       p=p, sample_size=sample_size,

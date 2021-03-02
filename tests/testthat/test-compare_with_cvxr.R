@@ -2,8 +2,8 @@ context("compare with cvxr")
 
 test_that("training loss is similar to the fit by CVXR", {
   grid = 10^seq(-4, log10(1), length.out=10) 
-  tols = c(1e-4, 1e-5, 1e-6)
-  max_iterations = 10000
+  tols = c(1e-4)
+  max_iterations = 20000
 
   for (family in c("gaussian", "binomial")){
     for (seed in 1:3) {
