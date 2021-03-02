@@ -145,13 +145,15 @@ protected:
           }
           
           while (num_passes < max_iterations) {
-            max_diff = update_b_for_working_set(lambda_1, lambda_2, false);
+            max_diff = update_intercept();
+            max_diff = std::max(max_diff, update_b_for_working_set(lambda_1, lambda_2, false));
             num_passes += 1;
             if (max_diff < max_diff_tolerance) {
               break;
             }
             while (num_passes < max_iterations && max_diff >= max_diff_tolerance) {
-              max_diff = update_b_for_working_set(lambda_1, lambda_2, true);
+              max_diff = update_intercept();
+              max_diff = std::max(max_diff, update_b_for_working_set(lambda_1, lambda_2, true));
               num_passes += 1;
             }
           }
@@ -163,11 +165,6 @@ protected:
     double compute_dual_objective(double x_opt) {
       temp_n = Y - xbeta;
       return x_opt  * triple_dot_product(temp_n, weights, Y) - x_opt * x_opt * weighted_squared_norm(temp_n, weights) / 2;
-    }
-    
-    double find_scalar_for_naive_projection() {
-      temp_n = Y - xbeta;
-      return triple_dot_product(temp_n, Y, weights) / triple_dot_product(temp_n, temp_n, weights);
     }
     
     double naive_projection(double lambda_1, double lambda_2, const Eigen::Ref<VecXd>& abs_res_by_G, const Eigen::Ref<VecXd>& abs_res_by_GxE) {
@@ -182,7 +179,8 @@ protected:
           M = std::min(M, (lambda_2 + temp_p[i]) / abs_res_by_GxE[i]);
         }      
       }
-      double x_hat = find_scalar_for_naive_projection();
+      temp_n = Y - xbeta;
+      double x_hat = triple_dot_product(temp_n, Y, weights) / triple_dot_product(temp_n, temp_n, weights);
       double x_opt;
       if (std::abs(x_hat) <= M) {
         x_opt = x_hat;

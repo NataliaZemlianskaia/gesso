@@ -1,3 +1,5 @@
+library(bigmemory)
+
 compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio=1e-4) {
   std = function(x) {
     mx = mean(x)
@@ -32,6 +34,16 @@ compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio=1e-4) {
     }
     lambda_max = max(c(max_G_by_Yn_abs, max_GxE_by_Yn_abs))
   } else {
+    
+    std = function(x) {
+      mx = mean(x)
+      return(sqrt(mean((x - mx)^2)))
+    }
+    
+    colStd = function(x) {
+      return(apply(x, 2, std))
+    }    
+    
     G_by_Yn_abs = abs(Y %*% G)[1,] / n
     GxE_by_Yn_abs = abs((Y * E) %*% G)[1,] / n  
     if (normalize) {
@@ -174,9 +186,10 @@ hierNetGxE.coef = function(fit, lambda){
  beta_0 = fit$beta_0[lambda_idx]
  beta_e = fit$beta_e[lambda_idx]
  beta_g = fit$beta_g[lambda_idx,]
+ beta_c = fit$beta_c[lambda_idx,]
  beta_gxe = fit$beta_gxe[lambda_idx,]
  
- return(list(beta_0=beta_0, beta_e=beta_e, beta_g=beta_g, beta_gxe=beta_gxe))
+ return(list(beta_0=beta_0, beta_e=beta_e, beta_g=beta_g, beta_c=beta_c, beta_gxe=beta_gxe))
 }
   
 hierNetGxE.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
@@ -207,15 +220,19 @@ hierNetGxE.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
   return(hierNetGxE.coef(fit, best_lambdas))
 }
 
-hierNetGxE.predict = function(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, 
+hierNetGxE.predict = function(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, beta_c=NULL,new_C=NULL,
                               family="gaussian"){
   new_GxE = new_G * new_E
-  lp = (beta_0 + beta_e * new_E +  new_G %*% beta_g + new_GxE %*% beta_gxe)[,1]
+  if (is.null(new_C)){
+    lp = (beta_0 + beta_e * new_E +  new_G %*% beta_g + new_GxE %*% beta_gxe)[,1]
+  } else {
+    lp = (beta_0 + beta_e * new_E +  new_G %*% beta_g + new_C %*% beta_c + new_GxE %*% beta_gxe)[,1]
+  }
   
   if (family == "gaussian"){
     return(lp)
   } else if (family == "binomial"){
-    prob = 1/(1+exp(-lp))
+    prob = 1/(1 + exp(-lp))
     return(prob)
   }
 }
