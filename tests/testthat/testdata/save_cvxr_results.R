@@ -4,7 +4,7 @@ tol = 1e-6
 max_iterations = 10000
 
 for (family in c("gaussian", "binomial")){
-  for (seed in 1:3) {
+  for (seed in 2:2) {
     cat("---", seed, family, "\n")
     data = data.gen(sample_size=200, p=50, 
                     n_g_non_zero=10, n_gxe_non_zero=4, 
@@ -22,9 +22,8 @@ for (family in c("gaussian", "binomial")){
                          max_iterations=max_iterations)
     print(Sys.time() - start)
     
-    print(sum(fit$num_iterations >= max_iterations))
-    print(max(fit$num_iterations))
-    
+    cat("-- hierNetGxE.fit done in ", Sys.time() - start, " seconds. num not converged ", sum(1 - fit$has_converged), "\n")    
+
     cvxr_fit = hierNetGxE.cvxr(data$G_train, data$E_train, data$GxE_train, data$Y_train,
                                grid=grid, tol=tol, family=family)
     

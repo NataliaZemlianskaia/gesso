@@ -20,10 +20,11 @@ glmnet.loss = function(G, Y, b_0, b_x, lambda, penalty.factor, family="gaussian"
 grid_size = 10
 grid = 10^seq(-4, log10(1), length.out=grid_size) 
 grid = rev(grid)
-max_iterations = 10000
+max_iterations = 20000
+tol = 1e-4
 
-for (family in c("binomial")){
-  for (seed in 1:15) {
+for (family in c("gaussian", "binomial")){
+  for (seed in 1:20) {
     if (seed <= 5) {
       sample_size = 200
       p = 50
@@ -32,11 +33,16 @@ for (family in c("binomial")){
       sample_size = 200
       p = 50
       n_confounders = 2
-    } else if (seed <= 10) {
+    } else if (seed <= 15) {
       sample_size = 100
       p = 500
       n_confounders = 5
+    } else {
+      sample_size = 200
+      p = 500
+      n_confounders = 10
     }
+    
     cat("-", seed, family, "\n")
     data = data.gen(sample_size=sample_size, p=p, 
                     n_g_non_zero=10, n_gxe_non_zero=4, 
@@ -51,7 +57,7 @@ for (family in c("binomial")){
     start = Sys.time()
     fit = hierNetGxE.fit(G=data$G_train, E=rep(0, sample_size),
                          Y=data$Y_train, C=data$C_train,
-                         tolerance=1e-4, grid=grid, family=family, 
+                         tolerance=tol, grid=grid, family=family, 
                          normalize=FALSE,
                          max_iterations=max_iterations)
     cat("-- hierNetGxE.fit done in ", Sys.time() - start, " seconds. num not converged ", sum(1 - fit$has_converged), "\n")
@@ -63,6 +69,7 @@ for (family in c("binomial")){
                         lambda=grid, thresh=1e-14,
                         intercept=TRUE, standardize.response=FALSE,
                         standardize=FALSE,
+                        family=family,
                         penalty.factor=penalty.factor)
     objective_value = c()
     for (i in 1:grid_size) {

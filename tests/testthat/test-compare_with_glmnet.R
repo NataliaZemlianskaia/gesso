@@ -5,12 +5,15 @@ test_that("training loss is similar to the fit by glmnet when E=0", {
   grid = 10^seq(-4, log10(1), length.out=grid_size) 
   grid = rev(grid)
   
-  tol = 1e-5
+  max_iterations = 20000
   
-  max_iterations = 10000
-  
-  for (family in c("gaussian")){
-    for (seed in 1:15) {
+  for (family in c("gaussian", "binomial")){
+    if (family == "gaussian") {
+      tol = 1e-4
+    } else {
+      tol = 1e-4
+    }
+    for (seed in 1:20) {
       file_name = paste0("testdata/compare_with_glmnet/", seed, "_", family, "_data.rds")
       data = readRDS(file_name)
       
@@ -22,7 +25,7 @@ test_that("training loss is similar to the fit by glmnet when E=0", {
       fit = hierNetGxE.fit(G=data$G_train, E=rep(0, sample_size),
                            Y=data$Y_train, C=data$C_train,
                            tolerance=tol, grid=grid, family=family, 
-                           normalize=FALSE, max_iterations)
+                           normalize=FALSE, max_iterations=max_iterations)
       expect_equal(sum(fit$has_converged != 1), 0)
       expect_lt(max(fit$objective_value - rep(glmnet_fit$objective_value, rep(grid_size, grid_size))), tol)
     }
