@@ -29,6 +29,7 @@ Note that the number of estimated non-zero interactions will only approximately 
   \item{beta_e}{estimated environmental coefficient value}
   \item{beta_g}{a vector of estimated main effect coefficients}
   \item{beta_gxe}{a vector of estimated interaction coefficients}
+  \item{beta_c}{a vector of estimated confounders coefficients}
 }
 \references{
 %% ~put references to the literature/web site here ~

@@ -23,6 +23,7 @@ A list of model coefficients corresponding to \code{lambda} values of tuning par
   \item{beta_0 }{estimated intercept value}
   \item{beta_e}{estimated environmental coefficient value}
   \item{beta_g}{a vector of estimated main effect coefficients}
+  \item{beta_c}{a vector of estimated confounders coefficients}
   \item{beta_gxe}{a vector of estimated interaction coefficients}
 }
 \references{

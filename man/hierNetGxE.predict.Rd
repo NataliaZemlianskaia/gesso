@@ -8,7 +8,8 @@ Predict new outcome vector
 Predict new outcome vector based on the new data and estimated model coefficients.
 }
 \usage{
-hierNetGxE.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, family = "gaussian")
+hierNetGxE.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, 
+                   beta_c=NULL, new_C=NULL, family = "gaussian")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -16,8 +17,10 @@ hierNetGxE.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, family = "gau
   \item{beta_e}{estimated environmental coefficient value}
   \item{beta_g}{a vector of estimated main effect coefficients}
   \item{beta_gxe}{a vector of estimated interaction coefficients}
-  \item{new_G}{matrix of main effects, predictors organized by columns}
+  \item{new_G}{matrix of main effects, variables organized by columns}
   \item{new_E}{vector of environmental measurments}
+  \item{beta_c}{a vector of estimated confounders coefficients}
+  \item{new_C}{matrix of confounders, variables organized by columns}
   \item{family}{set \code{family="gaussian"} for the continuous outcome and 
           \code{family="binomial"} for the binary outcome with 0/1 levels}
 }
