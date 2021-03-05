@@ -216,10 +216,10 @@ protected:
           } else {
             if (!is_first_iteration && num_updates_b_for_working_set <= 1) {
               max_diff_tolerance /= 4;
-            } else {
-              update_quadratic_approximation();
-              update_weighted_variables();
             }
+            update_quadratic_approximation();
+            update_weighted_variables();
+
             num_updates_b_for_working_set = 0;
             is_first_iteration = false;
           }
@@ -265,7 +265,11 @@ protected:
       return result;
     }
     
-    double naive_projection(double lambda_1, double lambda_2, const Eigen::Ref<VecXd>& abs_nu_by_G, const Eigen::Ref<VecXd>& abs_nu_by_GxE) {
+    double naive_projection(double lambda_1,
+                            double lambda_2,
+                            const Eigen::Ref<VecXd>& abs_nu_by_G,
+                            const Eigen::Ref<VecXd>& abs_nu_by_GxE,
+                            const VecXd& nu) {
       temp_p = (lambda_1 * abs_nu_by_GxE - lambda_2 * abs_nu_by_G).cwiseQuotient(abs_nu_by_GxE + abs_nu_by_G).cwiseMax(0).cwiseMin(lambda_1);
       double M = std::numeric_limits<double>::infinity();
       for (int i = 0; i < abs_nu_by_G.size(); ++i) {
@@ -275,12 +279,10 @@ protected:
         if (abs_nu_by_GxE[i] > 0) {
           M = std::min(M, (lambda_2 + temp_p[i]) / abs_nu_by_GxE[i]);
         }
-        
       }
-      //double x_hat = 1;
-      double x_hat = triple_dot_product(nu, Y.array() - 0.5, weights_user) / triple_dot_product(nu, nu, weights_user);
-      x_hat = std::min(x_hat, 1.0);
-      
+      double x_hat = 1;
+      //double x_hat = triple_dot_product(nu, Y.array() - 0.5, weights_user) / triple_dot_product(nu, nu, weights_user);
+      //x_hat = std::min(x_hat, 1.0);
       double x_opt;
       if (std::abs(x_hat) <= M) {
         x_opt = x_hat;
@@ -296,7 +298,7 @@ protected:
         abs_nu_by_GxE = (nu.cwiseProduct(weights_user).cwiseProduct(E).transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g) * normalize_weights_e;
         abs_nu_by_G_uptodate = false;
       }
-      x_opt = naive_projection(lambda_1, lambda_2, abs_nu_by_G, abs_nu_by_GxE);
+      x_opt = naive_projection(lambda_1, lambda_2, abs_nu_by_G, abs_nu_by_GxE, nu);
       nu *= x_opt;
       abs_nu_by_G *= x_opt;
       abs_nu_by_GxE *= x_opt;
@@ -311,13 +313,12 @@ protected:
       //abs_inner_nu_by_GxE.conservativeResize(working_set.size());
       abs_inner_nu_by_G.setZero(working_set.size());
       abs_inner_nu_by_GxE.setZero(working_set.size());
-      //VecXd res_w
       temp_n = inner_nu.cwiseProduct(weights_user);
       for (int i = 0; i < working_set.size(); ++i) {
         abs_inner_nu_by_G[i] = std::abs(G.col(working_set[i]).dot(temp_n)) * normalize_weights_g[working_set[i]];
         abs_inner_nu_by_GxE[i] = std::abs(G.col(working_set[i]).dot(temp_n.cwiseProduct(E))) * normalize_weights_g[working_set[i]] * normalize_weights_e;
       }
-      double x_opt = naive_projection(lambda_1, lambda_2, abs_inner_nu_by_G, abs_inner_nu_by_GxE);
+      double x_opt = naive_projection(lambda_1, lambda_2, abs_inner_nu_by_G, abs_inner_nu_by_GxE, inner_nu);
       inner_nu *= x_opt;
     }
     
@@ -339,7 +340,7 @@ protected:
       return primal_objective - dual_objective;
     }    
     
-    void update_nu_for_intercept(int num_passes, int max_iterations, VecXd& nu) {
+    int update_nu_for_intercept(int num_passes, int max_iterations, VecXd& nu) {
       while (num_passes < max_iterations) {
         mu = sigmoid(xbeta);
         nu = Y - mu;
@@ -359,6 +360,7 @@ protected:
         abs_nu_by_G_uptodate = false;
         ++num_passes;
       }
+      return num_passes;
     }
     
     void update_working_set(double lambda_1, double lambda_2, double dual_gap, int working_set_size) {

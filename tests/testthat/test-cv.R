@@ -3,7 +3,7 @@ context("cross-validation")
 test_that("cv and fit return same results on individual folds", {
   tol = 1e-4
   grid_size = 20
-  max_iterations = 2000
+  max_iterations = 5000
   sample_size = 300
   n_g_non_zero = 10
   n_gxe_non_zero = 5

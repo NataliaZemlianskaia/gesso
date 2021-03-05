@@ -13,7 +13,7 @@ test_that("fit with half zero weights", {
         tol = 1e-4
       } else {
         p = 100
-        tol = 1e-3
+        tol = 1e-4
       }
       data = data.gen(seed=seed, family=family,
                       p=p, sample_size=sample_size,

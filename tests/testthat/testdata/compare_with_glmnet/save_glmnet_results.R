@@ -21,7 +21,7 @@ grid_size = 10
 grid = 10^seq(-4, log10(1), length.out=grid_size) 
 grid = rev(grid)
 max_iterations = 20000
-tol = 1e-4
+tol = 1e-5
 
 for (family in c("gaussian", "binomial")){
   for (seed in 1:20) {
@@ -66,7 +66,7 @@ for (family in c("gaussian", "binomial")){
     penalty.factor = rep(0, ncol(glmnet_X))
     penalty.factor[1:ncol(data$G_train)] = 1
     glmnet_fit = glmnet(x=glmnet_X, y=data$Y_train,
-                        lambda=grid, thresh=1e-14,
+                        lambda=grid, thresh=1e-10,
                         intercept=TRUE, standardize.response=FALSE,
                         standardize=FALSE,
                         family=family,
