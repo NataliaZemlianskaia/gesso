@@ -1,6 +1,6 @@
 # gesso
 
-The package is developed to fit a regularized regression model that we call **gesso** for the joint selection of gene-environment (GxE) interactions based on the hierarchical lasso [Bien et al. (2013)]. The model focuses on a single environmental exposure and induces a "main-effect-before-interaction" hierarchical structure. Unlike the original hierarchical lasso model, which was designed for the gene-gene (GxG) interaction case, the GxE model has a simpler block-separable structure that  makes it possible to fit in large-scale applications. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
+The package is developed to fit a regularized regression model that we call **gesso** for the joint selection of gene-environment (GxE) interactions. The model focuses on a single environmental exposure and induces a "main-effect-before-interaction" hierarchical structure. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
 
 <img src="./man/figures/hierNet_model.png" width="552" height="170.4">
 
@@ -10,7 +10,7 @@ The package is developed to fit a regularized regression model that we call **ge
 `gesso` package can be used
 
  * for the selection of the gene-environment interaction terms in a joint "main-effect-before-interaction" hierarchical manner
- * for building a joint *correctly spesified* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
+ * for building a joint *correctly specified* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
  
 The package supports sparse matrices `dgCMatrix` and (filebacked) bigmatrix format from the `bigmemory` package for large or out of RAM datasets. 
 
