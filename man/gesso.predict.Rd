@@ -1,5 +1,5 @@
-\name{hierNetGxE.predict}
-\alias{hierNetGxE.predict}
+\name{gesso.predict}
+\alias{gesso.predict}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Predict new outcome vector
@@ -8,7 +8,7 @@ Predict new outcome vector
 Predict new outcome vector based on the new data and estimated model coefficients.
 }
 \usage{
-hierNetGxE.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, 
+gesso.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, 
                    beta_c=NULL, new_C=NULL, family = "gaussian")
 }
 %- maybe also 'usage' for other objects documented here.
@@ -47,13 +47,13 @@ Natalia Zemlianskaia
 }
 \examples{
 data = data.gen(sample_size=100, p=200)
-tune_model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train)
-coefficients = hierNetGxE.coef(tune_model$fit, tune_model$lambda_min)
+tune_model = gesso.cv(data$G_train, data$E_train, data$Y_train)
+coefficients = gesso.coef(tune_model$fit, tune_model$lambda_min)
 beta_0 = coefficients$beta_0; beta_e = coefficients$beta_e                   
 beta_g = coefficients$beta_g; beta_gxe = coefficients$beta_gxe     
 
 new_G = data$G_test; new_E = data$E_test
-new_Y = hierNetGxE.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E)
+new_Y = gesso.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E)
 cor(new_Y, data$Y_test)^2
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

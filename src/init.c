@@ -8,16 +8,16 @@
  */
 
 /* .Call calls */
-extern SEXP _hierNetGxE_fitModel(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _hierNetGxE_fitModelCV(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _gesso_fitModel(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _gesso_fitModelCV(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-  {"_hierNetGxE_fitModel",   (DL_FUNC) &_hierNetGxE_fitModel,   12},
-  {"_hierNetGxE_fitModelCV", (DL_FUNC) &_hierNetGxE_fitModelCV, 14},
+  {"_gesso_fitModel",   (DL_FUNC) &_gesso_fitModel,   12},
+  {"_gesso_fitModelCV", (DL_FUNC) &_gesso_fitModelCV, 14},
   {NULL, NULL, 0}
 };
 
-void R_init_hierNetGxE(DllInfo *dll)
+void R_init_gesso(DllInfo *dll)
 {
   R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
   R_useDynamicSymbols(dll, FALSE);

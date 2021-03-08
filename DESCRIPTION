@@ -1,4 +1,4 @@
-Package: hierNetGxE
+Package: gesso
 Type: Package
 Title: Hierarchical Selection of Interacton Terms in a Regularized Regression Model
 Version: 1.0

@@ -1,25 +1,25 @@
-\name{hierNetGxE-package}
-\alias{hierNetGxE-package}
-\alias{hierNetGxE}
+\name{gesso-package}
+\alias{gesso-package}
+\alias{gesso}
 \docType{package}
 \title{
-\packageTitle{hierNetGxE}
+\packageTitle{gesso}
 }
 \description{
-\packageDescription{hierNetGxE}
+\packageDescription{gesso}
 }
 \details{
 
 The DESCRIPTION file:
-\packageDESCRIPTION{hierNetGxE}
-\packageIndices{hierNetGxE}
+\packageDESCRIPTION{gesso}
+\packageIndices{gesso}
 ~~ An overview of how to use the package, including the most important ~~
 ~~ functions ~~
 }
 \author{
-\packageAuthor{hierNetGxE}
+\packageAuthor{gesso}
 
-Maintainer: \packageMaintainer{hierNetGxE}
+Maintainer: \packageMaintainer{gesso}
 }
 \references{
 ~~ Literature or other references for background information ~~

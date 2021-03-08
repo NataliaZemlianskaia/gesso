@@ -26,7 +26,7 @@ test_that("fit with half zero weights", {
       weights[half_samples] = 1
       weights = weights / half_n
       
-      fit_full_data = hierNetGxE.fit(data$G_train,
+      fit_full_data = gesso.fit(data$G_train,
                                      data$E_train,
                                      data$Y_train,
                                      tolerance=tol,
@@ -37,7 +37,7 @@ test_that("fit with half zero weights", {
                                      normalize=TRUE)
       expect_equal(sum(fit_full_data$has_converged != 1), 0)
       
-      fit_half_data = hierNetGxE.fit(data$G_train[half_samples,],
+      fit_half_data = gesso.fit(data$G_train[half_samples,],
                                      data$E_train[half_samples],
                                      data$Y_train[half_samples],
                                      tolerance=tol,

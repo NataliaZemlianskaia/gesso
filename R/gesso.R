@@ -60,7 +60,7 @@ compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio=1e-4) {
 }
 
 
-hierNetGxE.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, 
+gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, 
                           grid_min_ratio=1e-4, family="gaussian", weights=NULL,
                           tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   if (is(G, "matrix")) {
@@ -100,7 +100,7 @@ hierNetGxE.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=
   return(fit)
 }
 
-hierNetGxE.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, grid_min_ratio=1e-4, 
+gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, grid_min_ratio=1e-4, 
                          family="gaussian",
                          nfolds=4, parallel=TRUE, seed=42,
                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
@@ -181,7 +181,7 @@ hierNetGxE.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=2
               full_cv_result=result))
 }
 
-hierNetGxE.coef = function(fit, lambda){
+gesso.coef = function(fit, lambda){
  lambda_idx = which(fit$lambda_1 == lambda$lambda_1 & fit$lambda_2 == lambda$lambda_2)
  beta_0 = fit$beta_0[lambda_idx]
  beta_e = fit$beta_e[lambda_idx]
@@ -192,7 +192,7 @@ hierNetGxE.coef = function(fit, lambda){
  return(list(beta_0=beta_0, beta_e=beta_e, beta_g=beta_g, beta_c=beta_c, beta_gxe=beta_gxe))
 }
   
-hierNetGxE.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
+gesso.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
   cv_result = cv_model$cv_result; fit = cv_model$fit
   if (less_than){
   # best_lambdas = cv_result %>%
@@ -217,10 +217,10 @@ hierNetGxE.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
       select(lambda_1, lambda_2)
   }
   
-  return(hierNetGxE.coef(fit, best_lambdas))
+  return(gesso.coef(fit, best_lambdas))
 }
 
-hierNetGxE.predict = function(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, beta_c=NULL,new_C=NULL,
+gesso.predict = function(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, beta_c=NULL,new_C=NULL,
                               family="gaussian"){
   new_GxE = new_G * new_E
   if (is.null(new_C)){

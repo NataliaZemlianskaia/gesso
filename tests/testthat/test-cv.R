@@ -14,7 +14,7 @@ test_that("cv and fit return same results on individual folds", {
       data = data.gen(seed=seed, sample_size=sample_size,
                       family=family, normalize=TRUE)
       
-      cv = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train,
+      cv = gesso.cv(data$G_train, data$E_train, data$Y_train,
                          normalize=FALSE, grid_size=grid_size,
                          family=family, nfolds=nfolds, seed=seed)
       expect_equal(sum(cv$full_cv_result$has_converged != 1), 0)
@@ -24,7 +24,7 @@ test_that("cv and fit return same results on individual folds", {
         weights[cv$full_cv_result$fold_ids != fold_id] = 1
         weights = weights / sum(weights)
         
-        fit = hierNetGxE.fit(data$G_train, data$E_train, data$Y_train,
+        fit = gesso.fit(data$G_train, data$E_train, data$Y_train,
                              tolerance=tol,
                              grid=cv$grid,
                              family=family,
@@ -42,7 +42,7 @@ test_that("cv and fit return same results on individual folds", {
         for (i in 1:length(fit$lambda_1)) {
           lambda_1 = fit$lambda_1[i]
           lambda_2 = fit$lambda_2[i]
-          xbeta = hierNetGxE.predict(fit$beta_0[i], fit$beta_e[i], fit$beta_g[i,],
+          xbeta = gesso.predict(fit$beta_0[i], fit$beta_e[i], fit$beta_g[i,],
                                          fit$beta_gxe[i,], test_G, test_E, family="gaussian")
           if (family == "gaussian") {
             test_loss[i] = sum((test_Y - xbeta)^2) / test_sample_size

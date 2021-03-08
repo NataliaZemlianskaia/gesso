@@ -1,5 +1,5 @@
-\name{hierNetGxE.coefnum}
-\alias{hierNetGxE.coefnum}
+\name{gesso.coefnum}
+\alias{gesso.coefnum}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Get model coefficients with specified number of non-zero interactions 
@@ -8,11 +8,11 @@ Get model coefficients with specified number of non-zero interactions
 Get coefficients with \code{target_b_gxe_non_zero} specified to control the desired sparsity of interactions in the model.
 }
 \usage{
-hierNetGxE.coefnum(cv_model, target_b_gxe_non_zero, less_than = TRUE)
+gesso.coefnum(cv_model, target_b_gxe_non_zero, less_than = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{cv_model}{cross-validated model fit object obtained by using function \code{hierNetGxE.cv}}
+  \item{cv_model}{cross-validated model fit object obtained by using function \code{gesso.cv}}
   \item{target_b_gxe_non_zero}{number of non-zero interactions we want to inlcude in the model}
   \item{less_than}{\code{TRUE} if we want to control a number of \emph{at most} non-zero interactions, \code{FALSE} if we want to control a number of \emph{at least} non-zero interactions}
 }
@@ -48,8 +48,8 @@ Natalia Zemlianskaia
 }
 \examples{
 data = data.gen(sample_size=100, p=500)
-model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train)
-model_coefficients = hierNetGxE.coefnum(model, 5)
+model = gesso.cv(data$G_train, data$E_train, data$Y_train)
+model_coefficients = gesso.coefnum(model, 5)
 gxe_coefficients = model_coefficients$beta_gxe; sum(gxe_coefficients!=0)              
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

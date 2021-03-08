@@ -1,6 +1,6 @@
 context("data normalization")
 
-test_that("data normalization inside hierNetGxE.fit as if data was normalized", {
+test_that("data normalization inside gesso.fit as if data was normalized", {
   tol = 1e-4
   grid_size = 10
   max_iterations = 1000
@@ -9,7 +9,7 @@ test_that("data normalization inside hierNetGxE.fit as if data was normalized", 
       data_not_normalized = data.gen(seed=seed, family=family, normalize=FALSE)
       data_normalized = data.gen(seed=seed, family=family, normalize=TRUE)
       
-      fit_data_normalized = hierNetGxE.fit(data_normalized$G_train,
+      fit_data_normalized = gesso.fit(data_normalized$G_train,
                                            data_normalized$E_train,
                                            data_normalized$Y_train,
                                            tolerance=tol,
@@ -19,7 +19,7 @@ test_that("data normalization inside hierNetGxE.fit as if data was normalized", 
                                            normalize=FALSE)
       expect_equal(sum(fit_data_normalized$has_converged != 1), 0)
       
-      fit_normalized = hierNetGxE.fit(data_not_normalized$G_train,
+      fit_normalized = gesso.fit(data_not_normalized$G_train,
                                       data_not_normalized$E_train,
                                       data_not_normalized$Y_train,
                                       tolerance=tol,

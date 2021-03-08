@@ -52,9 +52,9 @@ Natalia Zemlianskaia
 }
 \examples{
 data = data.gen(sample_size=100, p=500)
-model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train)
-gxe_coefficients = hierNetGxE.coef(model$fit, model$lambda_min)$beta_gxe                
-g_coefficients = hierNetGxE.coef(model$fit, model$lambda_min)$beta_g  
+model = gesso.cv(data$G_train, data$E_train, data$Y_train)
+gxe_coefficients = gesso.coef(model$fit, model$lambda_min)$beta_gxe                
+g_coefficients = gesso.coef(model$fit, model$lambda_min)$beta_g  
 selection.metrics(data$Beta_G, data$Beta_GxE, g_coefficients, gxe_coefficients)
 
 }

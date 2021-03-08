@@ -1,4 +1,4 @@
 Sys.setenv("R_TESTS" = "")
 library(testthat)
-library(hierNetGxE)
-test_check("hierNetGxE")
+library(gesso)
+test_check("gesso")

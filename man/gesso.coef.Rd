@@ -1,5 +1,5 @@
-\name{hierNetGxE.coef}
-\alias{hierNetGxE.coef}
+\name{gesso.coef}
+\alias{gesso.coef}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Get model coefficients
@@ -8,11 +8,11 @@ Get model coefficients
 A function to obtain model coefficients from the model fit functions corresponding to the desired pair of tuning paramenters \code{lambda} = (\code{lambda_1}, \code{lambda_2}).
 }
 \usage{
-hierNetGxE.coef(fit, lambda)
+gesso.coef(fit, lambda)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{fit}{model fit object obtained either by using function \code{hierNetGxE.fit} or  \code{hierNetGxE.cv}}
+  \item{fit}{model fit object obtained either by using function \code{gesso.fit} or  \code{gesso.cv}}
   \item{lambda}{a pair of tuning parameters organized in a tibble (ex: \code{lambda = tibble(lambda_1=grid[1], lambda_2=grid[1])})}
 }
 \details{
@@ -43,10 +43,10 @@ Natalia Zemlianskaia
 }
 \examples{
 data = data.gen(sample_size=100, p=500)
-model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train, grid_size=20, 
+model = gesso.cv(data$G_train, data$E_train, data$Y_train, grid_size=20, 
         parallel=TRUE, nfolds=3)
-gxe_coefficients = hierNetGxE.coef(model$fit, model$lambda_min)$beta_gxe                
-g_coefficients = hierNetGxE.coef(model$fit, model$lambda_min)$beta_g     
+gxe_coefficients = gesso.coef(model$fit, model$lambda_min)$beta_gxe                
+g_coefficients = gesso.coef(model$fit, model$lambda_min)$beta_g     
 }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the

@@ -2,10 +2,10 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 fitModelCV <- function(G, E, Y, C, normalize, grid, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, ncores, mattype_g) {
-    .Call('_hierNetGxE_fitModelCV', PACKAGE = 'hierNetGxE', G, E, Y, C, normalize, grid, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, ncores, mattype_g)
+    .Call('_gesso_fitModelCV', PACKAGE = 'gesso', G, E, Y, C, normalize, grid, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, ncores, mattype_g)
 }
 
 fitModel <- function(G, E, Y, C, weights, normalize, grid, family, tolerance, max_iterations, min_working_set_size, mattype_g) {
-    .Call('_hierNetGxE_fitModel', PACKAGE = 'hierNetGxE', G, E, Y, C, weights, normalize, grid, family, tolerance, max_iterations, min_working_set_size, mattype_g)
+    .Call('_gesso_fitModel', PACKAGE = 'gesso', G, E, Y, C, weights, normalize, grid, family, tolerance, max_iterations, min_working_set_size, mattype_g)
 }
 

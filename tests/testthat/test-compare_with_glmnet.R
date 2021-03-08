@@ -19,7 +19,7 @@ test_that("training loss is similar to the fit by glmnet when E=0", {
         
         sample_size = length(data$Y_train)
         
-        fit = hierNetGxE.fit(G=data$G_train, E=rep(0, sample_size),
+        fit = gesso.fit(G=data$G_train, E=rep(0, sample_size),
                              Y=data$Y_train, C=data$C_train,
                              tolerance=tol, grid=grid, family=family, 
                              normalize=FALSE, max_iterations=max_iterations)

@@ -1,13 +1,13 @@
-# hierNetGxE
+# gesso
 
-The package is developed to fit a regularized regression model that we call **hierNetGxE** for the joint selection of gene-environment (GxE) interactions based on the hierarchical lasso [Bien et al. (2013)]. The model focuses on a single environmental exposure and induces a "main-effect-before-interaction" hierarchical structure. Unlike the original hierarchical lasso model, which was designed for the gene-gene (GxG) interaction case, the GxE model has a simpler block-separable structure that  makes it possible to fit in large-scale applications. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
+The package is developed to fit a regularized regression model that we call **gesso** for the joint selection of gene-environment (GxE) interactions based on the hierarchical lasso [Bien et al. (2013)]. The model focuses on a single environmental exposure and induces a "main-effect-before-interaction" hierarchical structure. Unlike the original hierarchical lasso model, which was designed for the gene-gene (GxG) interaction case, the GxE model has a simpler block-separable structure that  makes it possible to fit in large-scale applications. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
 
 <img src="./man/figures/hierNet_model.png" width="552" height="170.4">
 
-**hierNetGxE** model induces hierarchical selection of the (GxE) interaction terms via convex constraints added to the objective function. The model has two tuning parameters λ1 and λ2 responsible for the model sparsity with respect to main effects and interactions respectively.
+**gesso** model induces hierarchical selection of the (GxE) interaction terms via convex constraints added to the objective function. The model has two tuning parameters λ1 and λ2 responsible for the model sparsity with respect to main effects and interactions respectively.
 
 ## Introduction
-`hierNetGxE` package can be used
+`gesso` package can be used
 
  * for the selection of the gene-environment interaction terms in a joint "main-effect-before-interaction" hierarchical manner
  * for building a joint *correctly spesified* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
@@ -21,11 +21,11 @@ For more information and examples please see package vignette.
 ## install.packages("devtools")
 
 library(devtools)
-devtools::install_github("NataliaZemlianskaia/hierNetGxE")
+devtools::install_github("NataliaZemlianskaia/gesso")
 ```
 ## Example
 ```R
-library(hierNetGxE)
+library(gesso)
 
 ## generate the data: 1,000 main effects and 1,000 interaction effects 
 ## with 15 non-zero main effects and 10 non-zero interaction effects, sample size equal to 200
@@ -34,14 +34,14 @@ data = data.gen(sample_size=200, p=1000,
                 family="gaussian", mode="strong_hierarchical")
 
 ## tune the model over a 2D grid of hyperparameters   
-tune_model = hierNetGxE.cv(data$G_train, data$E_train, data$Y_train, 
+tune_model = gesso.cv(data$G_train, data$E_train, data$Y_train, 
                            grid_size=20, tolerance=1e-4,
                            parallel=TRUE, nfold=3,
                            normalize=TRUE,
                            seed=1)
 
 ## obtain interaction and main effect coefficietns corresponding to the best model  
-coefficients = hierNetGxE.coef(fit=tune_model$fit, lambda=tune_model$lambda_min)
+coefficients = gesso.coef(fit=tune_model$fit, lambda=tune_model$lambda_min)
 gxe_coefficients = coefficients$beta_gxe                      
 g_coefficients = coefficients$beta_g    
 

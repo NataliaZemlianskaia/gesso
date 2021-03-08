@@ -14,7 +14,7 @@ test_that("training loss is similar to the fit by CVXR", {
       cvxr_fit = readRDS(file_name)
       
       for (tol in tols) {
-        fit = hierNetGxE.fit(data$G_train, data$E_train, data$Y_train,
+        fit = gesso.fit(data$G_train, data$E_train, data$Y_train,
                              tolerance=tol, grid=grid, family=family, 
                              normalize=FALSE)
         expect_equal(sum(fit$has_converged != 1), 0)
