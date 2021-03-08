@@ -104,7 +104,7 @@ protected:
 
     void init() {
       weights = weights_user;
-      update_weighted_variables();
+      update_weighted_variables(false);
       Z_w = Y.cwiseProduct(weights);
     }
     

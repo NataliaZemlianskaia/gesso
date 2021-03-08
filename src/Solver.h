@@ -265,30 +265,31 @@ public:
     }
   }
     
-  void update_weighted_variables() {
-    // VecXd weights_sqrt = weights.cwiseSqrt();
-    // MatXd intercept_system_A_tmp(n, 2 + C.cols());
-    // intercept_system_A.col(0).setOnes();
-    // intercept_system_A_tmp.col(0) = weights_sqrt;
-    // intercept_system_A.col(1) = E;
-    // intercept_system_A_tmp.col(1) = E.cwiseProduct(weights_sqrt);
-    // for (int i = 0; i < C.cols(); ++i) {
-    //   intercept_system_A.col(i + 2) = C.col(i);
-    //   intercept_system_A_tmp.col(i + 2) = C.col(i).cwiseProduct(weights_sqrt);
-    // }
-    //intercept_system_A_qr = intercept_system_A_tmp.colPivHouseholderQr();
-    
+  void update_weighted_variables(bool working_set_only) {
     MapVec weights_map(weights.data(), weights.rows());
     update_intercept_system_A(weights_map, intercept_system_A);
     intercept_system_A_qr = intercept_system_A.colPivHouseholderQr();
 
-    for (int i = 0; i < G.cols(); ++i) {
-      temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
-      norm2_G[i] = temp_n.dot(weights);
-      temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
-      G_by_GxE[i] = temp_n.dot(weights);
-      temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
-      norm2_GxE[i] = temp_n.dot(weights);
+    int i;
+    if (working_set_only) {
+      for (int j = 0; j < working_set.size(); ++j) {
+        i = working_set[j];
+        temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
+        norm2_G[i] = temp_n.dot(weights);
+        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+        G_by_GxE[i] = temp_n.dot(weights);
+        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+        norm2_GxE[i] = temp_n.dot(weights);
+      }
+    } else {
+      for (int i = 0; i < G.cols(); ++i) {
+        temp_n = G.col(i).cwiseProduct(G.col(i)) * sqr(normalize_weights_g[i]);
+        norm2_G[i] = temp_n.dot(weights);
+        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+        G_by_GxE[i] = temp_n.dot(weights);
+        temp_n = normalize_weights_e * temp_n.cwiseProduct(E);
+        norm2_GxE[i] = temp_n.dot(weights);
+      }      
     }
 
     // const VecXd case1_detA
@@ -349,7 +350,7 @@ public:
       b_g_old = b_g[index];
       b_gxe_old = b_gxe[index];
       
-      xbeta -= normalize_weights_g[index] * (b_g[index] * G.col(index) + normalize_weights_e * G.col(index).cwiseProduct(E) * b_gxe[index]);
+      xbeta -= normalize_weights_g[index] * G.col(index).cwiseProduct((b_g[index] + ((normalize_weights_e * b_gxe[index]) * E).array()).matrix());
       
       temp_n = normalize_weights_g[index] * (Z_w - xbeta.cwiseProduct(weights)).cwiseProduct(G.col(index));
       G_by_res = temp_n.sum();

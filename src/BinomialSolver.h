@@ -95,7 +95,6 @@ private:
   using Solver<TG>::temp_p;
   using Solver<TG>::temp_n;
   
-  using Solver<TG>::update_intercept;
   using Solver<TG>::update_b_for_working_set;
   using Solver<TG>::update_weighted_variables;
   
@@ -197,7 +196,10 @@ protected:
       
       double duality_gap, inner_duality_gap, max_diff_tolerance, max_diff;
       while (num_passes < max_iterations) {
-        duality_gap = check_duality_gap(lambda_1, lambda_2, num_passes, max_iterations);
+        if (!abs_nu_by_G_uptodate) {
+          num_passes = update_intercept(num_passes, max_iterations, nu);
+        }
+        duality_gap = check_duality_gap(lambda_1, lambda_2);
         if (duality_gap < tolerance) {
           break;
         }
@@ -210,7 +212,8 @@ protected:
         int num_updates_b_for_working_set = 0;
         bool is_first_iteration = true;
         while (num_passes < max_iterations) {
-          inner_duality_gap = check_inner_duality_gap(lambda_1, lambda_2, num_passes, max_iterations);
+          num_passes = update_intercept(num_passes, max_iterations, inner_nu);
+          inner_duality_gap = check_inner_duality_gap(lambda_1, lambda_2);
           if (inner_duality_gap < tolerance) {
             break;
           } else {
@@ -218,7 +221,7 @@ protected:
               max_diff_tolerance /= 4;
             }
             update_quadratic_approximation();
-            update_weighted_variables();
+            update_weighted_variables(true);
 
             num_updates_b_for_working_set = 0;
             is_first_iteration = false;
@@ -313,34 +316,32 @@ protected:
       //abs_inner_nu_by_GxE.conservativeResize(working_set.size());
       abs_inner_nu_by_G.setZero(working_set.size());
       abs_inner_nu_by_GxE.setZero(working_set.size());
-      temp_n = inner_nu.cwiseProduct(weights_user);
+      VecXd inner_nu_weighted = inner_nu.cwiseProduct(weights_user);
+      
       for (int i = 0; i < working_set.size(); ++i) {
-        abs_inner_nu_by_G[i] = std::abs(G.col(working_set[i]).dot(temp_n)) * normalize_weights_g[working_set[i]];
-        abs_inner_nu_by_GxE[i] = std::abs(G.col(working_set[i]).dot(temp_n.cwiseProduct(E))) * normalize_weights_g[working_set[i]] * normalize_weights_e;
+        temp_n = inner_nu_weighted.cwiseProduct(G.col(working_set[i])) * normalize_weights_g[working_set[i]];
+        abs_inner_nu_by_G[i] = std::abs(temp_n.sum());
+        abs_inner_nu_by_GxE[i] = std::abs(temp_n.dot(E) * normalize_weights_e);
       }
       double x_opt = naive_projection(lambda_1, lambda_2, abs_inner_nu_by_G, abs_inner_nu_by_GxE, inner_nu);
       inner_nu *= x_opt;
     }
     
-    double check_duality_gap(double lambda_1, double lambda_2, int num_passes, int max_iterations) {
-      if (!abs_nu_by_G_uptodate) {
-        update_nu_for_intercept(num_passes, max_iterations, nu);        
-      }
+    double check_duality_gap(double lambda_1, double lambda_2) {
       update_nu(lambda_1, lambda_2); 
       double dual_objective = compute_dual_objective(nu);
       primal_objective = (-Y.cwiseProduct(xbeta) + log_one_plus_exp(xbeta)).dot(weights_user) + lambda_1 * (b_g.cwiseAbs().cwiseMax(b_gxe.cwiseAbs())).sum() + lambda_2 * b_gxe.cwiseAbs().sum();
       return primal_objective - dual_objective;
     }
     
-    double check_inner_duality_gap(double lambda_1, double lambda_2, int num_passes, int max_iterations) {
-      update_nu_for_intercept(num_passes, max_iterations, inner_nu);      
+    double check_inner_duality_gap(double lambda_1, double lambda_2) {
       update_inner_nu(lambda_1, lambda_2);  
       double dual_objective = compute_dual_objective(inner_nu);
       primal_objective = (-Y.cwiseProduct(xbeta) + log_one_plus_exp(xbeta)).dot(weights_user) + lambda_1 * (b_g.cwiseAbs().cwiseMax(b_gxe.cwiseAbs())).sum() + lambda_2 * b_gxe.cwiseAbs().sum();
       return primal_objective - dual_objective;
-    }    
+    }
     
-    int update_nu_for_intercept(int num_passes, int max_iterations, VecXd& nu) {
+    int update_intercept(int num_passes, int max_iterations, VecXd& nu) {
       while (num_passes < max_iterations) {
         mu = sigmoid(xbeta);
         nu = Y - mu;
