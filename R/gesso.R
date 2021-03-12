@@ -81,6 +81,8 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20,
   if (is.null(grid)) {
     grid = compute.grid(G, E, Y, normalize, grid_size, grid_min_ratio)
   }
+  Y = as.double(Y)
+  E = as.double(E)
   
   n = dim(G)[1]
   if (is.null(weights)) {

@@ -2,9 +2,9 @@
 
 The package is developed to fit a regularized regression model that we call **gesso** for the joint selection of gene-environment (GxE) interactions. The model focuses on a single environmental exposure and induces a "main-effect-before-interaction" hierarchical structure. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
 
-<img src="./man/figures/hierNet_model.png" width="552" height="170.4">
+<img src="./man/figures/gesso_model.png" width="652" height="150.4">
 
-**gesso** model induces hierarchical selection of the (GxE) interaction terms via convex constraints added to the objective function. The model has two tuning parameters λ1 and λ2 responsible for the model sparsity with respect to main effects and interactions respectively.
+**gesso** model induces hierarchical selection of the (GxE) interaction terms via overlapped group lasso structure. The model has two tuning parameters λ1 and λ2 allowing flexible, data dependent control over group sparsity and additional interactions sparsity.
 
 ## Introduction
 `gesso` package can be used
