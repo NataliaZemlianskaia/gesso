@@ -127,6 +127,8 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, gr
     grid = compute.grid(G, E, Y, normalize, grid_size, grid_min_ratio)
   }
   n = dim(G)[1]  
+  Y = as.double(Y)
+  E = as.double(E)
 
   if (nfolds < 2) {
     stop("number of folds (nfolds) must be at least 2")
