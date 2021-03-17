@@ -8,12 +8,14 @@
  */
 
 /* .Call calls */
+extern SEXP _gesso_computeLambdaMax(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _gesso_fitModel(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _gesso_fitModelCV(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-  {"_gesso_fitModel",   (DL_FUNC) &_gesso_fitModel,   12},
-  {"_gesso_fitModelCV", (DL_FUNC) &_gesso_fitModelCV, 14},
+  {"_gesso_computeLambdaMax", (DL_FUNC) &_gesso_computeLambdaMax,  8},
+  {"_gesso_fitModel",         (DL_FUNC) &_gesso_fitModel,         12},
+  {"_gesso_fitModelCV",       (DL_FUNC) &_gesso_fitModelCV,       14},
   {NULL, NULL, 0}
 };
 

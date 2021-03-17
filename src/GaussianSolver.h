@@ -23,6 +23,7 @@ private:
   using Solver<TG>::G;
   using Solver<TG>::E;
   using Solver<TG>::Y;
+  using Solver<TG>::C;
   using Solver<TG>::normalize;
   using Solver<TG>::weights_user;
   
@@ -33,6 +34,7 @@ private:
   using Solver<TG>::b_e;
   using Solver<TG>::b_g;
   using Solver<TG>::b_gxe;
+  using Solver<TG>::b_c;
   using Solver<TG>::delta;
   
   using Solver<TG>::weights;
@@ -54,7 +56,6 @@ private:
   using Solver<TG>::temp_p;
   using Solver<TG>::temp_n;  
   
-  using Solver<TG>::update_intercept;
   using Solver<TG>::update_b_for_working_set;
   using Solver<TG>::update_weighted_variables;
   
@@ -69,6 +70,11 @@ protected:
   VecXd abs_inner_res_by_G;
   VecXd abs_inner_res_by_GxE;
   
+  // X^TX where X = (1 | E | C)
+  MatXd intercept_system_A;
+  VecXd intercept_system_B;
+  Eigen::FullPivHouseholderQR<MatXd> intercept_system_A_qr;
+  
   public:
     GaussianSolver(const MapMat& G_,
                    const Eigen::Map<Eigen::VectorXd>& E_,
@@ -82,7 +88,9 @@ protected:
       upperbound_nu_by_G(p),
       upperbound_nu_by_GxE(p),
       abs_inner_res_by_G(p),
-      abs_inner_res_by_GxE(p) {
+      abs_inner_res_by_GxE(p),
+      intercept_system_A(2 + C_.cols(), 2 + C_.cols()),
+      intercept_system_B(2 + C_.cols()) {
       init();
     }
     
@@ -98,7 +106,9 @@ protected:
     upperbound_nu_by_G(p),
     upperbound_nu_by_GxE(p),
     abs_inner_res_by_G(p),
-    abs_inner_res_by_GxE(p) {
+    abs_inner_res_by_GxE(p),
+    intercept_system_A(2 + C_.cols(), 2 + C_.cols()),
+    intercept_system_B(2 + C_.cols()) {
       init();
     } 
 
@@ -106,6 +116,25 @@ protected:
       weights = weights_user;
       update_weighted_variables(false);
       Z_w = Y.cwiseProduct(weights);
+      
+      intercept_system_A(0, 0) = weights.sum();
+      intercept_system_A(0, 1) = normalize_weights_e * E.dot(weights);
+      intercept_system_A(1, 0) = intercept_system_A(0, 1);
+      intercept_system_A(1, 1) = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights);
+      for (int i = 0; i < C.cols(); ++i) {
+        intercept_system_A(0, i + 2) = C.col(i).dot(weights);
+        intercept_system_A(i + 2, 0) = intercept_system_A(0, i + 2);
+        intercept_system_A(1, i + 2) = normalize_weights_e * triple_dot_product(E, C.col(i), weights);
+        intercept_system_A(i + 2, 1) = intercept_system_A(1, i + 2);
+        for (int j = 0; j <= i; ++j) {
+          intercept_system_A(i + 2, j + 2) = triple_dot_product(C.col(i), C.col(j), weights);
+          if (i != j) {
+            intercept_system_A(j + 2, i + 2) = intercept_system_A(i + 2, j + 2);
+          }
+        }
+      }
+      
+      intercept_system_A_qr = intercept_system_A.fullPivHouseholderQr();
     }
     
     virtual ~GaussianSolver() {}
@@ -242,7 +271,7 @@ protected:
       safe_set_zero = (upperbound_nu_by_GxE.array() - lambda_2).max(0) < (lambda_1 - upperbound_nu_by_G.array());
       for (int i = 0; i < p; ++i) {
         safe_set_gxe[i] = safe_set_gxe[i] && (!safe_set_zero[i]) && (upperbound_nu_by_GxE[i] >= lambda_2);
-        safe_set_g[i] = safe_set_g[i] && (!safe_set_zero[i]) && (upperbound_nu_by_G[i] >= lambda_1 || safe_set_gxe[i]);      
+        safe_set_g[i] = safe_set_g[i] && (!safe_set_zero[i]) && (upperbound_nu_by_G[i] >= lambda_1 || safe_set_gxe[i]);
       }
       
       for (int i = 0; i < p; ++i) {
@@ -255,7 +284,7 @@ protected:
           xbeta -= normalize_weights_g[i] * G.col(i) * b_g[i];
           abs_nu_by_G_uptodate = false;
           b_g[i] = 0;
-        }      
+        }
       }
       std::vector<int> working_set_tmp = argsort<ArrayXd>(d_j);
       int index;
@@ -274,6 +303,35 @@ protected:
       std::sort(working_set.begin(), working_set.end());
     }
     
+    double update_intercept() {
+      xbeta -= normalize_weights_e * E * b_e;
+      xbeta = xbeta.array() - b_0;
+      for (int i = 0; i < C.cols(); ++i) {
+        xbeta -= C.col(i) * b_c[i];
+      }
+      intercept_system_B(0) = Z_w.sum() - xbeta.dot(weights);
+      intercept_system_B(1) = normalize_weights_e * E.dot(Z_w) - triple_dot_product(E * normalize_weights_e, xbeta, weights);
+      for (int i = 0; i < C.cols(); ++i) {
+        intercept_system_B(i + 2) = C.col(i).dot(Z_w) - triple_dot_product(C.col(i), xbeta, weights);
+      }
+      VecXd x = intercept_system_A_qr.solve(intercept_system_B);
+      double max_diff = std::max(intercept_system_A(0, 0) * sqr(b_0 - x(0)), intercept_system_A(1, 1) * sqr(b_e - x(1)));
+      b_0 = x(0);
+      b_e = x(1);
+      xbeta = xbeta.array() + b_0;
+      xbeta += E * b_e * normalize_weights_e;
+      for (int i = 0; i < C.cols(); ++i) {
+        max_diff = std::max(max_diff, intercept_system_A(i + 2, i + 2) * sqr(b_c[i] - x(i + 2)));
+        b_c[i] = x(i + 2);
+        xbeta += C.col(i) * b_c[i];
+      }
+      
+      if (max_diff > 0) {
+        abs_nu_by_G_uptodate = false;
+      }
+      return max_diff;
+    }    
+    
     virtual double get_value() {
       return primal_objective;
     }
@@ -286,6 +344,10 @@ protected:
         test_loss += sqr(Y[index] - xbeta[index]);
       }
       return test_loss;
+    }
+    
+    void get_residual(VecXd& nu) {
+      nu = Y - xbeta;
     }
 };
 

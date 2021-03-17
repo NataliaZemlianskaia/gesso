@@ -95,11 +95,6 @@ protected:
   
   bool abs_nu_by_G_uptodate;
 
-  // that depend on weights
-  MatXd intercept_system_A;
-  VecXd intercept_system_B;
-  Eigen::ColPivHouseholderQR	<MatXd> intercept_system_A_qr;
-  
   // Pre-computed constants for updating b_g and b_gxe
   VecXd norm2_G;
   VecXd norm2_GxE;
@@ -145,11 +140,6 @@ public:
     safe_set_g(p),
     safe_set_gxe(p),
     safe_set_zero(p),
-    //intercept_system_A(n, 2 + C_.cols()),
-    //intercept_system_A_weights_user(2 + C_.cols(), 2 + C_.cols()),
-    //intercept_system_B_weights_user(2 + C_.cols()),
-    intercept_system_A(2 + C_.cols(), 2 + C_.cols()),
-    intercept_system_B(2 + C_.cols()),
     norm2_G(p),
     norm2_GxE(p),
     G_by_GxE(p),
@@ -191,11 +181,6 @@ public:
     safe_set_g(p),
     safe_set_gxe(p),
     safe_set_zero(p),
-    //intercept_system_A(n, 2 + C_.cols()),
-    //intercept_system_A_weights_user(2 + C_.cols(), 2 + C_.cols()),
-    //intercept_system_B_weights_user(2 + C_.cols()),
-    intercept_system_A(2 + C_.cols(), 2 + C_.cols()),
-    intercept_system_B(2 + C_.cols()),
     norm2_G(p),
     norm2_GxE(p),
     G_by_GxE(p),
@@ -246,30 +231,7 @@ public:
   
   virtual int solve(double lambda_1, double lambda_2, double tolerance, int max_iterations, int min_working_set_size) = 0;
     
-  void update_intercept_system_A(const MapVec weights, MatXd& intercept_system_A) {
-    intercept_system_A(0, 0) = weights.sum();
-    intercept_system_A(0, 1) = normalize_weights_e * E.dot(weights);
-    intercept_system_A(1, 0) = intercept_system_A(0, 1);
-    intercept_system_A(1, 1) = sqr(normalize_weights_e) * E.cwiseProduct(E).dot(weights);
-    for (int i = 0; i < C.cols(); ++i) {
-      intercept_system_A(0, i + 2) = C.col(i).dot(weights);
-      intercept_system_A(i + 2, 0) = intercept_system_A(0, i + 2);
-      intercept_system_A(1, i + 2) = normalize_weights_e * triple_dot_product(E, C.col(i), weights);
-      intercept_system_A(i + 2, 1) = intercept_system_A(1, i + 2);
-      for (int j = 0; j <= i; ++j) {
-        intercept_system_A(i + 2, j + 2) = triple_dot_product(C.col(i), C.col(j), weights);
-        if (i != j) {
-          intercept_system_A(j + 2, i + 2) = intercept_system_A(i + 2, j + 2);
-        }
-      }
-    }
-  }
-    
   void update_weighted_variables(bool working_set_only) {
-    MapVec weights_map(weights.data(), weights.rows());
-    update_intercept_system_A(weights_map, intercept_system_A);
-    intercept_system_A_qr = intercept_system_A.colPivHouseholderQr();
-
     int i;
     if (working_set_only) {
       for (int j = 0; j < working_set.size(); ++j) {
@@ -297,35 +259,6 @@ public:
     case1_A22_div_detA = norm2_GxE.cwiseQuotient(temp_p);
     case1_A12_div_detA = G_by_GxE.cwiseQuotient(temp_p);
   }
-  
-  double update_intercept() {
-      xbeta -= normalize_weights_e * E * b_e;
-      xbeta = xbeta.array() - b_0;
-      for (int i = 0; i < C.cols(); ++i) {
-        xbeta -= C.col(i) * b_c[i];
-      }
-      intercept_system_B(0) = Z_w.sum() - xbeta.dot(weights);
-      intercept_system_B(1) = normalize_weights_e * E.dot(Z_w) - triple_dot_product(E * normalize_weights_e, xbeta, weights);
-      for (int i = 0; i < C.cols(); ++i) {
-        intercept_system_B(i + 2) = C.col(i).dot(Z_w) - triple_dot_product(C.col(i), xbeta, weights);
-      }
-      VecXd x = intercept_system_A_qr.solve(intercept_system_B);
-      double max_diff = std::max(intercept_system_A(0, 0) * sqr(b_0 - x(0)), intercept_system_A(1, 1) * sqr(b_e - x(1)));
-      b_0 = x(0);
-      b_e = x(1);
-      xbeta = xbeta.array() + b_0;
-      xbeta += E * b_e * normalize_weights_e;
-      for (int i = 0; i < C.cols(); ++i) {
-        max_diff = std::max(max_diff, intercept_system_A(i + 2, i + 2) * sqr(b_c[i] - x(i + 2)));
-        b_c[i] = x(i + 2);
-        xbeta += C.col(i) * b_c[i];
-      }
-
-      if (max_diff > 0) {
-        abs_nu_by_G_uptodate = false;
-      }
-      return max_diff;
-    }      
   
   double update_b_for_working_set(double lambda_1, double lambda_2, bool active_set_iteration) {
     const double plus_minus_one[] = {-1.0, 1.0};
@@ -551,6 +484,14 @@ public:
   VecXd get_b_gxe() {
     return b_gxe.cwiseProduct(normalize_weights_g) * normalize_weights_e;
   }
+  
+  VecXd get_normalize_weights_g() {
+    return normalize_weights_g;
+  }
+  
+  double get_normalize_weights_e() {
+    return normalize_weights_e;
+  }  
     
   int get_b_g_non_zero() {
     int result = 0;

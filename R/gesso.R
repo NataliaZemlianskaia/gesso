@@ -1,68 +1,4 @@
-library(bigmemory)
-
-compute.grid = function(G, E, Y, normalize, grid_size, grid_min_ratio=1e-4) {
-  std = function(x) {
-    mx = mean(x)
-    return(sqrt(mean((x - mx)^2)))
-  }
-  
-  p = dim(G)[2]
-  n = dim(G)[1]
-  
-  std_E = std(E)
-  
-  max_G_by_Yn_abs = 0 
-  max_GxE_by_Yn_abs = 0
-  
-  if (is.big.matrix(G)){
-    for (i in 1:p) {
-      cur_G_by_Yn_abs = abs(Y %*% G[,i])[1,1] / n
-      cur_GxE_by_Yn_abs = abs((Y * E) %*% G[,i])[1,1] / n
-      
-      if (normalize) {
-        std_G = std(G[,i])
-        cur_G_by_Yn_abs = cur_G_by_Yn_abs / std_G
-        cur_GxE_by_Yn_abs = cur_GxE_by_Yn_abs / (std_G * std_E)
-      }
-      
-      if (cur_G_by_Yn_abs > max_G_by_Yn_abs) {
-        max_G_by_Yn_abs = cur_G_by_Yn_abs
-      }
-      if (cur_GxE_by_Yn_abs > max_GxE_by_Yn_abs) {
-        max_GxE_by_Yn_abs = cur_GxE_by_Yn_abs
-      }
-    }
-    lambda_max = max(c(max_G_by_Yn_abs, max_GxE_by_Yn_abs))
-  } else {
-    
-    std = function(x) {
-      mx = mean(x)
-      return(sqrt(mean((x - mx)^2)))
-    }
-    
-    colStd = function(x) {
-      return(apply(x, 2, std))
-    }    
-    
-    G_by_Yn_abs = abs(Y %*% G)[1,] / n
-    GxE_by_Yn_abs = abs((Y * E) %*% G)[1,] / n  
-    if (normalize) {
-      std_G = colStd(G)
-      G_by_Yn_abs = G_by_Yn_abs / std_G
-      GxE_by_Yn_abs = GxE_by_Yn_abs / (std_G * std(E))
-    }
-    lambda_max = max(c(G_by_Yn_abs, GxE_by_Yn_abs))
-  }
-  
-  lambda_min = grid_min_ratio * lambda_max
-  grid = 10^seq(log10(lambda_min), log10(lambda_max), length.out=grid_size)
-  return(grid)
-}
-
-
-gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, 
-                          grid_min_ratio=1e-4, family="gaussian", weights=NULL,
-                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
+get.matrix.type = function(G) {
   if (is(G, "matrix")) {
     if (typeof(G) != "double")
       stop("G must be of type double")
@@ -77,9 +13,34 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20,
     mattype_g = 2
   } else {
     stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
-  }  
+  }
+  return(mattype_g)
+}
+
+compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio=1e-3) {
+  mattype_g = get.matrix.type(G)
+  if (is.null(C)) {
+    C = matrix(numeric(0), nrow=length(Y), ncol=0)
+  }
+  n = dim(G)[1]
+  weights = rep(1, n) / n
+  lambda_max = computeLambdaMax(G=G, E=E, Y=Y, C=C,
+                                weights=weights, normalize=normalize,
+                                family=family, mattype_g=mattype_g)
+  lambda_min = grid_min_ratio * lambda_max
+  grid = 10^seq(log10(lambda_min), log10(lambda_max), length.out=grid_size)
+  return(grid)
+}
+
+
+gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, 
+                          grid_min_ratio=1e-3, family="gaussian", weights=NULL,
+                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
+  mattype_g = get.matrix.type(G)
   if (is.null(grid)) {
-    grid = compute.grid(G, E, Y, normalize, grid_size, grid_min_ratio)
+    grid = compute.grid(G=G, E=E, Y=Y, C=C,
+                        normalize=normalize, family=family,
+                        grid_size=grid_size, grid_min_ratio=grid_min_ratio)
   }
   Y = as.double(Y)
   E = as.double(E)
@@ -108,23 +69,11 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, gr
                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
   
   set.seed(seed)
-  if (is(G, "matrix")) {
-    if (typeof(G) != "double")
-      stop("G must be of type double")
-    mattype_g = 0
-  } else if ("dgCMatrix" %in% class(G)) {
-    if (typeof(G@x) != "double")
-      stop("G must be of type double")
-    mattype_g = 1
-  } else if (is.big.matrix(G)) {
-    if (bigmemory::describe(G)@description$type != "double")
-      stop("G must be of type double")
-    mattype_g = 2
-  } else {
-    stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
-  }  
+  mattype_g = get.matrix.type(G)
   if (is.null(grid)) {
-    grid = compute.grid(G, E, Y, normalize, grid_size, grid_min_ratio)
+    grid = compute.grid(G=G, E=E, Y=Y, C=C,
+                        normalize=normalize, family=family,
+                        grid_size=grid_size, grid_min_ratio=grid_min_ratio)
   }
   n = dim(G)[1]  
   Y = as.double(Y)

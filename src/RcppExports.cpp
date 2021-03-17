@@ -6,6 +6,24 @@
 
 using namespace Rcpp;
 
+// computeLambdaMax
+double computeLambdaMax(SEXP G, const Eigen::Map<Eigen::VectorXd>& E, const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& C, const Eigen::Map<Eigen::VectorXd>& weights, const Rcpp::LogicalVector& normalize, const std::string& family, int mattype_g);
+RcppExport SEXP _gesso_computeLambdaMax(SEXP GSEXP, SEXP ESEXP, SEXP YSEXP, SEXP CSEXP, SEXP weightsSEXP, SEXP normalizeSEXP, SEXP familySEXP, SEXP mattype_gSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type G(GSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type E(ESEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type C(CSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::LogicalVector& >::type normalize(normalizeSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type family(familySEXP);
+    Rcpp::traits::input_parameter< int >::type mattype_g(mattype_gSEXP);
+    rcpp_result_gen = Rcpp::wrap(computeLambdaMax(G, E, Y, C, weights, normalize, family, mattype_g));
+    return rcpp_result_gen;
+END_RCPP
+}
 // fitModelCV
 Rcpp::List fitModelCV(SEXP G, const Eigen::Map<Eigen::VectorXd>& E, const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& C, const Rcpp::LogicalVector& normalize, const Eigen::VectorXd& grid, const std::string& family, double tolerance, int max_iterations, int min_working_set_size, int nfolds, int seed, int ncores, int mattype_g);
 RcppExport SEXP _gesso_fitModelCV(SEXP GSEXP, SEXP ESEXP, SEXP YSEXP, SEXP CSEXP, SEXP normalizeSEXP, SEXP gridSEXP, SEXP familySEXP, SEXP toleranceSEXP, SEXP max_iterationsSEXP, SEXP min_working_set_sizeSEXP, SEXP nfoldsSEXP, SEXP seedSEXP, SEXP ncoresSEXP, SEXP mattype_gSEXP) {
