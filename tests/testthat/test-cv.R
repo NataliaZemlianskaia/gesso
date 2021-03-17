@@ -42,8 +42,8 @@ test_that("cv and fit return same results on individual folds", {
         for (i in 1:length(fit$lambda_1)) {
           lambda_1 = fit$lambda_1[i]
           lambda_2 = fit$lambda_2[i]
-          xbeta = gesso.predict(fit$beta_0[i], fit$beta_e[i], fit$beta_g[i,],
-                                         fit$beta_gxe[i,], test_G, test_E, family="gaussian")
+          xbeta = gesso.predict(fit$beta_0[i], fit$beta_e[i], fit$beta_g[,i],
+                                         fit$beta_gxe[,i], test_G, test_E, family="gaussian")
           if (family == "gaussian") {
             test_loss[i] = sum((test_Y - xbeta)^2) / test_sample_size
           } else {

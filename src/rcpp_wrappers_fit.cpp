@@ -37,9 +37,10 @@ Rcpp::List fitModelRcpp(const TG& G,
 
   Eigen::VectorXd beta_0(grid_size_squared);
   Eigen::VectorXd beta_e(grid_size_squared);
-  Eigen::MatrixXd beta_c(grid_size_squared, C.cols());
-  Eigen::MatrixXd beta_g(grid_size_squared, G.cols());
-  Eigen::MatrixXd beta_gxe(grid_size_squared, G.cols());
+  Eigen::MatrixXd beta_c(C.cols(), grid_size_squared);
+  Eigen::SparseMatrix<double> beta_g(G.cols(), grid_size_squared);
+  Eigen::SparseMatrix<double> beta_gxe(G.cols(), grid_size_squared);
+
   Eigen::VectorXd lambda_1(grid_size_squared);
   Eigen::VectorXd lambda_2(grid_size_squared);
   Eigen::VectorXd working_set_size(grid_size_squared);
@@ -48,6 +49,8 @@ Rcpp::List fitModelRcpp(const TG& G,
   Eigen::VectorXd num_fitered_by_safe_g(grid_size_squared);
   Eigen::VectorXd num_fitered_by_safe_gxe(grid_size_squared);
   Eigen::VectorXd objective_value(grid_size_squared);
+  Eigen::VectorXd beta_g_nonzero(grid_size_squared);
+  Eigen::VectorXd beta_gxe_nonzero(grid_size_squared);
   
   Eigen::VectorXd grid_lambda_1 = grid;
   std::sort(grid_lambda_1.data(), grid_lambda_1.data() + grid_lambda_1.size());
@@ -63,10 +66,10 @@ Rcpp::List fitModelRcpp(const TG& G,
       beta_0[index] = solver->get_b_0();
       beta_e[index] = solver->get_b_e();
       if (C.cols() > 0) {
-        beta_c.row(index) = solver->get_b_c(); 
+        beta_c.col(index) = solver->get_b_c(); 
       }
-      beta_g.row(index) = solver->get_b_g();
-      beta_gxe.row(index) = solver->get_b_gxe();
+      beta_g.col(index) = solver->get_b_g().sparseView();
+      beta_gxe.col(index) = solver->get_b_gxe().sparseView();
       lambda_1[index] = grid_lambda_1[i];
       lambda_2[index] = grid_lambda_2[j];
       num_iterations[index] = curr_solver_iterations;
@@ -75,6 +78,8 @@ Rcpp::List fitModelRcpp(const TG& G,
       num_fitered_by_safe_gxe[index] = solver->get_num_fitered_by_safe_gxe();
       objective_value[index] = solver->get_value();
       has_converged[index] = int(curr_solver_iterations < max_iterations);
+      beta_g_nonzero[index] = solver->get_b_g_non_zero();
+      beta_gxe_nonzero[index] = solver->get_b_gxe_non_zero();
       index++;
       
       if (index >= grid_size_squared) {
@@ -102,7 +107,9 @@ Rcpp::List fitModelRcpp(const TG& G,
     Rcpp::Named("working_set_size") = working_set_size,
     Rcpp::Named("num_fitered_by_safe_g") = num_fitered_by_safe_g,
     Rcpp::Named("num_fitered_by_safe_gxe") = num_fitered_by_safe_gxe,
-    Rcpp::Named("objective_value") = objective_value,    
+    Rcpp::Named("objective_value") = objective_value,
+    Rcpp::Named("beta_g_nonzero") = beta_g_nonzero,
+    Rcpp::Named("beta_gxe_nonzero") = beta_gxe_nonzero,
     Rcpp::Named("grid") = grid
   );
 }

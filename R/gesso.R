@@ -58,8 +58,6 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20,
                  tolerance=tolerance,
                  max_iterations=max_iterations, min_working_set_size=min_working_set_size,
                  mattype_g=mattype_g)
-  fit$beta_g_nonzero = rowSums(fit$beta_g != 0)
-  fit$beta_gxe_nonzero = rowSums(fit$beta_gxe != 0) 
   return(fit)
 }
 
@@ -138,9 +136,9 @@ gesso.coef = function(fit, lambda){
  lambda_idx = which(fit$lambda_1 == lambda$lambda_1 & fit$lambda_2 == lambda$lambda_2)
  beta_0 = fit$beta_0[lambda_idx]
  beta_e = fit$beta_e[lambda_idx]
- beta_g = fit$beta_g[lambda_idx,]
- beta_c = fit$beta_c[lambda_idx,]
- beta_gxe = fit$beta_gxe[lambda_idx,]
+ beta_g = fit$beta_g[,lambda_idx]
+ beta_c = fit$beta_c[,lambda_idx]
+ beta_gxe = fit$beta_gxe[,lambda_idx]
  
  return(list(beta_0=beta_0, beta_e=beta_e, beta_g=beta_g, beta_c=beta_c, beta_gxe=beta_gxe))
 }
@@ -148,21 +146,12 @@ gesso.coef = function(fit, lambda){
 gesso.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
   cv_result = cv_model$cv_result; fit = cv_model$fit
   if (less_than){
-  # best_lambdas = cv_result %>%
-  #   filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
-  #   filter(mean_loss == min(mean_loss)) %>%
-  #   select(lambda_1, lambda_2)
     best_lambdas = cv_result %>%
       filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
       arrange(mean_loss) %>%
       slice(1) %>%
       select(lambda_1, lambda_2)
   } else {
-    # best_lambdas = cv_result %>%
-    #   filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
-    #   filter(mean_loss == min(mean_loss)) %>%
-    #   select(lambda_1, lambda_2)
-    
     best_lambdas = cv_result %>%
       filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
       arrange(mean_loss) %>%
