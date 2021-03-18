@@ -10,7 +10,7 @@ The package is developed to fit a regularized regression model that we call **ge
 `gesso` package can be used
 
  * for the selection of the gene-environment interaction terms in a joint "main-effect-before-interaction" hierarchical manner
- * for building a joint *well-formlated* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
+ * for building a joint *well-formulated* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
  
 The package supports sparse matrices `dgCMatrix` and (filebacked) bigmatrix format from the `bigmemory` package for large or out of RAM datasets. 
 
