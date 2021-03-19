@@ -8,10 +8,10 @@ Data Generation
 Generates genotypes data matrix G (\code{sample_size} by \code{p}), vector of environmental measurments E, and an outcome vector Y of size \code{sample_size}. Simulates training, validation, and test datasets.
 }
 \usage{
-data.gen(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, family="gaussian",
-                    mode="strong_hierarchical", normalize=FALSE, normalize_response=FALSE, 
-                    seed=1, pG=0.2, pE=0.3,
-                    n_confounders=NULL)
+data.gen(sample_size = 100, p = 20, n_g_non_zero = 15, n_gxe_non_zero = 10, family = "gaussian",
+                    mode = "strong_hierarchical", normalize = FALSE, normalize_response = FALSE, 
+                    seed = 1, pG = 0.2, pE = 0.3,
+                    n_confounders = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

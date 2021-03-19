@@ -14,6 +14,8 @@ The package is developed to fit a regularized regression model that we call **ge
  
 The package supports sparse matrices `dgCMatrix` and (filebacked) bigmatrix format from the `bigmemory` package for large or out of RAM datasets. 
 
+Tha package allows to add unpenalized covariates to the model.
+
 For more information and examples please see package vignette.
 
 ## Installation

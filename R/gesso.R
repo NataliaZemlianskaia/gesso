@@ -19,6 +19,8 @@ get.matrix.type = function(G) {
 
 compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio=1e-3) {
   mattype_g = get.matrix.type(G)
+  Y = as.double(Y)
+  E = as.double(E)
   if (is.null(C)) {
     C = matrix(numeric(0), nrow=length(Y), ncol=0)
   }
@@ -33,18 +35,25 @@ compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio
 }
 
 
-gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, 
-                          grid_min_ratio=1e-3, family="gaussian", weights=NULL,
-                          tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
+gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
+                     grid=NULL, grid_size=20, 
+                     grid_min_ratio=1e-3, family="gaussian", weights=NULL,
+                     tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
+                     verbose=FALSE) {
   mattype_g = get.matrix.type(G)
+  Y = as.double(Y)
+  E = as.double(E)
+  if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
   if (is.null(grid)) {
+    if (verbose) {start = Sys.time()}
     grid = compute.grid(G=G, E=E, Y=Y, C=C,
                         normalize=normalize, family=family,
                         grid_size=grid_size, grid_min_ratio=grid_min_ratio)
+    if (verbose) {
+      cat("Compute grid: ", "\n")
+      print(Sys.time() - start)
+    }
   }
-  Y = as.double(Y)
-  E = as.double(E)
-  
   n = dim(G)[1]
   if (is.null(weights)) {
     weights = rep(1, n) / n
@@ -52,6 +61,7 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20,
   if (is.null(C)) {
     C = matrix(numeric(0), nrow=length(Y), ncol=0)
   }
+  
   fit = fitModel(G=G, E=E, Y=Y, C=C,
                  weights=weights, normalize=normalize,
                  grid=grid, family=family,
@@ -61,21 +71,28 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20,
   return(fit)
 }
 
-gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, grid_min_ratio=1e-4, 
-                         family="gaussian",
-                         nfolds=4, parallel=TRUE, seed=42,
-                         tolerance=1e-4, max_iterations=10000, min_working_set_size=100) {
+gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
+                    grid=NULL, grid_size=20, grid_min_ratio=1e-3, 
+                    family="gaussian",
+                    nfolds=4, parallel=TRUE, seed=42,
+                    tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
+                    verbose=TRUE) {
   
   set.seed(seed)
   mattype_g = get.matrix.type(G)
+  Y = as.double(Y)
+  E = as.double(E)
+  if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
   if (is.null(grid)) {
+    if (verbose) {start = Sys.time()}
     grid = compute.grid(G=G, E=E, Y=Y, C=C,
                         normalize=normalize, family=family,
                         grid_size=grid_size, grid_min_ratio=grid_min_ratio)
+    if (verbose) {
+      cat("Compute grid: ", "\n")
+      print(Sys.time() - start)
+    }
   }
-  n = dim(G)[1]  
-  Y = as.double(Y)
-  E = as.double(E)
 
   if (nfolds < 2) {
     stop("number of folds (nfolds) must be at least 2")
@@ -86,24 +103,34 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, gr
   }
 
   if (parallel) {
-    print("Parallel cv")
-    start_parallel = Sys.time()
+   if (verbose) {
+     cat("Parallel cv:", "\n")
+     start_parallel = Sys.time()
+    }
     result = fitModelCV(G, E, Y, C, normalize, grid, family, tolerance,
                         max_iterations, min_working_set_size, nfolds, seed, nfolds, mattype_g)
-    print(Sys.time() - start_parallel)
+    if (verbose) {print(Sys.time() - start_parallel)}
   } else {
-    print("Non-parallel cv")
+    if (verbose) {
+      cat("Non-arallel cv:", "\n")
+      start_nparallel = Sys.time()
+    }
     result = fitModelCV(G, E, Y, C, normalize, grid, family, tolerance,
                         max_iterations, min_working_set_size, nfolds, seed, 1, mattype_g)
+    if (verbose) {print(Sys.time() - start_nparallel)}
   }
   result_ = colMeans(result$test_loss)
   mean_beta_g_nonzero = colMeans(result$beta_g_nonzero)
   mean_beta_gxe_nonzero = colMeans(result$beta_gxe_nonzero)
   
+  n = dim(G)[1] 
   weights = rep(1, n)
   weights = weights / sum(weights)
-  print("fit on full data")
-  start_all = Sys.time()
+  if (verbose) {
+    cat("Fit on the full dataset:", "\n")
+    start_all = Sys.time()
+  }
+  
   
   fit_all_data = fitModel(G=G, E=E, Y=Y, C=C,
                           weights=weights, normalize=normalize,
@@ -111,7 +138,9 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, grid=NULL, grid_size=20, gr
                           tolerance=tolerance,
                           max_iterations=max_iterations, min_working_set_size=min_working_set_size,
                           mattype_g=mattype_g)
-  print(Sys.time() - start_all)
+  if (verbose) {
+    print(Sys.time() - start_all)
+  }
   
   lambda_min_index = which.min(result_)
   loss_min = result_[lambda_min_index]
@@ -149,20 +178,20 @@ gesso.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
     best_lambdas = cv_result %>%
       filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
       arrange(mean_loss) %>%
-      slice(1) %>%
-      select(lambda_1, lambda_2)
+      dplyr::slice(1) %>%
+      dplyr::select(lambda_1, lambda_2)
   } else {
     best_lambdas = cv_result %>%
       filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
       arrange(mean_loss) %>%
-      slice(1) %>%
-      select(lambda_1, lambda_2)
+      dplyr::slice(1) %>%
+      dplyr::select(lambda_1, lambda_2)
   }
   
   return(gesso.coef(fit, best_lambdas))
 }
 
-gesso.predict = function(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, beta_c=NULL,new_C=NULL,
+gesso.predict = function(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, beta_c=NULL, new_C=NULL,
                               family="gaussian"){
   new_GxE = new_G * new_E
   if (is.null(new_C)){
@@ -182,7 +211,7 @@ gesso.predict = function(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E, beta_c=
 
 
 
-
+ 
 
 
 
