@@ -25,13 +25,13 @@ This vignette is a tutorial about how to use the `gesso` package
 
 The package is developed to fit a regularized regression model that we call **gesso** for the joint selection of gene-environment (GxE) interactions. The model focuses on a single environmental exposure and induces a "main-effect-before-interaction" hierarchical structure. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
 
-**gesso** model induces hierarchical selection of the (GxE) interaction terms via overlapped group lasso structure. The model has two tuning parameters $\lambda_1$ and $\lambda_2$ allowing flexible, data dependent control over group sparsity and additional interactions sparsity.
+**gesso** model induces hierarchical selection of the (GxE) interaction terms via overlapped group lasso structure. The model has two tuning parameters $\lambda_1$ and $\lambda_2$ allowing flexible, data-dependent control over group sparsity and additional interactions sparsity.
 
-Response (outcome) variable can be either quantitative of binary 0/1 variable. For a binary response IRLS procedure is used with custom screening rules we developed.
+Response (outcome) variable can be either quantitative or binary 0/1 variable. For a binary response, the IRLS procedure is used with the custom screening rules we developed.
 
 The package supports sparse matrices `dgCMatrix` and (filebacked) bigmatrix format from the `bigmemory` package for large or out of RAM datasets. 
 
-Tha package allows to add unpenalized covariates to the model.
+The package allows adding unpenalized covariates to the model.
 
 ### Installation
 
@@ -54,7 +54,7 @@ library(bigmemory)
 
 ### Data generation
 
-First, we generate the dataset using `data.gen()` function from the package. The function allows us to generate a binary (0/1) matrix of genotypes `G` of a given `sample_size` and `p` number of features, binary vector `E` of environmental measurements, and a response variable `Y` $\sim g(\beta_0 + \beta_E E + \beta_G G + \beta_{G\times E} G\times E)$ - either quantitative or binary depending of the `family` parameter. 
+First, we generate the dataset using `data.gen()` function from the package. The function allows us to generate a binary (0/1) matrix of genotypes `G` of a given `sample_size` and `p` number of features, binary vector `E` of environmental measurements, and a response variable `Y` $\sim g(\beta_0 + \beta_E E + \beta_G G + \beta_{G\times E} G\times E)$ - either quantitative or binary depending on the `family` parameter. 
 
 We can specify the number of non-zero main effects (`n_g_non_zero`) and interactions (`n_gxe_non_zero`) we want to generate. We also specified a *strong_hierarchical* mode for our dataset, which means that (1) if interaction effect is generated as non-zero, it's respective genetic main effect is also generated as non-zero 
 $(\beta_{G\times E} \ne 0 \longrightarrow \beta_G \ne 0)$, and (2) effect sizes of the main effects are larger than that of interaction effects 
@@ -92,25 +92,34 @@ cbind(data$Beta_G[data$Beta_G != 0], data$Beta_GxE[data$Beta_G != 0])
 
 ### Selection example
 
-To tune the model over a 2D grid of hyper-parameters (lambda_1 and lambda_2) we use function `gesso.cv()`, where we specify 
+To tune the model over a 2D grid of hyper-parameters (lambda_1 and lambda_2) we use the function `gesso.cv()`, where we specify 
 
-* our data `G, E, Y` and `family` parameter for the response variable; matrix `G` should be a numeric matrix, vector `E` should be a numeric vector. Vector `Y` could either be a numeric or binary 0/1 vector
+* our data `G, E, Y` and `family` parameter for the response variable; matrix `G` should be a numeric matrix, vector `E` should be a numeric vector. Vector `Y` could either be a continuous or binary 0/1 numeric vector
 * `tolerance` for the convergence of the fitting algorithm 
 * `grid_size` to automatically generate grid values for cross-validation
-* `nfolds` to specify how many folds we want to use in cross-validation
-* `parallel` TRUE to enable parallel cross-validation
-* `seed` set random seed to control random folds assignments
-* `normalize` TRUE to normalize matrix `G` (such that column-wise sd is eqial to 1)
+* `nfolds` to specify how many folds to use in cross-validation
+* `parallel` TRUE to enable parallel cross-validation (TRUE by default)
+* `seed` set the random seed to control random folds assignments
+* `normalize` TRUE to normalize matrix `G` (such that column-wise sd is eqial to 1) and vector `E` (TRUE by default)
+* `normalize_response` TRUE to normalize vector `Y` (FALSE by default)
+
+There is an option to use a custom grid in `gesso.cv()` function by specifying `grid` parameter. 
+
+`verbose` parameter is set to `TRUE` by default in `gesso.cv()`, but we can set it to `FALSE` to avoid outputting function messages about partial execution time.
+
 
 ```{r}
-tolerance = 1e-4
 start = Sys.time()
 tune_model = gesso.cv(G=data$G_train, E=data$E_train, Y=data$Y_train, 
-                           family=family, grid_size=20, tolerance=tolerance,
-                           parallel=TRUE, nfolds=3,
-                           normalize=TRUE,
-                           seed=1)
+                      family=family, grid_size=20, tolerance=1e-4,
+                      parallel=TRUE, nfolds=3,
+                      normalize=TRUE,
+                      normalize_response=FALSE,
+                      seed=1,
+                      max_iterations=10000)
 Sys.time() - start
+
+sum(!tune_model$fit$has_converged)
 ```
 
 #### Obtain best model with `gesso.coef()` function
@@ -137,15 +146,17 @@ Check that the largest estimated interaction effects correspond to the true non-
 
 Calculate principal selection metrics with `selection.metrics()` funciton available in the package
 ```{r}
-selection_gesso = selection.metrics(true_b_g=data$Beta_G, true_b_gxe=data$Beta_GxE, 
-                              estimated_b_g=g_coefficients, estimated_b_gxe=gxe_coefficients)
+selection_gesso = selection.metrics(true_b_g=data$Beta_G, true_b_gxe=data$Beta_GxE,
+                                    estimated_b_g=g_coefficients,
+                                    estimated_b_gxe=gxe_coefficients)
 cbind(selection_gesso)
 ```
 
 Compare with the standard Lasso model (we use `glmnet` package)
 ```{r}
 set.seed(1)
-tune_model_glmnet = cv.glmnet(x=cbind(data$E_train, data$G_train, data$G_train * data$E_train),
+tune_model_glmnet = cv.glmnet(x=cbind(data$E_train, data$G_train, 
+                                      data$G_train * data$E_train),
                               y=data$Y_train,
                               nfolds=3,
                               family=family)
@@ -161,12 +172,12 @@ selection_glmnet = selection.metrics(data$Beta_G, data$Beta_GxE, g_glmnet, gxe_g
 cbind(selection_gesso, selection_glmnet)
 ```
 
-We see that gesso model outperforms the Lasso model in terms of detection of interaction terms in all important selection metrics, including GxE detection AUC (`auc_gxe`), sensitivity (`sensitivity_gxe`), and precision(`precision_gxe`). Estimation bias of the interaction coefficients is also substantially lower for the gesso model (`mse_b_gxe`).
+We see that the gesso model outperforms the Lasso model in terms of the detection of interaction terms in all important selection metrics, including GxE detection AUC (`auc_gxe`), sensitivity (`sensitivity_gxe`), and precision(`precision_gxe`). The estimation bias of the interaction coefficients is also substantially lower for the gesso model (`mse_b_gxe`).
 
 
 #### Obtain target model with `gesso.coefnum()` function
 
-To control how parsimonious is our model with respect to the selected non-zero interaction terms we can use `gesso.coefnum()` function. We obtain interaction and main effect coefficients corresponding to the target GxE model, where instead of specifying tuning parameters `lambda`, we set `target_b_gxe_non_zero` parameter which is the number of *at most* (specify `less_than=TRUE` - default value) or *at leats* (specify `less_than=FALSE`) non-zero interactions we want to include in the model, depending on the parameter `less_than`. 
+To control how parsimonious is our model with respect to the selected non-zero interaction terms we can use `gesso.coefnum()` function. We obtain interaction and main effect coefficients corresponding to the target GxE model, where instead of specifying tuning parameters `lambda`, we set `target_b_gxe_non_zero` parameter which is the number of *at most* (specify `less_than=TRUE` - default value) or *at least* (specify `less_than=FALSE`) non-zero interactions we want to include in the model, depending on the parameter `less_than`. 
 
 The target model is selected based on the averaged cross-validation (cv) results (tune_model$cv_result): for each pair of parameters lambda=(lambda_1, lambda_2) in the grid and for each cv fold we obtain a number of non-zero estimated interaction terms, then average cv results by lambda and choose the tuning parameters corresponding to the minimum average cv loss that have *at most* or *at least* `target_b_gxe_non_zero` non-zero interaction terms. Returned coefficients are obtained by fitting the model on the full dataset with the selected tuning parameters.
 
@@ -180,7 +191,8 @@ g_coefficients = coefficients$beta_g
 
 Calculate principal selection metrics
 ```{r}
-selection_gesso = selection.metrics(data$Beta_G, data$Beta_GxE, g_coefficients, gxe_coefficients)
+selection_gesso = selection.metrics(data$Beta_G, data$Beta_GxE, g_coefficients,
+                                    gxe_coefficients)
 cbind(selection_gesso, selection_glmnet)
 ```
 
@@ -188,7 +200,7 @@ Here we see that the number of non-zero interactions in the model (`b_gxe_non_ze
 
 ### Prediction example
 
-With `gesso.coef()` we, again, obtain coefficients corresponding to the best model in terms of minimal cross-validated error and use `gesso.predict()` function to apply our estimated model to a new test dataset that can also be generated by the function `data.gen()`. 
+With `gesso.coef()` we obtain coefficients corresponding to the best model in terms of minimal cross-validated error and use `gesso.predict()` function to apply our estimated model to a new test dataset that can also be generated by the function `data.gen()`. 
 
 We calculate test R-squared to assess model performance.
 
@@ -214,9 +226,38 @@ cbind(test_R2_gesso, test_R2_glmnet)
 
 ### Adding unpenalized covariates to the model
 
+The package allows adding unpenalized covariates to the model (for example, important adjustment demographic variables like age and gender). In this example, we first generate data with additional covariates (specify `n_confounders` parameter in `data.gen()`) and then show how to fit the model, the user just needs to specify numeric matrix `C` of covariates organized by columns.
+
+
+```{r}
+family = "gaussian"
+sample_size = 150; p = 400; n_g_non_zero = 10; n_gxe_non_zero = 5
+n_confounders = 2
+
+grid = 10^seq(-5, log10(1), length.out = 20)
+
+data = data.gen(seed=1, sample_size=sample_size, p=p, 
+                n_g_non_zero=n_g_non_zero, n_gxe_non_zero=n_gxe_non_zero, 
+                mode="strong_hierarchical",
+                family=family,
+                n_confounders=n_confounders)
+
+tune_model = gesso.cv(G=data$G_train, E=data$E_train, Y=data$Y_train, 
+                      C=data$C_train,
+                      family=family, grid=grid, tolerance=1e-4,
+                      parallel=TRUE, nfolds=3,
+                      normalize=TRUE,
+                      normalize_response=TRUE,
+                      verbose=FALSE,
+                      seed=1)
+
+```
+
+
+
 ### Sparse matrix option example
 
-We generate a large highly sparse genotype matrix `G` by setting genotype prevalence parameter `pG` to 0.03 and measure how long does it take to fit the model.
+We generate a large highly sparse genotype matrix `G` by setting the genotype prevalence parameter `pG` to 0.03 and measure how long does it take to fit the model.
 
 ```{r}
 sample_size = 600; p = 30000
@@ -230,7 +271,7 @@ sum(data$G_train != 0) / (sample_size * p)
 
 start = Sys.time()
 fit = gesso.fit(G=data$G_train, E=data$E_train, Y=data$Y_train, 
-                     tolerance=tolerance,
+                     tolerance=1e-4,
                      normalize=TRUE)
 time_non_sparse = Sys.time() - start; time_non_sparse
 ```
@@ -246,7 +287,7 @@ fit = gesso.fit(G=G_train_sparse, E=data$E_train, Y=data$Y_train,
 time_sparse = Sys.time() - start; time_sparse
 ```
 
-We see that sparse option enables more efficient fitting, however, the speed-up works only for substantially sparse matrices.
+We see that the sparse option enables more efficient fitting, however, the speed-up works only for substantially sparse matrices.
 
 ```{r}
 (as.numeric(time_non_sparse) * 60) / as.numeric(time_sparse)
@@ -255,7 +296,7 @@ We see that sparse option enables more efficient fitting, however, the speed-up 
 
 ### Bigmatrix (`bigmemory` package) option example
 
-Here we show how to convert data into `bigmatrix` format. This format should be used for a very large datasets that barely fit in RAM. 
+Here we show how to convert data into `bigmatrix` format. This format should be used for very large datasets that barely fit in RAM. 
 
 For out of RAM objects function `attach.big.matrix("g_train.desc")` should be used given that the files already exist in a correct format (`g_train.desc`, `g_train.bin`).
 
@@ -269,10 +310,10 @@ G_train = as.big.matrix(data$G_train,
 ## is.filebacked(G_train) should return TRUE
 
 fit_bm = gesso.fit(G_train, data$E_train, data$Y_train,
-                     tolerance=tolerance, grid=grid, family=family)
+                     tolerance=1e-4, grid=grid, family=family)
                      
 tune_model_bm = gesso.cv(G_train, data$E_train, data$Y_train, 
-                              family=family, grid=grid, tolerance=tolerance,
+                              family=family, grid=grid, tolerance=1e-4,
                               parallel=TRUE, nfolds=3,
                               normalize=TRUE, seed=1)                     
 ```
