@@ -13,17 +13,18 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ### Purpose of this vignette
 
 This vignette is a tutorial about how to use the `gesso` package 
 
- * for the selection of the gene-environment interaction terms in a joint "main-effect-before-interaction" hierarchical manner
+ * for the selection of the gene-environment interaction terms in a joint *main-effect-before-interaction* hierarchical manner
  * for building a *well-formulated* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
  * to show how to convert data to sparse/bigmatrix format for more efficient and flexible use of the package
 
 ### Overview
 
-The package is developed to fit a regularized regression model that we call **gesso** for the joint selection of gene-environment (GxE) interactions. The model focuses on a single environmental exposure and induces a "main-effect-before-interaction" hierarchical structure. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
+The package is developed to fit a regularized regression model that we call **gesso** for the joint selection of gene-environment (GxE) interactions. The model focuses on a single environmental exposure and induces a *main-effect-before-interaction* hierarchical structure. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
 
 **gesso** model induces hierarchical selection of the (GxE) interaction terms via overlapped group lasso structure. The model has two tuning parameters $\lambda_1$ and $\lambda_2$ allowing flexible, data-dependent control over group sparsity and additional interactions sparsity.
 
@@ -92,7 +93,7 @@ cbind(data$Beta_G[data$Beta_G != 0], data$Beta_GxE[data$Beta_G != 0])
 
 ### Selection example
 
-To tune the model over a 2D grid of hyper-parameters (lambda_1 and lambda_2) we use the function `gesso.cv()`, where we specify 
+To tune the model over a 2D grid of hyper-parameters (`lambda_1` and `lambda_2`) we use the function `gesso.cv()`, where we specify 
 
 * our data `G, E, Y` and `family` parameter for the response variable; matrix `G` should be a numeric matrix, vector `E` should be a numeric vector. Vector `Y` could either be a continuous or binary 0/1 numeric vector
 * `tolerance` for the convergence of the fitting algorithm 
@@ -103,9 +104,9 @@ To tune the model over a 2D grid of hyper-parameters (lambda_1 and lambda_2) we 
 * `normalize` TRUE to normalize matrix `G` (such that column-wise sd is eqial to 1) and vector `E` (TRUE by default)
 * `normalize_response` TRUE to normalize vector `Y` (FALSE by default)
 
-There is an option to use a custom grid in `gesso.cv()` function by specifying `grid` parameter. 
+There is an option to use a custom grid in `gesso.cv()` function by specifying `grid` parameter instead of `grid_size` parameter. 
 
-`verbose` parameter is set to `TRUE` by default in `gesso.cv()`, but we can set it to `FALSE` to avoid outputting function messages about partial execution time.
+`verbose` parameter is set to TRUE by default in `gesso.cv()`, but we can set it to FALSE to avoid outputting function messages about partial execution time.
 
 
 ```{r}
@@ -114,17 +115,16 @@ tune_model = gesso.cv(G=data$G_train, E=data$E_train, Y=data$Y_train,
                       family=family, grid_size=20, tolerance=1e-4,
                       parallel=TRUE, nfolds=3,
                       normalize=TRUE,
-                      normalize_response=FALSE,
+                      normalize_response=TRUE,
                       seed=1,
                       max_iterations=10000)
 Sys.time() - start
 
-sum(!tune_model$fit$has_converged)
 ```
 
 #### Obtain best model with `gesso.coef()` function
 
-To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters we use `gesso.coef()` function. We need to specify a model fit object and a pair of lambda = (lambda_1, lambda_2) values organized in a tibble (ex: `lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])`).
+To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters we use `gesso.coef()` function. We need to specify a model fit object and a pair of `lambda` = (`lambda_1`, `lambda_2`) values organized in a tibble (ex: `lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])`).
 
 Below we set `fit = tune_model$fit` - model fit on the full dataset and `lambda = tune_model$lambda_min` - the pair of tuning parameters corresponding to the minimum cross-validation error that `gesso.cv()` function returns.
 
@@ -179,12 +179,12 @@ We see that the gesso model outperforms the Lasso model in terms of the detectio
 
 To control how parsimonious is our model with respect to the selected non-zero interaction terms we can use `gesso.coefnum()` function. We obtain interaction and main effect coefficients corresponding to the target GxE model, where instead of specifying tuning parameters `lambda`, we set `target_b_gxe_non_zero` parameter which is the number of *at most* (specify `less_than=TRUE` - default value) or *at least* (specify `less_than=FALSE`) non-zero interactions we want to include in the model, depending on the parameter `less_than`. 
 
-The target model is selected based on the averaged cross-validation (cv) results (tune_model$cv_result): for each pair of parameters lambda=(lambda_1, lambda_2) in the grid and for each cv fold we obtain a number of non-zero estimated interaction terms, then average cv results by lambda and choose the tuning parameters corresponding to the minimum average cv loss that have *at most* or *at least* `target_b_gxe_non_zero` non-zero interaction terms. Returned coefficients are obtained by fitting the model on the full dataset with the selected tuning parameters.
+The target model is selected based on the averaged cross-validation (cv) results (tune_model$cv_result): for each pair of parameters `lambda`=(`lambda_1`, `lambda_2`) in the grid and for each cv fold we obtain a number of non-zero estimated interaction terms, then average cv results by lambda and choose the tuning parameters corresponding to the minimum average cv loss that have *at most* or *at least* `target_b_gxe_non_zero` non-zero interaction terms. Returned coefficients are obtained by fitting the model on the full dataset with the selected tuning parameters.
 
 Note that the number of estimated non-zero interactions will only approximately reflect the numbers obtained on cv datasets.
 
 ```{r}
-coefficients = gesso.coefnum(cv_model=tune_model, target_b_gxe_non_zero=10)
+coefficients = gesso.coefnum(cv_model=tune_model, target_b_gxe_non_zero=5)
 gxe_coefficients = coefficients$beta_gxe                      
 g_coefficients = coefficients$beta_g   
 ```
@@ -196,7 +196,7 @@ selection_gesso = selection.metrics(data$Beta_G, data$Beta_GxE, g_coefficients,
 cbind(selection_gesso, selection_glmnet)
 ```
 
-Here we see that the number of non-zero interactions in the model (`b_gxe_non_zero`) is 8 (vs 32 non-zero terms in the model corresponding to the minimal cross-validated error), leading to increased precision and slightly decreased sensitivity.
+Here we see that the number of non-zero interactions in the model (`b_gxe_non_zero`) is 4 (vs 45 non-zero terms in the model corresponding to the minimal cross-validated error), leading to substantially increased precision and decreased sensitivity.
 
 ### Prediction example
 
@@ -234,7 +234,7 @@ family = "gaussian"
 sample_size = 150; p = 400; n_g_non_zero = 10; n_gxe_non_zero = 5
 n_confounders = 2
 
-grid = 10^seq(-5, log10(1), length.out = 20)
+grid = 10^seq(-3, log10(1), length.out = 20)
 
 data = data.gen(seed=1, sample_size=sample_size, p=p, 
                 n_g_non_zero=n_g_non_zero, n_gxe_non_zero=n_gxe_non_zero, 
@@ -271,8 +271,10 @@ sum(data$G_train != 0) / (sample_size * p)
 
 start = Sys.time()
 fit = gesso.fit(G=data$G_train, E=data$E_train, Y=data$Y_train, 
-                     tolerance=1e-4,
-                     normalize=TRUE)
+                grid_size=20, grid_min_ratio=1e-2,
+                tolerance=1e-4,
+                normalize=TRUE,
+                normalize_response=TRUE)
 time_non_sparse = Sys.time() - start; time_non_sparse
 ```
 
@@ -282,15 +284,17 @@ G_train_sparse = as(data$G_train, "dgCMatrix")
 
 start = Sys.time()
 fit = gesso.fit(G=G_train_sparse, E=data$E_train, Y=data$Y_train, 
-                     tolerance=tolerance,
-                     normalize=TRUE)
+                tolerance=1e-4,
+                grid_size=20, grid_min_ratio=1e-2,
+                normalize=TRUE,
+                normalize_response=TRUE)
 time_sparse = Sys.time() - start; time_sparse
 ```
 
-We see that the sparse option enables more efficient fitting, however, the speed-up works only for substantially sparse matrices.
+We see that the sparse option enables (`r round(as.numeric(time_non_sparse) / as.numeric(time_sparse),2)` times) more efficient fitting, however, the speed-up works only for substantially sparse matrices.
 
 ```{r}
-(as.numeric(time_non_sparse) * 60) / as.numeric(time_sparse)
+as.numeric(time_non_sparse) / as.numeric(time_sparse)
 ```
 
 
@@ -313,25 +317,22 @@ fit_bm = gesso.fit(G_train, data$E_train, data$Y_train,
                      tolerance=1e-4, grid=grid, family=family)
                      
 tune_model_bm = gesso.cv(G_train, data$E_train, data$Y_train, 
-                              family=family, grid=grid, tolerance=1e-4,
-                              parallel=TRUE, nfolds=3,
-                              normalize=TRUE, seed=1)                     
+                         family=family, grid=grid, tolerance=1e-4,
+                         parallel=TRUE, nfolds=3,
+                         normalize=TRUE, seed=1)                     
 ```
 
 ### Working sets
 
-We use the same large dataset that we generated for the sparse matrices example to demonstrate how our screening rules work
+We use the same large dataset (`p` = 30,000) that we generated for the sparse matrices example to demonstrate how our screening rules work.
 
-```{r fig.height = 3, fig.width = 5, fig.align = "center"}
-plot(fit$beta_g_nonzero, pch=19, cex=0.4, 
-     ylab="num of non-zero features", xlab="lambdas path")
-points(fit$beta_gxe_nonzero, pch=19, cex=0.4, col="red")
-legend("topleft", legend=c("G features", "GxE features"), col=c("black", "red"), pch=19)
-```
+Working sets (WS) are the sets of variables left after we applied our screening rules to the full set of predictors. Histogram of the working set sizes shows that most of the time we have to fit only a handful of variables.
 
 ```{r}
-sum(fit$working_set_size > 3000)/ length(fit$working_set_size)
+hist(fit$working_set_size, breaks = 100, col="blue")
 ```
+
+2-dimensional plot below shows the log(WS size) for each ($\lambda_1$, $\lambda_2$) fit.
 
 ```{r fig.height = 3, fig.width = 4, fig.align = "center"}
 df = data.frame(lambda_1_factor = factor(fit$lambda_1),
