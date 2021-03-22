@@ -43,7 +43,7 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
   E = as.double(E)
-  if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
+  #if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
   if (is.null(grid)) {
     if (verbose) {start = Sys.time()}
     grid = compute.grid(G=G, E=E, Y=Y, C=C,
@@ -82,7 +82,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
   E = as.double(E)
-  if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
+  #if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
   if (is.null(grid)) {
     if (verbose) {start = Sys.time()}
     grid = compute.grid(G=G, E=E, Y=Y, C=C,
@@ -107,16 +107,20 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
      cat("Parallel cv:", "\n")
      start_parallel = Sys.time()
     }
-    result = fitModelCV(G, E, Y, C, normalize, grid, family, tolerance,
-                        max_iterations, min_working_set_size, nfolds, seed, nfolds, mattype_g)
+    result = fitModelCV(G=G, E=E, Y=Y, C=C, normalize=normalize, 
+                        grid=grid, family=family, tolerance=tolerance, 
+                        max_iterations=max_iterations, min_working_set_size=min_working_set_size,
+                        nfolds=nfolds, seed=seed, ncores=nfolds, mattype_g=mattype_g)
     if (verbose) {print(Sys.time() - start_parallel)}
   } else {
     if (verbose) {
-      cat("Non-arallel cv:", "\n")
+      cat("Non-parallel cv:", "\n")
       start_nparallel = Sys.time()
     }
-    result = fitModelCV(G, E, Y, C, normalize, grid, family, tolerance,
-                        max_iterations, min_working_set_size, nfolds, seed, 1, mattype_g)
+    result = fitModelCV(G=G, E=E, Y=Y, C=C, normalize=normalize, 
+                        grid=grid, family=family, tolerance=tolerance, 
+                        max_iterations=max_iterations, min_working_set_size=min_working_set_size,
+                        nfolds=nfolds, seed=seed, ncores=1, mattype_g=mattype_g)
     if (verbose) {print(Sys.time() - start_nparallel)}
   }
   result_ = colMeans(result$test_loss)
