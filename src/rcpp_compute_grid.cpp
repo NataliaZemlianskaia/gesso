@@ -39,9 +39,9 @@ double computeLambdaMaxRcpp(const TG& G,
     normalize_weights_e = solver.get_normalize_weights_e();
   }
   nu = nu.cwiseProduct(weights);
-  VecXd tmp = (nu * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g);
+  VecXd tmp = (nu.transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g);
   const double max_G_by_nu = tmp.maxCoeff();
-  tmp = (normalize_weights_e * nu.cwiseProduct(E) * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g);
+  tmp = (normalize_weights_e * nu.cwiseProduct(E).transpose() * G).cwiseAbs().transpose().cwiseProduct(normalize_weights_g);
   const double max_GxE_by_nu = tmp.maxCoeff();
   const double lambda_max = std::max(max_G_by_nu, max_GxE_by_nu);
   return lambda_max;

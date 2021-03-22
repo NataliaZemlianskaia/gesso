@@ -120,6 +120,7 @@ Rcpp::List fitModelCVRcpp(const TG& G,
                            tolerance, max_iterations, min_working_set_size,
                            test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
   } else {
+    Eigen::initParallel();
     RcppThread::ThreadPool pool(ncores);
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       pool.push([&, test_fold_id] {
