@@ -43,7 +43,7 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
   E = as.double(E)
-  #if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
+  if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
   if (is.null(grid)) {
     if (verbose) {start = Sys.time()}
     grid = compute.grid(G=G, E=E, Y=Y, C=C,
@@ -82,7 +82,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
   E = as.double(E)
-  #if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
+  if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
   if (is.null(grid)) {
     if (verbose) {start = Sys.time()}
     grid = compute.grid(G=G, E=E, Y=Y, C=C,
