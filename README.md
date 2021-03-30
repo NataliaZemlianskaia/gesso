@@ -69,3 +69,8 @@ cbind(selection)
 ## auc_gxe         0.9232314
 ## auc_g           0.9999993
 ```
+## References
+
+”A Scalable Hierarchical Lasso for Gene-Environment Interactions” Natalia Zemlianskaia, W.James Gauderman, Juan Pablo Lewinger
+
+https://arxiv.org/abs/2103.13510
