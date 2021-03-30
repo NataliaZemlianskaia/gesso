@@ -29,8 +29,8 @@ devtools::install_github("NataliaZemlianskaia/gesso")
 ```R
 library(gesso)
 
-## generate the data: 1,000 main effects and 1,000 interaction effects 
-## with 15 non-zero main effects and 10 non-zero interaction effects, sample size equal to 200
+## generate the data: 400 main effects and 400 interaction effects 
+## with 10 non-zero main effects and 5 non-zero interaction effects, sample size equal to 150
 data = data.gen(sample_size=150, p=400, 
                 n_g_non_zero=10, n_gxe_non_zero=5, 
                 family="gaussian", mode="strong_hierarchical")
