@@ -74,7 +74,7 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
 gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
                     grid=NULL, grid_size=20, grid_min_ratio=1e-3, 
                     family="gaussian",
-                    nfolds=4, parallel=TRUE, seed=42,
+                    fold_ids=NULL, nfolds=4, parallel=TRUE, seed=42,
                     tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
                     verbose=TRUE) {
   
@@ -101,6 +101,18 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   if (is.null(C)) {
     C = matrix(numeric(0), nrow=length(Y), ncol=0)
   }
+  
+  if (is.null(fold_ids)) {
+    if (family == "gaussian") {
+      fold_ids = sample(seq(1, dim(G)[1]) %% nfolds, replace=FALSE)
+    } else {
+      fold_ids = c()
+      fold_ids[Y == 0] = sample(seq(1, sum(Y == 0)) %% nfolds, replace=FALSE)
+      fold_ids[Y == 1] = sample(seq(1, sum(Y == 1)) %% nfolds, replace=FALSE)
+    }
+  } else {
+    fold_ids = fold_ids - 1
+  }
 
   if (parallel) {
    if (verbose) {
@@ -110,7 +122,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
     result = fitModelCV(G=G, E=E, Y=Y, C=C, normalize=normalize, 
                         grid=grid, family=family, tolerance=tolerance, 
                         max_iterations=max_iterations, min_working_set_size=min_working_set_size,
-                        nfolds=nfolds, seed=seed, ncores=nfolds, mattype_g=mattype_g)
+                        fold_ids=fold_ids, seed=seed, ncores=nfolds, mattype_g=mattype_g)
     if (verbose) {print(Sys.time() - start_parallel)}
   } else {
     if (verbose) {
@@ -120,7 +132,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
     result = fitModelCV(G=G, E=E, Y=Y, C=C, normalize=normalize, 
                         grid=grid, family=family, tolerance=tolerance, 
                         max_iterations=max_iterations, min_working_set_size=min_working_set_size,
-                        nfolds=nfolds, seed=seed, ncores=1, mattype_g=mattype_g)
+                        fold_ids=fold_ids, seed=seed, ncores=1, mattype_g=mattype_g)
     if (verbose) {print(Sys.time() - start_nparallel)}
   }
   result_ = colMeans(result$test_loss)
@@ -157,6 +169,8 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   
 
   lambda_min = result_table[lambda_min_index, 1:2]
+  
+  result$fold_ids = result$fold_ids + 1
   
   return(list(cv_result=result_table,
               lambda_min=lambda_min, 

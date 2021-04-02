@@ -25,8 +25,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // fitModelCV
-Rcpp::List fitModelCV(SEXP G, const Eigen::Map<Eigen::VectorXd>& E, const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& C, const Rcpp::LogicalVector& normalize, const Eigen::VectorXd& grid, const std::string& family, double tolerance, int max_iterations, int min_working_set_size, int nfolds, int seed, int ncores, int mattype_g);
-RcppExport SEXP _gesso_fitModelCV(SEXP GSEXP, SEXP ESEXP, SEXP YSEXP, SEXP CSEXP, SEXP normalizeSEXP, SEXP gridSEXP, SEXP familySEXP, SEXP toleranceSEXP, SEXP max_iterationsSEXP, SEXP min_working_set_sizeSEXP, SEXP nfoldsSEXP, SEXP seedSEXP, SEXP ncoresSEXP, SEXP mattype_gSEXP) {
+Rcpp::List fitModelCV(SEXP G, const Eigen::Map<Eigen::VectorXd>& E, const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& C, const Rcpp::LogicalVector& normalize, const Eigen::VectorXd& grid, const std::string& family, double tolerance, int max_iterations, int min_working_set_size, const Eigen::VectorXd& fold_ids, int seed, int ncores, int mattype_g);
+RcppExport SEXP _gesso_fitModelCV(SEXP GSEXP, SEXP ESEXP, SEXP YSEXP, SEXP CSEXP, SEXP normalizeSEXP, SEXP gridSEXP, SEXP familySEXP, SEXP toleranceSEXP, SEXP max_iterationsSEXP, SEXP min_working_set_sizeSEXP, SEXP fold_idsSEXP, SEXP seedSEXP, SEXP ncoresSEXP, SEXP mattype_gSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -40,11 +40,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type tolerance(toleranceSEXP);
     Rcpp::traits::input_parameter< int >::type max_iterations(max_iterationsSEXP);
     Rcpp::traits::input_parameter< int >::type min_working_set_size(min_working_set_sizeSEXP);
-    Rcpp::traits::input_parameter< int >::type nfolds(nfoldsSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type fold_ids(fold_idsSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
     Rcpp::traits::input_parameter< int >::type mattype_g(mattype_gSEXP);
-    rcpp_result_gen = Rcpp::wrap(fitModelCV(G, E, Y, C, normalize, grid, family, tolerance, max_iterations, min_working_set_size, nfolds, seed, ncores, mattype_g));
+    rcpp_result_gen = Rcpp::wrap(fitModelCV(G, E, Y, C, normalize, grid, family, tolerance, max_iterations, min_working_set_size, fold_ids, seed, ncores, mattype_g));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -99,20 +99,15 @@ Rcpp::List fitModelCVRcpp(const TG& G,
                           double tolerance,
                           int max_iterations,
                           int min_working_set_size,
-                          int nfolds,
+                          const Eigen::VectorXd& fold_ids,
                           int seed,
                           int ncores) {
   const int grid_size_squared = grid.size() * grid.size();
+  const int nfolds = fold_ids.maxCoeff() + 1;
   Eigen::MatrixXd test_loss(nfolds, grid_size_squared);
   Eigen::MatrixXi beta_g_nonzero(nfolds, grid_size_squared);
   Eigen::MatrixXi beta_gxe_nonzero(nfolds, grid_size_squared);
   Eigen::MatrixXi has_converged(nfolds, grid_size_squared);
-
-  VecXd fold_ids(G.rows());
-  for (int i = 0; i < G.rows(); ++i) {
-    fold_ids[i] = i % nfolds;
-  }
-  std::shuffle(fold_ids.data(), fold_ids.data() + fold_ids.size(), std::default_random_engine(seed));
 
   if (ncores == 1) {
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
@@ -150,7 +145,7 @@ Rcpp::List fitModelCV(SEXP G,
                       double tolerance,
                       int max_iterations,
                       int min_working_set_size,
-                      int nfolds,
+                      const Eigen::VectorXd& fold_ids,
                       int seed,
                       int ncores,
                       int mattype_g) {
@@ -158,19 +153,19 @@ Rcpp::List fitModelCV(SEXP G,
     return fitModelCVRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y, C,
                                     normalize, grid,
                                     family, tolerance, max_iterations, min_working_set_size,
-                                    nfolds, seed, ncores);    
+                                    fold_ids, seed, ncores);    
   } if (mattype_g == 2) {
     Rcpp::S4 G_info(G);
     Rcpp::XPtr<BigMatrix> xptr((SEXP) G_info.slot("address"));
     MapMat Gmap((const double *)xptr->matrix(), xptr->nrow(), xptr->ncol());
     return fitModelCVRcpp<MapMat>(Gmap, E, Y, C, normalize, grid,
                                   family, tolerance, max_iterations, min_working_set_size,
-                                  nfolds, seed, ncores);
+                                  fold_ids, seed, ncores);
   } else {
     Rcpp::NumericMatrix G_mat(G);
     MapMat Gmap((const double *) &G_mat[0], G_mat.rows(), G_mat.cols());
     return fitModelCVRcpp<MapMat>(Gmap, E, Y, C, normalize, grid,
                                   family, tolerance, max_iterations, min_working_set_size,
-                                  nfolds, seed, ncores);
+                                  fold_ids, seed, ncores);
   }
 }
