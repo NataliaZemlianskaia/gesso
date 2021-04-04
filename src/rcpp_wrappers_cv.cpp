@@ -120,7 +120,12 @@ Rcpp::List fitModelCVRcpp(const TG& G,
                           const Eigen::VectorXd& fold_ids,
                           int seed,
                           int ncores) {
-  const int grid_size_squared = grid.size() * grid.size();
+  int grid_size_squared;
+  if (alpha < 0) {
+    grid_size_squared = grid.size() * grid.size();
+  } else {
+    grid_size_squared = grid.size();
+  }
   const int nfolds = fold_ids.maxCoeff() + 1;
   Eigen::MatrixXd test_loss(nfolds, grid_size_squared);
   Eigen::MatrixXi beta_g_nonzero(nfolds, grid_size_squared);

@@ -82,7 +82,6 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
                     fold_ids=NULL, nfolds=4, parallel=TRUE, seed=42,
                     tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
                     verbose=TRUE) {
-  
   set.seed(seed)
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
@@ -155,7 +154,6 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
     start_all = Sys.time()
   }
   
-  
   fit_all_data = fitModel(G=G, E=E, Y=Y, C=C,
                           weights=weights, normalize=normalize,
                           grid=grid, alpha=alpha, family=family,
@@ -165,7 +163,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   if (verbose) {
     print(Sys.time() - start_all)
   }
-  
+
   lambda_min_index = which.min(result_)
   loss_min = result_[lambda_min_index]
   
