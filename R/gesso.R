@@ -36,7 +36,7 @@ compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio
 
 
 gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
-                     grid=NULL, grid_size=20, 
+                     grid=NULL, grid_size=20, alpha=NULL,
                      grid_min_ratio=1e-3, family="gaussian", weights=NULL,
                      tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
                      verbose=FALSE) {
@@ -61,10 +61,15 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   if (is.null(C)) {
     C = matrix(numeric(0), nrow=length(Y), ncol=0)
   }
-  
+  if (is.null(alpha)) {
+    alpha = -1
+  }
+
   fit = fitModel(G=G, E=E, Y=Y, C=C,
                  weights=weights, normalize=normalize,
-                 grid=grid, family=family,
+                 grid=grid,
+                 alpha=alpha,
+                 family=family,
                  tolerance=tolerance,
                  max_iterations=max_iterations, min_working_set_size=min_working_set_size,
                  mattype_g=mattype_g)
@@ -72,7 +77,7 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
 }
 
 gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
-                    grid=NULL, grid_size=20, grid_min_ratio=1e-3, 
+                    grid=NULL, grid_size=20, grid_min_ratio=1e-3, alpha=NULL,
                     family="gaussian",
                     fold_ids=NULL, nfolds=4, parallel=TRUE, seed=42,
                     tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
@@ -93,6 +98,9 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
       print(Sys.time() - start)
     }
   }
+  if (is.null(alpha)) {
+    alpha = -1
+  }  
 
   if (nfolds < 2) {
     stop("number of folds (nfolds) must be at least 2")
@@ -120,7 +128,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
      start_parallel = Sys.time()
     }
     result = fitModelCV(G=G, E=E, Y=Y, C=C, normalize=normalize, 
-                        grid=grid, family=family, tolerance=tolerance, 
+                        grid=grid, alpha=alpha, family=family, tolerance=tolerance, 
                         max_iterations=max_iterations, min_working_set_size=min_working_set_size,
                         fold_ids=fold_ids, seed=seed, ncores=nfolds, mattype_g=mattype_g)
     if (verbose) {print(Sys.time() - start_parallel)}
@@ -130,7 +138,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
       start_nparallel = Sys.time()
     }
     result = fitModelCV(G=G, E=E, Y=Y, C=C, normalize=normalize, 
-                        grid=grid, family=family, tolerance=tolerance, 
+                        grid=grid, alpha=alpha, family=family, tolerance=tolerance, 
                         max_iterations=max_iterations, min_working_set_size=min_working_set_size,
                         fold_ids=fold_ids, seed=seed, ncores=1, mattype_g=mattype_g)
     if (verbose) {print(Sys.time() - start_nparallel)}
@@ -150,7 +158,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   
   fit_all_data = fitModel(G=G, E=E, Y=Y, C=C,
                           weights=weights, normalize=normalize,
-                          grid=grid, family=family,
+                          grid=grid, alpha=alpha, family=family,
                           tolerance=tolerance,
                           max_iterations=max_iterations, min_working_set_size=min_working_set_size,
                           mattype_g=mattype_g)

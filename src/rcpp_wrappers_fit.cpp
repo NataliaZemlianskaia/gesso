@@ -18,6 +18,7 @@ Rcpp::List fitModelRcpp(const TG& G,
                         const Eigen::Map<Eigen::VectorXd>& weights,
                         const Rcpp::LogicalVector& normalize,
                         const Eigen::VectorXd& grid,
+                        double alpha,
                         const std::string& family,
                         double tolerance,
                         int max_iterations,
@@ -33,7 +34,12 @@ Rcpp::List fitModelRcpp(const TG& G,
       new BinomialSolver<TG>(G, E, Y, C, weights, normalize[0]));
   }
   
-  const int grid_size_squared = grid.size() * grid.size();
+  int grid_size_squared;
+  if (alpha < 0) {
+    grid_size_squared = grid.size() * grid.size();
+  } else {
+    grid_size_squared = grid.size();
+  }
 
   Eigen::VectorXd beta_0(grid_size_squared);
   Eigen::VectorXd beta_e(grid_size_squared);
@@ -59,9 +65,20 @@ Rcpp::List fitModelRcpp(const TG& G,
   
   int index = 0;
   int curr_solver_iterations;
+  double curr_lambda_2;
   for (int i = 0; i < grid.size(); ++i) {
     for (int j = 0; j < grid.size(); ++j) {
-      curr_solver_iterations = solver->solve(grid_lambda_1[i], grid_lambda_2[j], tolerance, max_iterations, min_working_set_size);
+      if (alpha < 0) {
+        curr_lambda_2 = grid_lambda_2[j];
+      } else {
+        if (i == j) {
+          curr_lambda_2 = grid_lambda_1[i] * alpha;
+        } else {
+          continue;
+        }
+      }
+      
+      curr_solver_iterations = solver->solve(grid_lambda_1[i], curr_lambda_2, tolerance, max_iterations, min_working_set_size);
 
       beta_0[index] = solver->get_b_0();
       beta_e[index] = solver->get_b_e();
@@ -71,7 +88,7 @@ Rcpp::List fitModelRcpp(const TG& G,
       beta_g.col(index) = solver->get_b_g().sparseView();
       beta_gxe.col(index) = solver->get_b_gxe().sparseView();
       lambda_1[index] = grid_lambda_1[i];
-      lambda_2[index] = grid_lambda_2[j];
+      lambda_2[index] = curr_lambda_2;
       num_iterations[index] = curr_solver_iterations;
       working_set_size[index] = solver->get_working_set_size();
       num_fitered_by_safe_g[index] = solver->get_num_fitered_by_safe_g();
@@ -122,6 +139,7 @@ Rcpp::List fitModel(SEXP G,
                     const Eigen::Map<Eigen::VectorXd>& weights,
                     const Rcpp::LogicalVector& normalize,
                     const Eigen::VectorXd& grid,
+                    double alpha,
                     const std::string& family,
                     double tolerance,
                     int max_iterations,
@@ -129,18 +147,18 @@ Rcpp::List fitModel(SEXP G,
                     int mattype_g) {
   if (mattype_g == 1) {
     return fitModelRcpp<MapSparseMat>(Rcpp::as<MapSparseMat>(G), E, Y, C,
-                                            weights, normalize, grid,
+                                            weights, normalize, grid, alpha,
                                             family, tolerance, max_iterations, min_working_set_size);    
   } if (mattype_g == 2) {
     Rcpp::S4 G_info(G);
     Rcpp::XPtr<BigMatrix> xptr((SEXP) G_info.slot("address"));
     MapMat Gmap((const double *)xptr->matrix(), xptr->nrow(), xptr->ncol());
-    return fitModelRcpp<MapMat>(Gmap, E, Y, C, weights, normalize, grid,
+    return fitModelRcpp<MapMat>(Gmap, E, Y, C, weights, normalize, grid, alpha,
                                 family, tolerance, max_iterations, min_working_set_size);
   } else {
     Rcpp::NumericMatrix G_mat(G);
     MapMat Gmap((const double *) &G_mat[0], G_mat.rows(), G_mat.cols());
-    return fitModelRcpp<MapMat>(Gmap, E, Y, C, weights, normalize, grid,
+    return fitModelRcpp<MapMat>(Gmap, E, Y, C, weights, normalize, grid, alpha,
                                 family, tolerance, max_iterations, min_working_set_size);
   }
 }

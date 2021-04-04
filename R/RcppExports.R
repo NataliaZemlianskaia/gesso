@@ -5,11 +5,11 @@ computeLambdaMax <- function(G, E, Y, C, weights, normalize, family, mattype_g) 
     .Call('_gesso_computeLambdaMax', PACKAGE = 'gesso', G, E, Y, C, weights, normalize, family, mattype_g)
 }
 
-fitModelCV <- function(G, E, Y, C, normalize, grid, family, tolerance, max_iterations, min_working_set_size, fold_ids, seed, ncores, mattype_g) {
-    .Call('_gesso_fitModelCV', PACKAGE = 'gesso', G, E, Y, C, normalize, grid, family, tolerance, max_iterations, min_working_set_size, fold_ids, seed, ncores, mattype_g)
+fitModelCV <- function(G, E, Y, C, normalize, grid, alpha, family, tolerance, max_iterations, min_working_set_size, fold_ids, seed, ncores, mattype_g) {
+    .Call('_gesso_fitModelCV', PACKAGE = 'gesso', G, E, Y, C, normalize, grid, alpha, family, tolerance, max_iterations, min_working_set_size, fold_ids, seed, ncores, mattype_g)
 }
 
-fitModel <- function(G, E, Y, C, weights, normalize, grid, family, tolerance, max_iterations, min_working_set_size, mattype_g) {
-    .Call('_gesso_fitModel', PACKAGE = 'gesso', G, E, Y, C, weights, normalize, grid, family, tolerance, max_iterations, min_working_set_size, mattype_g)
+fitModel <- function(G, E, Y, C, weights, normalize, grid, alpha, family, tolerance, max_iterations, min_working_set_size, mattype_g) {
+    .Call('_gesso_fitModel', PACKAGE = 'gesso', G, E, Y, C, weights, normalize, grid, alpha, family, tolerance, max_iterations, min_working_set_size, mattype_g)
 }
 

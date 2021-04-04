@@ -25,8 +25,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // fitModelCV
-Rcpp::List fitModelCV(SEXP G, const Eigen::Map<Eigen::VectorXd>& E, const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& C, const Rcpp::LogicalVector& normalize, const Eigen::VectorXd& grid, const std::string& family, double tolerance, int max_iterations, int min_working_set_size, const Eigen::VectorXd& fold_ids, int seed, int ncores, int mattype_g);
-RcppExport SEXP _gesso_fitModelCV(SEXP GSEXP, SEXP ESEXP, SEXP YSEXP, SEXP CSEXP, SEXP normalizeSEXP, SEXP gridSEXP, SEXP familySEXP, SEXP toleranceSEXP, SEXP max_iterationsSEXP, SEXP min_working_set_sizeSEXP, SEXP fold_idsSEXP, SEXP seedSEXP, SEXP ncoresSEXP, SEXP mattype_gSEXP) {
+Rcpp::List fitModelCV(SEXP G, const Eigen::Map<Eigen::VectorXd>& E, const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& C, const Rcpp::LogicalVector& normalize, const Eigen::VectorXd& grid, double alpha, const std::string& family, double tolerance, int max_iterations, int min_working_set_size, const Eigen::VectorXd& fold_ids, int seed, int ncores, int mattype_g);
+RcppExport SEXP _gesso_fitModelCV(SEXP GSEXP, SEXP ESEXP, SEXP YSEXP, SEXP CSEXP, SEXP normalizeSEXP, SEXP gridSEXP, SEXP alphaSEXP, SEXP familySEXP, SEXP toleranceSEXP, SEXP max_iterationsSEXP, SEXP min_working_set_sizeSEXP, SEXP fold_idsSEXP, SEXP seedSEXP, SEXP ncoresSEXP, SEXP mattype_gSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -36,6 +36,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type C(CSEXP);
     Rcpp::traits::input_parameter< const Rcpp::LogicalVector& >::type normalize(normalizeSEXP);
     Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type grid(gridSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type family(familySEXP);
     Rcpp::traits::input_parameter< double >::type tolerance(toleranceSEXP);
     Rcpp::traits::input_parameter< int >::type max_iterations(max_iterationsSEXP);
@@ -44,13 +45,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
     Rcpp::traits::input_parameter< int >::type mattype_g(mattype_gSEXP);
-    rcpp_result_gen = Rcpp::wrap(fitModelCV(G, E, Y, C, normalize, grid, family, tolerance, max_iterations, min_working_set_size, fold_ids, seed, ncores, mattype_g));
+    rcpp_result_gen = Rcpp::wrap(fitModelCV(G, E, Y, C, normalize, grid, alpha, family, tolerance, max_iterations, min_working_set_size, fold_ids, seed, ncores, mattype_g));
     return rcpp_result_gen;
 END_RCPP
 }
 // fitModel
-Rcpp::List fitModel(SEXP G, const Eigen::Map<Eigen::VectorXd>& E, const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& C, const Eigen::Map<Eigen::VectorXd>& weights, const Rcpp::LogicalVector& normalize, const Eigen::VectorXd& grid, const std::string& family, double tolerance, int max_iterations, int min_working_set_size, int mattype_g);
-RcppExport SEXP _gesso_fitModel(SEXP GSEXP, SEXP ESEXP, SEXP YSEXP, SEXP CSEXP, SEXP weightsSEXP, SEXP normalizeSEXP, SEXP gridSEXP, SEXP familySEXP, SEXP toleranceSEXP, SEXP max_iterationsSEXP, SEXP min_working_set_sizeSEXP, SEXP mattype_gSEXP) {
+Rcpp::List fitModel(SEXP G, const Eigen::Map<Eigen::VectorXd>& E, const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& C, const Eigen::Map<Eigen::VectorXd>& weights, const Rcpp::LogicalVector& normalize, const Eigen::VectorXd& grid, double alpha, const std::string& family, double tolerance, int max_iterations, int min_working_set_size, int mattype_g);
+RcppExport SEXP _gesso_fitModel(SEXP GSEXP, SEXP ESEXP, SEXP YSEXP, SEXP CSEXP, SEXP weightsSEXP, SEXP normalizeSEXP, SEXP gridSEXP, SEXP alphaSEXP, SEXP familySEXP, SEXP toleranceSEXP, SEXP max_iterationsSEXP, SEXP min_working_set_sizeSEXP, SEXP mattype_gSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -61,12 +62,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< const Rcpp::LogicalVector& >::type normalize(normalizeSEXP);
     Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type grid(gridSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type family(familySEXP);
     Rcpp::traits::input_parameter< double >::type tolerance(toleranceSEXP);
     Rcpp::traits::input_parameter< int >::type max_iterations(max_iterationsSEXP);
     Rcpp::traits::input_parameter< int >::type min_working_set_size(min_working_set_sizeSEXP);
     Rcpp::traits::input_parameter< int >::type mattype_g(mattype_gSEXP);
-    rcpp_result_gen = Rcpp::wrap(fitModel(G, E, Y, C, weights, normalize, grid, family, tolerance, max_iterations, min_working_set_size, mattype_g));
+    rcpp_result_gen = Rcpp::wrap(fitModel(G, E, Y, C, weights, normalize, grid, alpha, family, tolerance, max_iterations, min_working_set_size, mattype_g));
     return rcpp_result_gen;
 END_RCPP
 }
