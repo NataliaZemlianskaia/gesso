@@ -47,3 +47,35 @@ coefficients_alpha = gesso.coefnum(cv_result_alpha, 50, less_than=FALSE)
 cbind(selection.metrics(data$Beta_G, data$Beta_GxE, coefficients$beta_g, coefficients$beta_gxe),
       selection.metrics(data$Beta_G, data$Beta_GxE, 
                         coefficients_alpha$beta_g, coefficients_alpha$beta_gxe))
+
+
+data = data.gen(seed=1, family=family)
+start = Sys.time()
+cv_result_auc = gesso.cv(data$G_train, data$E_train, data$Y_train,
+                     tolerance=tol, grid_size=20, family=family, normalize=TRUE,
+                     max_iterations=max_iterations, type_measure = 'auc')
+stop_cd = Sys.time() - start; stop_cd
+cat('Number not-converged: ', sum(cv_result$fit$has_converged == 0))
+
+start = Sys.time()
+cv_result_loss = gesso.cv(data$G_train, data$E_train, data$Y_train,
+                         tolerance=tol, grid_size=20, family=family, normalize=TRUE,
+                         max_iterations=max_iterations, type_measure = 'loss')
+stop_cd = Sys.time() - start; stop_cd
+cat('Number not-converged: ', sum(cv_result$fit$has_converged == 0))
+
+coefficients_auc = gesso.coef(cv_result_auc$fit, cv_result_auc$lambda_min)
+coefficients_loss = gesso.coef(cv_result_loss$fit, cv_result_loss$lambda_min)
+
+cbind(selection.metrics(data$Beta_G, data$Beta_GxE, coefficients_auc$beta_g, coefficients_auc$beta_gxe),
+      selection.metrics(data$Beta_G, data$Beta_GxE, 
+                        coefficients_loss$beta_g, coefficients_loss$beta_gxe))
+
+cv_result_auc$fit$objective_value[
+  cv_result_auc$fit$lambda_2 == cv_result_auc$lambda_min$lambda_2 & 
+    cv_result_auc$fit$lambda_1 == cv_result_auc$lambda_min$lambda_1]
+
+cv_result_loss$fit$objective_value[
+  cv_result_loss$fit$lambda_2 == cv_result_loss$lambda_min$lambda_2 & 
+    cv_result_loss$fit$lambda_1 == cv_result_loss$lambda_min$lambda_1]
+

@@ -511,6 +511,10 @@ public:
     }
     return result;
   }    
+  
+  double get_xbeta(int index) {
+    return xbeta[index];
+  }
     
   int get_working_set_size() {
     return working_set.size();

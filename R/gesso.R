@@ -37,7 +37,7 @@ compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio
 
 gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
                      grid=NULL, grid_size=20, alpha=NULL,
-                     grid_min_ratio=1e-3, family="gaussian", weights=NULL,
+                     grid_min_ratio=1e-2, family="gaussian", weights=NULL,
                      tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
                      verbose=FALSE) {
   mattype_g = get.matrix.type(G)
@@ -77,8 +77,8 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
 }
 
 gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
-                    grid=NULL, grid_size=20, grid_min_ratio=1e-3, alpha=NULL,
-                    family="gaussian",
+                    grid=NULL, grid_size=20, grid_min_ratio=1e-2, alpha=NULL,
+                    family="gaussian", type_measure="loss",
                     fold_ids=NULL, nfolds=4, parallel=TRUE, seed=42,
                     tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
                     verbose=TRUE) {
@@ -118,6 +118,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
       fold_ids[Y == 1] = sample(seq(1, sum(Y == 1)) %% nfolds, replace=FALSE)
     }
   } else {
+    nfolds = max(fold_ids)
     fold_ids = fold_ids - 1
   }
 
@@ -142,7 +143,24 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
                         fold_ids=fold_ids, seed=seed, ncores=1, mattype_g=mattype_g)
     if (verbose) {print(Sys.time() - start_nparallel)}
   }
-  result_ = colMeans(result$test_loss)
+  fold_ids = fold_ids + 1
+  
+  if (type_measure == "loss") {
+    result_ = colMeans(result$test_loss)
+  } else if (type_measure == "auc") {
+    if (family != "binomial") {
+      stop("type_measure == 'auc' is only for binomial family")
+    }
+    auc_per_fold = c()
+    for (fold_id in 1:nfolds) {
+      Y_fold = Y[fold_ids == fold_id]
+      auc_per_fold = rbind(auc_per_fold, 
+                           apply(result$xbeta[fold_ids == fold_id,], 2, function(x) get.AUC(x, Y_fold)))
+    }
+    result_ = colMeans(auc_per_fold)
+  } else {
+    stop("Unknown type_measure: '", type_measure, "'")
+  }
   mean_beta_g_nonzero = colMeans(result$beta_g_nonzero)
   mean_beta_gxe_nonzero = colMeans(result$beta_gxe_nonzero)
   
@@ -176,7 +194,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
 
   lambda_min = result_table[lambda_min_index, 1:2]
   
-  result$fold_ids = result$fold_ids + 1
+  result$fold_ids = fold_ids
   
   return(list(cv_result=result_table,
               lambda_min=lambda_min, 

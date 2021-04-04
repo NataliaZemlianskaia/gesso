@@ -30,6 +30,7 @@ void fitModelCVRcppSingleFold(const TG& G,
                               int max_iterations,
                               int min_working_set_size,
                               int test_fold_id,
+                              Eigen::MatrixXd& xbeta,
                               Eigen::MatrixXd& test_loss,
                               Eigen::MatrixXi& beta_g_nonzero,
                               Eigen::MatrixXi& beta_gxe_nonzero,
@@ -87,6 +88,9 @@ void fitModelCVRcppSingleFold(const TG& G,
       
       curr_solver_iterations = solver->solve(grid_lambda_1[i], curr_lambda_2, tolerance, max_iterations, min_working_set_size);
       
+      for (int i = 0; i < test_idx.size(); ++i) {
+        xbeta(test_idx[i], index) = solver->get_xbeta(test_idx[i]);
+      }
       test_loss(test_fold_id, index) = solver->get_test_loss(test_idx) / test_idx.size();
       beta_g_nonzero(test_fold_id, index) = solver->get_b_g_non_zero();
       beta_gxe_nonzero(test_fold_id, index) = solver->get_b_gxe_non_zero();
@@ -127,6 +131,8 @@ Rcpp::List fitModelCVRcpp(const TG& G,
     grid_size_squared = grid.size();
   }
   const int nfolds = fold_ids.maxCoeff() + 1;
+  const int n = fold_ids.size();
+  Eigen::MatrixXd xbeta(n, grid_size_squared);
   Eigen::MatrixXd test_loss(nfolds, grid_size_squared);
   Eigen::MatrixXi beta_g_nonzero(nfolds, grid_size_squared);
   Eigen::MatrixXi beta_gxe_nonzero(nfolds, grid_size_squared);
@@ -136,7 +142,7 @@ Rcpp::List fitModelCVRcpp(const TG& G,
     for (int test_fold_id = 0; test_fold_id < nfolds; ++test_fold_id)
       fitModelCVRcppSingleFold<TG>(G, E, Y, C, fold_ids, normalize, grid, alpha, family,
                            tolerance, max_iterations, min_working_set_size,
-                           test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
+                           test_fold_id, xbeta, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
   } else {
     Eigen::initParallel();
     RcppThread::ThreadPool pool(ncores);
@@ -144,16 +150,16 @@ Rcpp::List fitModelCVRcpp(const TG& G,
       pool.push([&, test_fold_id] {
         fitModelCVRcppSingleFold<TG>(G, E, Y, C, fold_ids, normalize, grid, alpha,
                              family, tolerance, max_iterations, min_working_set_size,
-                             test_fold_id, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
+                             test_fold_id, xbeta, test_loss, beta_g_nonzero, beta_gxe_nonzero, has_converged);
       });
     pool.join();
   }
   return Rcpp::List::create(
+    Rcpp::Named("xbeta") = xbeta,
     Rcpp::Named("test_loss") = test_loss,
     Rcpp::Named("beta_g_nonzero") = beta_g_nonzero,
     Rcpp::Named("beta_gxe_nonzero") = beta_gxe_nonzero,
-    Rcpp::Named("has_converged") = has_converged,
-    Rcpp::Named("fold_ids") = fold_ids
+    Rcpp::Named("has_converged") = has_converged
   );  
 }
 
