@@ -48,8 +48,10 @@ cbind(selection.metrics(data$Beta_G, data$Beta_GxE, coefficients$beta_g, coeffic
       selection.metrics(data$Beta_G, data$Beta_GxE, 
                         coefficients_alpha$beta_g, coefficients_alpha$beta_gxe))
 
+data = data.gen(seed=1, family=family, p=30, n_g_non_zero=20, n_gxe_non_zero=20, 
+                sample_size=300)
+#G = data$G_train; E = data$E_train; Y = data$Y_train
 
-data = data.gen(seed=1, family=family)
 start = Sys.time()
 cv_result_auc = gesso.cv(data$G_train, data$E_train, data$Y_train,
                      tolerance=tol, grid_size=20, family=family, normalize=TRUE,

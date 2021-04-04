@@ -1,3 +1,11 @@
+
+auroc = function(score, bool) {
+ n1 = sum(!bool)
+ n2 = sum(bool)
+ U  = sum(rank(score)[!bool]) - n1 * (n1 + 1) / 2
+ return(1 - U / n1 / n2)
+}
+
 get.matrix.type = function(G) {
   if (is(G, "matrix")) {
     if (typeof(G) != "double")
@@ -151,11 +159,13 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
     if (family != "binomial") {
       stop("type_measure == 'auc' is only for binomial family")
     }
+  
     auc_per_fold = c()
     for (fold_id in 1:nfolds) {
       Y_fold = Y[fold_ids == fold_id]
-      auc_per_fold = rbind(auc_per_fold, 
-                           apply(result$xbeta[fold_ids == fold_id,], 2, function(x) get.AUC(x, Y_fold)))
+      auc_per_fold = rbind(auc_per_fold,
+                            apply(result$xbeta[fold_ids == fold_id,], 2,
+                                  function(x) auroc(x, Y_fold)))
     }
     result_ = colMeans(auc_per_fold)
   } else {
@@ -182,7 +192,12 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
     print(Sys.time() - start_all)
   }
 
-  lambda_min_index = which.min(result_)
+  if (type_measure == "loss") {
+    lambda_min_index = which.min(result_)
+  } else {
+    lambda_min_index = which.max(result_)
+  }
+  
   loss_min = result_[lambda_min_index]
   
   result_table = tibble(lambda_1=fit_all_data$lambda_1,

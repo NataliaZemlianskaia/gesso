@@ -1,15 +1,11 @@
-get.AUC = function(estimated_coef, true_coef){
-  estimated_coef = abs(estimated_coef)
-  estimated_sorted = sort(estimated_coef, decreasing=TRUE, index.return=TRUE)
-  val = unlist(estimated_sorted$x)
-  idx = unlist(estimated_sorted$ix)  
-  roc_y = true_coef[idx];
-  stack_y = cumsum(roc_y != 0)/(sum(roc_y != 0) + 1e-5) #sensitivity
-  stack_x = cumsum(roc_y == 0)/(sum(roc_y == 0) + 1e-5)
-  auc = sum((stack_x[2:length(roc_y)]-stack_x[1:length(roc_y)-1])*stack_y[2:length(roc_y)])
-  return(auc)
-}
 
+auroc_ = function(estimated_coef, true_coef) {
+  score = abs(estimated_coef); bool = true_coef != 0
+  n1 = sum(!bool)
+  n2 = sum(bool)
+  U = sum(rank(score)[!bool]) - n1 * (n1 + 1) / 2
+  return(1 - U / n1 / n2)
+}
 
 selection.metrics = function(true_b_g, true_b_gxe, estimated_b_g, estimated_b_gxe) {
   index_beta_gxe_non_zero = which(true_b_gxe != 0)
@@ -41,6 +37,7 @@ selection.metrics = function(true_b_g, true_b_gxe, estimated_b_g, estimated_b_gx
               specificity_gxe = sum(abs(estimated_b_gxe[index_beta_gxe_zero]) == 0)/(length(index_beta_gxe_zero) + 1e-8),
               precision_gxe = precision_gxe,
               
-              auc_g=get.AUC(estimated_b_g, true_b_g),
-              auc_gxe=get.AUC(estimated_b_gxe, true_b_gxe)))
+              auc_g=auroc_(estimated_b_g, true_b_g),
+              auc_gxe=auroc_(estimated_b_gxe, true_b_gxe)))
 }
+
