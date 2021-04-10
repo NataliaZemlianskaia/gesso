@@ -215,7 +215,8 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
               lambda_min=lambda_min, 
               fit=fit_all_data,
               grid=grid,
-              full_cv_result=result))
+              full_cv_result=result,
+              type_measure=type_measure))
 }
 
 gesso.coef = function(fit, lambda){
@@ -230,19 +231,36 @@ gesso.coef = function(fit, lambda){
 }
   
 gesso.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
+  type_measure = cv_model$type_measure
   cv_result = cv_model$cv_result; fit = cv_model$fit
-  if (less_than){
-    best_lambdas = cv_result %>%
-      filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
-      arrange(mean_loss) %>%
-      dplyr::slice(1) %>%
-      dplyr::select(lambda_1, lambda_2)
+  if (type_measure == "loss"){
+    if (less_than){
+      best_lambdas = cv_result %>%
+        filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
+        arrange(mean_loss) %>%
+        dplyr::slice(1) %>%
+        dplyr::select(lambda_1, lambda_2)
+    } else {
+      best_lambdas = cv_result %>%
+        filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
+        arrange(mean_loss) %>%
+        dplyr::slice(1) %>%
+        dplyr::select(lambda_1, lambda_2)
+    }
   } else {
-    best_lambdas = cv_result %>%
-      filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
-      arrange(mean_loss) %>%
-      dplyr::slice(1) %>%
-      dplyr::select(lambda_1, lambda_2)
+    if (less_than){
+      best_lambdas = cv_result %>%
+        filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
+        arrange(desc(mean_loss)) %>%
+        dplyr::slice(1) %>%
+        dplyr::select(lambda_1, lambda_2)
+    } else {
+      best_lambdas = cv_result %>%
+        filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
+        arrange(desc(mean_loss)) %>%
+        dplyr::slice(1) %>%
+        dplyr::select(lambda_1, lambda_2)
+    }
   }
   
   return(gesso.coef(fit, best_lambdas))
