@@ -10,8 +10,8 @@ Fits hierNet GxE model over the two dimentional grid of hyperparmeters \code{lam
 \usage{
 gesso.fit(G, E, Y, C = NULL, normalize = TRUE, normalize_response = FALSE, grid = NULL,
           grid_size = 20, grid_min_ratio = 1e-2, alpha = NULL, family = "gaussian", 
-          tolerance = 1e-4, weights = NULL, max_iterations = 10000, min_working_set_size = 100,
-          verbose = FALSE)
+          tolerance = 1e-4, weights = NULL, max_iterations = 10000, 
+          min_working_set_size = 100, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

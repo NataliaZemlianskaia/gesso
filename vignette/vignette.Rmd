@@ -21,6 +21,10 @@ This vignette is a tutorial about how to use the `gesso` package
  * for the selection of the gene-environment interaction terms in a joint *main-effect-before-interaction* hierarchical manner
  * for building a *well-formulated* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
  * to show how to convert data to sparse/bigmatrix format for more efficient and flexible use of the package
+ 
+### Package highlights
+ * option is available to tune only one hyperparameter and set $\alpha$: $\lambda_2$ = $\alpha$ $\lambda_1$
+ * option is available to tune hyperparameters by maximizing AUC for the binary outcomes
 
 ### Overview
 

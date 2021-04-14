@@ -10,7 +10,7 @@ Performs \code{nfolds}-fold cross-validation to tune hyperparmeters \code{lambda
 \usage{
 gesso.cv(G, E, Y, C = NULL, normalize = TRUE, normalize_response = FALSE, grid = NULL,
          grid_size = 20, alpha = NULL, grid_min_ratio = 1e-2, family = "gaussian", 
-         type_measure="loss", nfolds = 4, fold_ids = NULL,
+         type_measure = "loss", nfolds = 4, fold_ids = NULL,
          parallel = TRUE, seed = 42, tolerance = 1e-4, max_iterations = 10000, 
          min_working_set_size = 100, verbose = TRUE)
 }
