@@ -12,7 +12,7 @@
 
 <meta name="author" content="Natalia Zemlianskaia" />
 
-<meta name="date" content="2021-04-13" />
+<meta name="date" content="2021-04-14" />
 
 <title>Getting started with gesso</title>
 
@@ -311,7 +311,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Getting started with <code>gesso</code></h1>
 <h4 class="author">Natalia Zemlianskaia</h4>
-<h4 class="date">2021-04-13</h4>
+<h4 class="date">2021-04-14</h4>
 
 
 
@@ -321,14 +321,6 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <ul>
 <li>for the selection of the gene-environment interaction terms in a joint <em>main-effect-before-interaction</em> hierarchical manner</li>
 <li>for building a <em>well-formulated</em> prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model</li>
-<li>to show how to convert data to sparse/bigmatrix format for more efficient and flexible use of the package</li>
-</ul>
-</div>
-<div id="package-highlights" class="section level3">
-<h3>Package highlights</h3>
-<ul>
-<li>option is available to tune only one hyperparameter and set <span class="math inline">\(\alpha\)</span>: <span class="math inline">\(\lambda_2\)</span> = <span class="math inline">\(\alpha\)</span> <span class="math inline">\(\lambda_1\)</span></li>
-<li>option is available to tune hyperparameters by maximizing AUC for the binary outcomes</li>
 </ul>
 </div>
 <div id="overview" class="section level3">
@@ -337,7 +329,16 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p><strong>gesso</strong> model induces hierarchical selection of the (GxE) interaction terms via overlapped group lasso structure. The model has two tuning parameters <span class="math inline">\(\lambda_1\)</span> and <span class="math inline">\(\lambda_2\)</span> allowing flexible, data-dependent control over group sparsity and additional interactions sparsity.</p>
 <p>Response (outcome) variable can be either quantitative or binary 0/1 variable. For a binary response, the IRLS procedure is used with the custom screening rules we developed.</p>
 <p>The package supports sparse matrices <code>dgCMatrix</code> and (filebacked) bigmatrix format from the <code>bigmemory</code> package for large or out of RAM datasets.</p>
-<p>The package allows adding unpenalized covariates to the model.</p>
+</div>
+<div id="package-highlights" class="section level3">
+<h3>Package highlights</h3>
+<p>The package allows</p>
+<ul>
+<li>to tune only one hyperparameter and set <span class="math inline">\(\alpha\)</span>: <span class="math inline">\(\lambda_2\)</span> = <span class="math inline">\(\alpha\)</span> <span class="math inline">\(\lambda_1\)</span>;</li>
+<li>to tune hyperparameters by maximizing AUC for the binary outcomes;</li>
+<li>to add unpenalized covariates to the mode;</li>
+<li>to utilize sparse/bigmatrix data format for more efficient and flexible use of the package.</li>
+</ul>
 </div>
 <div id="installation" class="section level3">
 <h3>Installation</h3>
@@ -419,13 +420,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb16-7" data-line-number="7">                      <span class="dt">seed=</span><span class="dv">1</span>,</a>
 <a class="sourceLine" id="cb16-8" data-line-number="8">                      <span class="dt">max_iterations=</span><span class="dv">10000</span>)</a></code></pre></div>
 <pre><code>## Compute grid:  
-## Time difference of 0.00149107 secs
+## Time difference of 0.001035929 secs
 ## Parallel cv: 
-## Time difference of 0.935977 secs
+## Time difference of 0.7887568 secs
 ## Fit on the full dataset: 
-## Time difference of 0.6829669 secs</code></pre>
+## Time difference of 0.4664228 secs</code></pre>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start</a></code></pre></div>
-<pre><code>## Time difference of 1.630471 secs</code></pre>
+<pre><code>## Time difference of 1.262696 secs</code></pre>
 <div id="obtain-best-model-with-gesso.coef-function" class="section level4">
 <h4>Obtain best model with <code>gesso.coef()</code> function</h4>
 <p>To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters we use <code>gesso.coef()</code> function. We need to specify a model fit object and a pair of <code>lambda</code> = (<code>lambda_1</code>, <code>lambda_2</code>) values organized in a tibble (ex: <code>lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])</code>).</p>
@@ -590,7 +591,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb42-5" data-line-number="5">                <span class="dt">normalize=</span><span class="ot">TRUE</span>,</a>
 <a class="sourceLine" id="cb42-6" data-line-number="6">                <span class="dt">normalize_response=</span><span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb42-7" data-line-number="7">time_non_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_non_sparse</a></code></pre></div>
-<pre><code>## Time difference of 1.036888 mins</code></pre>
+<pre><code>## Time difference of 43.9949 secs</code></pre>
 <p>We then convert our generated matrix to sparse format and measure fitting time again.</p>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb44-1" data-line-number="1">G_train_sparse =<span class="st"> </span><span class="kw">as</span>(data<span class="op">$</span>G_train, <span class="st">&quot;dgCMatrix&quot;</span>)</a>
 <a class="sourceLine" id="cb44-2" data-line-number="2"></a>
@@ -601,10 +602,10 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb44-7" data-line-number="7">                <span class="dt">normalize=</span><span class="ot">TRUE</span>,</a>
 <a class="sourceLine" id="cb44-8" data-line-number="8">                <span class="dt">normalize_response=</span><span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb44-9" data-line-number="9">time_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_sparse</a></code></pre></div>
-<pre><code>## Time difference of 15.15276 secs</code></pre>
-<p>We see that the sparse option enables (0.07 times) more efficient fitting, however, the speed-up works only for substantially sparse matrices.</p>
+<pre><code>## Time difference of 10.51841 secs</code></pre>
+<p>We see that the sparse option enables (4.18 times) more efficient fitting, however, the speed-up works only for substantially sparse matrices.</p>
 <div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb46-1" data-line-number="1"><span class="kw">as.numeric</span>(time_non_sparse) <span class="op">/</span><span class="st"> </span><span class="kw">as.numeric</span>(time_sparse)</a></code></pre></div>
-<pre><code>## [1] 0.06842899</code></pre>
+<pre><code>## [1] 4.182659</code></pre>
 </div>
 <div id="bigmatrix-bigmemory-package-option-example" class="section level3">
 <h3>Bigmatrix (<code>bigmemory</code> package) option example</h3>

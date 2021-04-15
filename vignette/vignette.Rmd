@@ -20,12 +20,8 @@ This vignette is a tutorial about how to use the `gesso` package
 
  * for the selection of the gene-environment interaction terms in a joint *main-effect-before-interaction* hierarchical manner
  * for building a *well-formulated* prediction model containing interaction terms with a specific exposure of interest, where the final prediction model only includes interaction terms for which their respective main effects are also included in the model
- * to show how to convert data to sparse/bigmatrix format for more efficient and flexible use of the package
- 
-### Package highlights
- * option is available to tune only one hyperparameter and set $\alpha$: $\lambda_2$ = $\alpha$ $\lambda_1$
- * option is available to tune hyperparameters by maximizing AUC for the binary outcomes
 
+ 
 ### Overview
 
 The package is developed to fit a regularized regression model that we call **gesso** for the joint selection of gene-environment (GxE) interactions. The model focuses on a single environmental exposure and induces a *main-effect-before-interaction* hierarchical structure. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.
@@ -36,7 +32,13 @@ Response (outcome) variable can be either quantitative or binary 0/1 variable. F
 
 The package supports sparse matrices `dgCMatrix` and (filebacked) bigmatrix format from the `bigmemory` package for large or out of RAM datasets. 
 
-The package allows adding unpenalized covariates to the model.
+### Package highlights
+The package allows
+
+ * to tune only one hyperparameter and set $\alpha$: $\lambda_2$ = $\alpha$ $\lambda_1$;
+ * to tune hyperparameters by maximizing *AUC* for the binary outcomes;
+ * to add unpenalized covariates to the mode;
+ * to utilize sparse/bigmatrix data format for more efficient and flexible use of the package.
 
 ### Installation
 
