@@ -35,10 +35,10 @@ The package supports sparse matrices `dgCMatrix` and (filebacked) bigmatrix form
 ### Package highlights
 The package allows
 
- * to tune only one hyperparameter and set $\alpha$: $\lambda_2$ = $\alpha$ $\lambda_1$;
+ * to tune only one hyperparameter ($\lambda_1$) and set $\alpha$: $\lambda_2$ = $\alpha$ $\lambda_1$;
  * to tune hyperparameters by maximizing *AUC* for the binary outcomes;
- * to add unpenalized covariates to the mode;
- * to utilize sparse/bigmatrix data format for more efficient and flexible use of the package.
+ * to add unpenalized covariates to the model;
+ * to utilize sparse/bigmatrix data formats for more efficient and flexible use of the package.
 
 ### Installation
 
