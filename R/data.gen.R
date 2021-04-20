@@ -31,7 +31,7 @@ data.gen = function(sample_size=100, p=20, n_g_non_zero=15, n_gxe_non_zero=10, f
     }
   } else {
     if (family == "binomial"){
-      n = n_train * 15
+      n = n_train * 50
       beta_0 = -1
       beta_c = 0.8
       if (mode == "strong_hierarchical" || mode == "anti_hierarchical"){

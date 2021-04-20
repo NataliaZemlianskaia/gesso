@@ -208,7 +208,7 @@ protected:
         working_set_size = std::min(2 * working_set_size, p);
 
         active_set.setZero(p);
-        max_diff_tolerance = tolerance;
+        max_diff_tolerance = tolerance; //* 4;
         int num_updates_b_for_working_set = 0;
         bool is_first_iteration = true;
         while (num_passes < max_iterations) {
@@ -218,7 +218,8 @@ protected:
             break;
           } else {
             if (!is_first_iteration && num_updates_b_for_working_set <= 1) {
-              max_diff_tolerance /= 4;
+             // max_diff_tolerance = std::max(max_diff_tolerance / 4, tolerance / 4);
+              max_diff_tolerance = max_diff_tolerance / 4;
             }
             update_quadratic_approximation();
             update_weighted_variables(true);
@@ -273,14 +274,21 @@ protected:
                             const Eigen::Ref<VecXd>& abs_nu_by_G,
                             const Eigen::Ref<VecXd>& abs_nu_by_GxE,
                             const VecXd& nu) {
-      temp_p = (lambda_1 * abs_nu_by_GxE - lambda_2 * abs_nu_by_G).cwiseQuotient(abs_nu_by_GxE + abs_nu_by_G).cwiseMax(0).cwiseMin(lambda_1);
       double M = std::numeric_limits<double>::infinity();
       for (int i = 0; i < abs_nu_by_G.size(); ++i) {
-        if (abs_nu_by_G[i] > 0) {
-          M = std::min(M, (lambda_1 - temp_p[i]) / abs_nu_by_G[i]);
-        }
-        if (abs_nu_by_GxE[i] > 0) {
-          M = std::min(M, (lambda_2 + temp_p[i]) / abs_nu_by_GxE[i]);
+        if (abs_nu_by_GxE[i] * lambda_1 - abs_nu_by_G[i] * lambda_2 <= 0) {
+          // delta = 0
+          if (abs_nu_by_GxE[i] > 0) {
+            M = std::min(M, lambda_2 / abs_nu_by_GxE[i]);
+          }
+          if (abs_nu_by_G[i] > 0) {
+            M = std::min(M, lambda_1 / abs_nu_by_G[i]);
+          }
+        } else {
+          // delta = (B * lambda_1 - A * lambda_1) / (A + B)
+          if (abs_nu_by_G[i] + abs_nu_by_GxE[i] > 0) {
+            M = std::min(M, (lambda_1 + lambda_2) / (abs_nu_by_G[i] + abs_nu_by_GxE[i]));
+          }
         }
       }
       double x_hat = 1;

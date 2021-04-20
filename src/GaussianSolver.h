@@ -198,15 +198,22 @@ protected:
     
     double naive_projection(double lambda_1, double lambda_2, const Eigen::Ref<VecXd>& abs_res_by_G, const Eigen::Ref<VecXd>& abs_res_by_GxE) {
       //VecXd dual_delta
-      temp_p = (lambda_1 * abs_res_by_GxE - lambda_2 * abs_res_by_G).cwiseQuotient(abs_res_by_GxE + abs_res_by_G).cwiseMax(0).cwiseMin(lambda_1);
       double M = std::numeric_limits<double>::infinity();
       for (int i = 0; i < abs_res_by_G.size(); ++i) {
-        if (abs_res_by_G[i] > 0) {
-          M = std::min(M, (lambda_1 - temp_p[i]) / abs_res_by_G[i]);
+        if (abs_res_by_GxE[i] * lambda_1 - abs_res_by_G[i] * lambda_2 <= 0) {
+          // delta = 0
+          if (abs_res_by_GxE[i] > 0) {
+            M = std::min(M, lambda_2 / abs_res_by_GxE[i]);
+          }
+          if (abs_res_by_G[i] > 0) {
+            M = std::min(M, lambda_1 / abs_res_by_G[i]);
+          }
+        } else {
+          // delta = (B * lambda_1 - A * lambda_1) / (A + B)
+          if (abs_res_by_G[i] + abs_res_by_GxE[i] > 0) {
+            M = std::min(M, (lambda_1 + lambda_2) / (abs_res_by_G[i] + abs_res_by_GxE[i]));
+          }
         }
-        if (abs_res_by_GxE[i] > 0) {
-          M = std::min(M, (lambda_2 + temp_p[i]) / abs_res_by_GxE[i]);
-        }      
       }
       temp_n = Y - xbeta;
       double x_hat = triple_dot_product(temp_n, Y, weights) / triple_dot_product(temp_n, temp_n, weights);
