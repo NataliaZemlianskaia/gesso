@@ -17,9 +17,6 @@ selection.metrics(true_b_g, true_b_gxe, estimated_b_g, estimated_b_gxe)
   \item{estimated_b_g}{vector of estimated main effect coefficients}
   \item{estimated_b_gxe}{vector of estimated interaction coefficients}
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
 \value{
 A list of principal selection metrics
   \item{b_g_non_zero}{number of non-zero main effects}
@@ -35,21 +32,6 @@ A list of principal selection metrics
   \item{auc_g}{area under the curve for zero/non-zero binary classification problem for main effects}
   \item{auc_gxe}{area under the curve for zero/non-zero binary classification problem for interactions}
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-Natalia Zemlianskaia
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
 \examples{
 data = data.gen(sample_size=100, p=500)
 model = gesso.cv(data$G_train, data$E_train, data$Y_train)
@@ -58,7 +40,3 @@ g_coefficients = gesso.coef(model$fit, model$lambda_min)$beta_g
 selection.metrics(data$Beta_G, data$Beta_GxE, g_coefficients, gxe_coefficients)
 
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }% use one of  RShowDoc("KEYWORDS")
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

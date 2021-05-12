@@ -25,7 +25,7 @@ get.matrix.type = function(G) {
   return(mattype_g)
 }
 
-compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio=1e-3) {
+compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio=1e-2) {
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
   E = as.double(E)
@@ -44,8 +44,8 @@ compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio
 
 
 gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
-                     grid=NULL, grid_size=20, alpha=NULL,
-                     grid_min_ratio=1e-2, family="gaussian", weights=NULL,
+                     grid=NULL, grid_size=20, grid_min_ratio=1e-2, 
+                     alpha=NULL, family="gaussian", weights=NULL,
                      tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
                      verbose=FALSE) {
   mattype_g = get.matrix.type(G)
@@ -236,30 +236,30 @@ gesso.coefnum = function(cv_model, target_b_gxe_non_zero, less_than=TRUE){
   if (type_measure == "loss"){
     if (less_than){
       best_lambdas = cv_result %>%
-        filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
-        arrange(mean_loss) %>%
+        filter(.data$mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
+        arrange(.data$mean_loss) %>%
         dplyr::slice(1) %>%
-        dplyr::select(lambda_1, lambda_2)
+        dplyr::select(.data$lambda_1, .data$lambda_2)
     } else {
       best_lambdas = cv_result %>%
-        filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
-        arrange(mean_loss) %>%
+        filter(.data$mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
+        arrange(.data$mean_loss) %>%
         dplyr::slice(1) %>%
-        dplyr::select(lambda_1, lambda_2)
+        dplyr::select(.data$lambda_1, .data$lambda_2)
     }
   } else {
     if (less_than){
       best_lambdas = cv_result %>%
-        filter(mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
-        arrange(desc(mean_loss)) %>%
+        filter(.data$mean_beta_gxe_nonzero <= target_b_gxe_non_zero) %>%
+        arrange(desc(.data$mean_loss)) %>%
         dplyr::slice(1) %>%
-        dplyr::select(lambda_1, lambda_2)
+        dplyr::select(.data$lambda_1, .data$lambda_2)
     } else {
       best_lambdas = cv_result %>%
-        filter(mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
-        arrange(desc(mean_loss)) %>%
+        filter(.data$mean_beta_gxe_nonzero >= target_b_gxe_non_zero) %>%
+        arrange(desc(.data$mean_loss)) %>%
         dplyr::slice(1) %>%
-        dplyr::select(lambda_1, lambda_2)
+        dplyr::select(.data$lambda_1, .data$lambda_2)
     }
   }
   

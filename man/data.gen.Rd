@@ -8,10 +8,11 @@ Data Generation
 Generates genotypes data matrix G (\code{sample_size} by \code{p}), vector of environmental measurments E, and an outcome vector Y of size \code{sample_size}. Simulates training, validation, and test datasets.
 }
 \usage{
-data.gen(sample_size = 100, p = 20, n_g_non_zero = 15, n_gxe_non_zero = 10, family = "gaussian",
-                    mode = "strong_hierarchical", normalize = FALSE, normalize_response = FALSE, 
-                    seed = 1, pG = 0.2, pE = 0.3,
-                    n_confounders = NULL)
+data.gen(sample_size = 100, p = 20, n_g_non_zero = 15, n_gxe_non_zero = 10, 
+         family = "gaussian", mode = "strong_hierarchical", 
+         normalize = FALSE, normalize_response = FALSE, 
+         seed = 1, pG = 0.2, pE = 0.3,
+         n_confounders = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -28,9 +29,6 @@ data.gen(sample_size = 100, p = 20, n_g_non_zero = 15, n_gxe_non_zero = 10, fami
   \item{pE}{environment prevalence, value from 0 to 1}
   \item{seed}{random seed}
   \item{n_confounders}{number of confounders to generate, either \code{NULL} or \code{>1}}
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
 }
 \value{
 A list of simulated datasets and generating coefficients
@@ -56,27 +54,9 @@ A list of simulated datasets and generating coefficients
 \item{family, p, sample_size, mode, seed}{input simulation parameters}
 
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-Natalia Zemlianskaia
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
 \examples{
-data = data.gen(sample_size=1000, p=100000)
+data = data.gen(sample_size=100, p=500)
 G = data$G_train; GxE = data$GxE_train
 E = data$E_train; Y = data$Y_train
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-%\keyword{ ~kwd1 }% use one of  RShowDoc("KEYWORDS")
-%\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+

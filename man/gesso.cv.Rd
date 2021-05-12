@@ -5,12 +5,12 @@
 Cross-Validation
 }
 \description{
-Performs \code{nfolds}-fold cross-validation to tune hyperparmeters \code{lambda_1} and \code{lambda_2} for hierNet GxE model.
+Performs \code{nfolds}-fold cross-validation to tune hyperparmeters \code{lambda_1} and \code{lambda_2} for the gesso model.
 }
 \usage{
 gesso.cv(G, E, Y, C = NULL, normalize = TRUE, normalize_response = FALSE, grid = NULL,
-         grid_size = 20, alpha = NULL, grid_min_ratio = 1e-2, family = "gaussian", 
-         type_measure = "loss", nfolds = 4, fold_ids = NULL,
+         grid_size = 20, grid_min_ratio = 1e-2, alpha = NULL, family = "gaussian", 
+         type_measure = "loss", fold_ids = NULL, nfolds = 4, 
          parallel = TRUE, seed = 42, tolerance = 1e-4, max_iterations = 10000, 
          min_working_set_size = 100, verbose = TRUE)
 }
@@ -38,9 +38,6 @@ gesso.cv(G, E, Y, C = NULL, normalize = TRUE, normalize_response = FALSE, grid =
   \item{seed}{set random seed to control random folds assignments}
   \item{verbose}{\code{TRUE} to print messages}
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
 \value{
 A list of objects
 \item{cv_result}{a tibble with cross-validation results: averaged across folds loss and the number of non-zero coefficients for each value of (\code{lambda_1}, \code{lambda_2}) path.
@@ -57,21 +54,6 @@ A list of objects
 \item{grid}{vector of values used for hyperparameters tuning}
 \item{full_cv_result}{inner variables}
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-Natalia Zemlianskaia
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
 \examples{
 data = data.gen(sample_size=100, p=500)
 tune_model = gesso.cv(data$G_train, data$E_train, data$Y_train, 
@@ -79,7 +61,4 @@ tune_model = gesso.cv(data$G_train, data$E_train, data$Y_train,
 gxe_coefficients = gesso.coef(tune_model$fit, tune_model$lambda_min)$beta_gxe        
 g_coefficients = gesso.coef(tune_model$fit, tune_model$lambda_min)$beta_g          
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }% use one of  RShowDoc("KEYWORDS")
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+

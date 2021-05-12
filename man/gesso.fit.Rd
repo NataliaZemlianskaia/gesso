@@ -10,7 +10,7 @@ Fits hierNet GxE model over the two dimentional grid of hyperparmeters \code{lam
 \usage{
 gesso.fit(G, E, Y, C = NULL, normalize = TRUE, normalize_response = FALSE, grid = NULL,
           grid_size = 20, grid_min_ratio = 1e-2, alpha = NULL, family = "gaussian", 
-          tolerance = 1e-4, weights = NULL, max_iterations = 10000, 
+          weights = NULL, tolerance = 1e-4, max_iterations = 10000, 
           min_working_set_size = 100, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -33,9 +33,6 @@ gesso.fit(G, E, Y, C = NULL, normalize = TRUE, normalize_response = FALSE, grid 
   \item{weights}{inner fitting parameter}
   \item{verbose}{\code{TRUE} to print messages}
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
 \value{
 A list of estimated coefficients and other model fit metrics for each pair of hyperparameters (\code{lambda_1}, \code{lambda_2})
 \item{beta_0}{vector of estimated intercept values of size \code{lambda_1}*\code{lambda_2}}
@@ -55,21 +52,6 @@ A list of estimated coefficients and other model fit metrics for each pair of hy
 %\item{num_fitered_by_safe_g}{}
 %\item{num_fitered_by_safe_gxe}{}
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-Natalia Zemlianskaia
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
 \examples{
 data = data.gen()
 fit = gesso.fit(G=data$G_train, E=data$E_train, Y=data$Y_train, normalize=TRUE)
@@ -77,7 +59,3 @@ plot(fit$beta_g_nonzero, pch=19, cex=0.4,
      ylab="num of non-zero features", xlab="lambdas path")
 points(fit$beta_gxe_nonzero, pch=19, cex=0.4, col="red")
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }% use one of  RShowDoc("KEYWORDS")
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

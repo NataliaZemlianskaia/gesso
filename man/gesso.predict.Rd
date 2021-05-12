@@ -24,26 +24,8 @@ gesso.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E,
   \item{family}{set \code{family="gaussian"} for the continuous outcome and 
           \code{family="binomial"} for the binary outcome with 0/1 levels}
 }
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
 \value{
 Returns a vector of predicted values
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-Natalia Zemlianskaia
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
 data = data.gen(sample_size=100, p=200)
@@ -56,7 +38,4 @@ new_G = data$G_test; new_E = data$E_test
 new_Y = gesso.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E)
 cor(new_Y, data$Y_test)^2
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }% use one of  RShowDoc("KEYWORDS")
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+

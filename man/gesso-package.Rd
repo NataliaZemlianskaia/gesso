@@ -8,27 +8,16 @@
 \description{
 \packageDescription{gesso}
 }
-\details{
-
-The DESCRIPTION file:
-\packageDESCRIPTION{gesso}
-\packageIndices{gesso}
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
-}
 \author{
 \packageAuthor{gesso}
 
 Maintainer: \packageMaintainer{gesso}
 }
 \references{
-~~ Literature or other references for background information ~~
+"A scalable hierarchical lasso for gene-environment interactions", 
+Natalia Zemlianskaia, W.James Gauderman, Juan Pablo Lewinger
+https://arxiv.org/abs/2103.13510
 }
 \keyword{ package }
-\seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
-}
-\examples{
-~~ simple examples of the most important functions ~~
-}
+
+

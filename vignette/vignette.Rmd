@@ -110,7 +110,7 @@ To tune the model over a 2D grid of hyper-parameters (`lambda_1` and `lambda_2`)
 * `normalize` TRUE to normalize matrix `G` (such that column-wise sd is eqial to 1) and vector `E` (TRUE by default)
 * `normalize_response` TRUE to normalize vector `Y` (FALSE by default)
 
-There is an option to use a custom grid in `gesso.cv()` function by specifying `grid` parameter instead of `grid_size` parameter. 
+There is an option to use a custom grid in `gesso.cv()` function by specifying `grid` parameter instead of `grid_size` parameter. The user can also specify `alpha` parameter to enable tuning only over `lambda_1` while assuming `lambda_2` = `lambda_1` * `alpha`.
 
 `verbose` parameter is set to TRUE by default in `gesso.cv()`, but we can set it to FALSE to avoid outputting function messages about partial execution time.
 
@@ -132,7 +132,7 @@ Sys.time() - start
 
 To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters we use `gesso.coef()` function. We need to specify a model fit object and a pair of `lambda` = (`lambda_1`, `lambda_2`) values organized in a tibble (ex: `lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])`).
 
-Below we set `fit = tune_model$fit` - model fit on the full dataset and `lambda = tune_model$lambda_min` - the pair of tuning parameters corresponding to the minimum cross-validation error that `gesso.cv()` function returns.
+Below we set `fit = tune_model$fit` - model fit on the full dataset and `lambda = tune_model$lambda_min` - the pair of tuning parameters corresponding to the minimum cross-validated error that `gesso.cv()` function returns.
 
 ```{r}
 coefficients = gesso.coef(fit=tune_model$fit, lambda=tune_model$lambda_min)
