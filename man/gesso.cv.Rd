@@ -11,7 +11,7 @@ Performs \code{nfolds}-fold cross-validation to tune hyperparmeters \code{lambda
 gesso.cv(G, E, Y, C = NULL, normalize = TRUE, normalize_response = FALSE, grid = NULL,
          grid_size = 20, grid_min_ratio = 1e-2, alpha = NULL, family = "gaussian", 
          type_measure = "loss", fold_ids = NULL, nfolds = 4, 
-         parallel = TRUE, seed = 42, tolerance = 1e-4, max_iterations = 10000, 
+         parallel = TRUE, seed = 42, tolerance = 1e-3, max_iterations = 10000, 
          min_working_set_size = 100, verbose = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.

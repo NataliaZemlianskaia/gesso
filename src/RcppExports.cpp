@@ -72,3 +72,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_gesso_computeLambdaMax", (DL_FUNC) &_gesso_computeLambdaMax, 8},
+    {"_gesso_fitModelCV", (DL_FUNC) &_gesso_fitModelCV, 15},
+    {"_gesso_fitModel", (DL_FUNC) &_gesso_fitModel, 13},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_gesso(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}

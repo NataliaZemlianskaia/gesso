@@ -20,7 +20,7 @@ test_that("cv and fit return same results on individual folds", {
                           family=family, normalize=TRUE)
           
           cv = gesso.cv(data$G_train, data$E_train, data$Y_train,
-                        normalize=FALSE, grid_size=grid_size, alpha=alpha,
+                        tolerance=tol, normalize=FALSE, grid_size=grid_size, alpha=alpha,
                         family=family, nfolds=nfolds, seed=seed, 
                         type_measure=type_measure,
                         verbose=FALSE)
@@ -86,7 +86,7 @@ test_that("cv and fit return same results on (custom) individual folds", {
       fold_ids = fold_ids + 1
       
       cv = gesso.cv(data$G_train, data$E_train, data$Y_train,
-                    normalize=FALSE, grid_size=grid_size,
+                    tolerance=tol, normalize=FALSE, grid_size=grid_size,
                     family=family, fold_ids=fold_ids, seed=seed,
                     verbose=FALSE)
       expect_equal(sum(cv$full_cv_result$has_converged != 1), 0)

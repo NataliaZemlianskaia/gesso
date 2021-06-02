@@ -20,9 +20,19 @@ get.matrix.type = function(G) {
       stop("G must be of type double")
     mattype_g = 2
   } else {
-    stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix")
+    stop("G must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix. If G is a data frame, use as.matrix(G).")
   }
   return(mattype_g)
+}
+
+check.is.matrix = function(X, name) {
+  if (is(X, "matrix")) {
+    if (typeof(X) != "double")
+      stop(paste0(name, " must be of type double"))
+    mattype_g = 0
+  } else {
+    stop(paste0(name, " must be a standard R matrix, big.matrix, filebacked.big.matrix, or dgCMatrix. If ", name, " is a data.frame, use as.matrix(", name, ")."))
+  }
 }
 
 compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio=1e-2) {
@@ -31,6 +41,8 @@ compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio
   E = as.double(E)
   if (is.null(C)) {
     C = matrix(numeric(0), nrow=length(Y), ncol=0)
+  } else {
+    check.is.matrix(C, "C")    
   }
   n = dim(G)[1]
   weights = rep(1, n) / n
@@ -46,7 +58,7 @@ compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio
 gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
                      grid=NULL, grid_size=20, grid_min_ratio=1e-2, 
                      alpha=NULL, family="gaussian", weights=NULL,
-                     tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
+                     tolerance=1e-3, max_iterations=10000, min_working_set_size=100,
                      verbose=FALSE) {
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
@@ -68,6 +80,8 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   }
   if (is.null(C)) {
     C = matrix(numeric(0), nrow=length(Y), ncol=0)
+  } else {
+    check.is.matrix(C, "C")    
   }
   if (is.null(alpha)) {
     alpha = -1
@@ -88,7 +102,7 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
                     grid=NULL, grid_size=20, grid_min_ratio=1e-2, alpha=NULL,
                     family="gaussian", type_measure="loss",
                     fold_ids=NULL, nfolds=4, parallel=TRUE, seed=42,
-                    tolerance=1e-4, max_iterations=10000, min_working_set_size=100,
+                    tolerance=1e-3, max_iterations=10000, min_working_set_size=100,
                     verbose=TRUE) {
   set.seed(seed)
   mattype_g = get.matrix.type(G)
@@ -115,6 +129,8 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   
   if (is.null(C)) {
     C = matrix(numeric(0), nrow=length(Y), ncol=0)
+  } else {
+    check.is.matrix(C, "C")    
   }
   
   if (is.null(fold_ids)) {
