@@ -28,7 +28,7 @@ gesso.predict(beta_0, beta_e, beta_g, beta_gxe, new_G, new_E,
 Returns a vector of predicted values
 }
 \examples{
-data = data.gen(sample_size=100, p=200)
+data = data.gen()
 tune_model = gesso.cv(data$G_train, data$E_train, data$Y_train)
 coefficients = gesso.coef(tune_model$fit, tune_model$lambda_min)
 beta_0 = coefficients$beta_0; beta_e = coefficients$beta_e                   

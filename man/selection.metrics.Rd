@@ -33,7 +33,7 @@ A list of principal selection metrics
   \item{auc_gxe}{area under the curve for zero/non-zero binary classification problem for interactions}
 }
 \examples{
-data = data.gen(sample_size=100, p=500)
+data = data.gen()
 model = gesso.cv(data$G_train, data$E_train, data$Y_train)
 gxe_coefficients = gesso.coef(model$fit, model$lambda_min)$beta_gxe                
 g_coefficients = gesso.coef(model$fit, model$lambda_min)$beta_g  

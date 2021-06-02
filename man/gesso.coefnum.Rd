@@ -29,7 +29,7 @@ Note that the number of estimated non-zero interactions will only approximately 
   \item{beta_c}{a vector of estimated confounders coefficients}
 }
 \examples{
-data = data.gen(sample_size=100, p=500)
+data = data.gen()
 model = gesso.cv(data$G_train, data$E_train, data$Y_train)
 model_coefficients = gesso.coefnum(model, 5)
 gxe_coefficients = model_coefficients$beta_gxe; sum(gxe_coefficients!=0)              

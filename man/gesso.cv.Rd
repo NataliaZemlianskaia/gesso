@@ -55,7 +55,7 @@ A list of objects
 \item{full_cv_result}{inner variables}
 }
 \examples{
-data = data.gen(sample_size=100, p=500)
+data = data.gen()
 tune_model = gesso.cv(data$G_train, data$E_train, data$Y_train, 
                       grid_size=20, parallel=TRUE, nfolds=3)
 gxe_coefficients = gesso.coef(tune_model$fit, tune_model$lambda_min)$beta_gxe        

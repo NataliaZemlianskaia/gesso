@@ -24,7 +24,7 @@ A list of model coefficients corresponding to \code{lambda} values of tuning par
   \item{beta_gxe}{a vector of estimated interaction coefficients}
 }
 \examples{
-data = data.gen(sample_size=100, p=500)
+data = data.gen()
 model = gesso.cv(data$G_train, data$E_train, data$Y_train, grid_size=20, 
         parallel=TRUE, nfolds=3)
 gxe_coefficients = gesso.coef(model$fit, model$lambda_min)$beta_gxe                

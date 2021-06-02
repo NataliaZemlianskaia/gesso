@@ -2,15 +2,15 @@ Package: gesso
 Type: Package
 Title: Hierarchical Selection of Gene-Environment Interactions in a Regularized Regression Model
 Version: 1.0.0
-Date: 2020-10-03
+Date: 2021-06-01
 Author: Natalia Zemlianskaia
 Maintainer: Natalia Zemlianskaia <natasha.zemlianskaia@gmail.com>
 Description: The method focuses on a single environmental exposure and induces 
     a main-effect-before-interaction hierarchical structure for the joint selection of interaction terms 
     in a regularized regression model.
 License: MIT + file LICENSE
-Imports: Rcpp (>= 1.0.3), RcppEigen, bigmemory, methods
+Imports: Rcpp (>= 1.0.3), Matrix, bigmemory, methods
 Depends: dplyr, R (>= 3.5)
-Suggests: Matrix, glmnet, CVXR, testthat, knitr, rmarkdown, ggplot2
+Suggests: glmnet, testthat, knitr, rmarkdown, ggplot2
 LinkingTo: Rcpp, RcppEigen, RcppThread, BH, bigmemory
 VignetteBuilder: knitr

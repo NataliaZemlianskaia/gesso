@@ -55,7 +55,7 @@ A list of simulated datasets and generating coefficients
 
 }
 \examples{
-data = data.gen(sample_size=100, p=500)
+data = data.gen(sample_size=100, p=100)
 G = data$G_train; GxE = data$GxE_train
 E = data$E_train; Y = data$Y_train
 }
