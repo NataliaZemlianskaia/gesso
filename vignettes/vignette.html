@@ -12,7 +12,7 @@
 
 <meta name="author" content="Natalia Zemlianskaia" />
 
-<meta name="date" content="2021-04-14" />
+<meta name="date" content="2021-06-01" />
 
 <title>Getting started with gesso</title>
 
@@ -27,7 +27,14 @@
     </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
 a.sourceLine { display: inline-block; line-height: 1.25; }
 a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
@@ -311,7 +318,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Getting started with <code>gesso</code></h1>
 <h4 class="author">Natalia Zemlianskaia</h4>
-<h4 class="date">2021-04-14</h4>
+<h4 class="date">2021-06-01</h4>
 
 
 
@@ -327,18 +334,23 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h3>Overview</h3>
 <p>The package is developed to fit a regularized regression model that we call <strong>gesso</strong> for the joint selection of gene-environment (GxE) interactions. The model focuses on a single environmental exposure and induces a <em>main-effect-before-interaction</em> hierarchical structure. We developed and implemented an efficient fitting algorithm and screening rules that can discard large numbers of irrelevant predictors with high accuracy.</p>
 <p><strong>gesso</strong> model induces hierarchical selection of the (GxE) interaction terms via overlapped group lasso structure. The model has two tuning parameters <span class="math inline">\(\lambda_1\)</span> and <span class="math inline">\(\lambda_2\)</span> allowing flexible, data-dependent control over group sparsity and additional interactions sparsity.</p>
-<p>Response (outcome) variable can be either quantitative or binary 0/1 variable. For a binary response, the IRLS procedure is used with the custom screening rules we developed.</p>
+<p>Response (outcome) variable can be either continuous or binary 0/1 variable. For a binary response, the IRLS procedure is used with the custom screening rules we developed.</p>
 <p>The package supports sparse matrices <code>dgCMatrix</code> and (filebacked) bigmatrix format from the <code>bigmemory</code> package for large or out of RAM datasets.</p>
 </div>
 <div id="package-highlights" class="section level3">
 <h3>Package highlights</h3>
 <p>The package allows</p>
 <ul>
-<li>to tune only one hyperparameter (<span class="math inline">\(\lambda_1\)</span>) and set <span class="math inline">\(\alpha\)</span>: <span class="math inline">\(\lambda_2\)</span> = <span class="math inline">\(\alpha\)</span> <span class="math inline">\(\lambda_1\)</span>;</li>
-<li>to tune hyperparameters by maximizing <em>AUC</em> for the binary outcomes;</li>
+<li>to model either continuous or binary (0/1) outcomes;</li>
+<li>to tune either both hyperparameters (<span class="math inline">\(\lambda_1\)</span>, <span class="math inline">\(\lambda_2\)</span>), or only one hyperparameter (<span class="math inline">\(\lambda_1\)</span>) and set <span class="math inline">\(\alpha\)</span>: <span class="math inline">\(\lambda_2\)</span> = <span class="math inline">\(\alpha\)</span> <span class="math inline">\(\lambda_1\)</span>;</li>
+<li>to tune hyperparameters for the binary outcomes either by maximizing <em>AUC</em> or minimizing <em>logistic loss</em>;</li>
 <li>to add unpenalized covariates to the model;</li>
 <li>to utilize sparse/bigmatrix data formats for more efficient and flexible use of the package.</li>
 </ul>
+</div>
+<div id="system-requirements" class="section level3">
+<h3>System requirements</h3>
+<p>NOTE: <code>RcppThread</code> cannot be installed with <code>gcc</code> 4.8.5 version <a href="https://github.com/tnagler/RcppThread/issues/13">https://github.com/tnagler/RcppThread/issues/13</a>. In this case, we recommend updating <code>gcc</code> to a more recent version.</p>
 </div>
 <div id="installation" class="section level3">
 <h3>Installation</h3>
@@ -409,7 +421,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <li><code>normalize</code> TRUE to normalize matrix <code>G</code> (such that column-wise sd is eqial to 1) and vector <code>E</code> (TRUE by default)</li>
 <li><code>normalize_response</code> TRUE to normalize vector <code>Y</code> (FALSE by default)</li>
 </ul>
-<p>There is an option to use a custom grid in <code>gesso.cv()</code> function by specifying <code>grid</code> parameter instead of <code>grid_size</code> parameter.</p>
+<p>There is an option to use a custom grid in <code>gesso.cv()</code> function by specifying <code>grid</code> parameter instead of <code>grid_size</code> parameter. The user can also specify <code>alpha</code> parameter to enable tuning only over <code>lambda_1</code> while assuming <code>lambda_2</code> = <code>lambda_1</code> * <code>alpha</code>.</p>
 <p><code>verbose</code> parameter is set to TRUE by default in <code>gesso.cv()</code>, but we can set it to FALSE to avoid outputting function messages about partial execution time.</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1">start =<span class="st"> </span><span class="kw">Sys.time</span>()</a>
 <a class="sourceLine" id="cb16-2" data-line-number="2">tune_model =<span class="st"> </span><span class="kw">gesso.cv</span>(<span class="dt">G=</span>data<span class="op">$</span>G_train, <span class="dt">E=</span>data<span class="op">$</span>E_train, <span class="dt">Y=</span>data<span class="op">$</span>Y_train, </a>
@@ -420,17 +432,17 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb16-7" data-line-number="7">                      <span class="dt">seed=</span><span class="dv">1</span>,</a>
 <a class="sourceLine" id="cb16-8" data-line-number="8">                      <span class="dt">max_iterations=</span><span class="dv">10000</span>)</a></code></pre></div>
 <pre><code>## Compute grid:  
-## Time difference of 0.001717091 secs
+## Time difference of 0.001224995 secs
 ## Parallel cv: 
-## Time difference of 1.070644 secs
+## Time difference of 1.456951 secs
 ## Fit on the full dataset: 
-## Time difference of 0.7859659 secs</code></pre>
+## Time difference of 0.961683 secs</code></pre>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start</a></code></pre></div>
-<pre><code>## Time difference of 1.870005 secs</code></pre>
+<pre><code>## Time difference of 2.429304 secs</code></pre>
 <div id="obtain-best-model-with-gesso.coef-function" class="section level4">
 <h4>Obtain best model with <code>gesso.coef()</code> function</h4>
 <p>To obtain interaction and main effect coefficients corresponding to the model with a particular pair of tuning parameters we use <code>gesso.coef()</code> function. We need to specify a model fit object and a pair of <code>lambda</code> = (<code>lambda_1</code>, <code>lambda_2</code>) values organized in a tibble (ex: <code>lambda = tibble(lambda_1=tune_model$grid[1], lambda_2=tune_model$grid[1])</code>).</p>
-<p>Below we set <code>fit = tune_model$fit</code> - model fit on the full dataset and <code>lambda = tune_model$lambda_min</code> - the pair of tuning parameters corresponding to the minimum cross-validation error that <code>gesso.cv()</code> function returns.</p>
+<p>Below we set <code>fit = tune_model$fit</code> - model fit on the full dataset and <code>lambda = tune_model$lambda_min</code> - the pair of tuning parameters corresponding to the minimum cross-validated error that <code>gesso.cv()</code> function returns.</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" data-line-number="1">coefficients =<span class="st"> </span><span class="kw">gesso.coef</span>(<span class="dt">fit=</span>tune_model<span class="op">$</span>fit, <span class="dt">lambda=</span>tune_model<span class="op">$</span>lambda_min)</a>
 <a class="sourceLine" id="cb20-2" data-line-number="2">gxe_coefficients =<span class="st"> </span>coefficients<span class="op">$</span>beta_gxe                      </a>
 <a class="sourceLine" id="cb20-3" data-line-number="3">g_coefficients =<span class="st"> </span>coefficients<span class="op">$</span>beta_g   </a></code></pre></div>
@@ -499,7 +511,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## precision_gxe   0.25            0.07692308      
 ## auc_g           1               1               
 ## auc_gxe         0.8964557       0.6711392</code></pre>
-<p>We see that the gesso model outperforms the Lasso model in terms of the detection of interaction terms in all important selection metrics, including GxE detection AUC (<code>auc_gxe</code>), sensitivity (<code>sensitivity_gxe</code>), and precision(<code>precision_gxe</code>). The estimation bias of the interaction coefficients is also substantially lower for the gesso model (<code>mse_b_gxe</code>).</p>
+<p>We see that the gesso model outperforms the Lasso model in terms of the detection of interaction terms in all important selection metrics, including GxE detection AUC (<code>auc_gxe</code>), sensitivity (<code>sensitivity_gxe</code>), and precision (<code>precision_gxe</code>). The estimation bias of the interaction coefficients is also substantially lower for the gesso model (<code>mse_b_gxe</code>).</p>
 </div>
 <div id="obtain-target-model-with-gesso.coefnum-function" class="section level4">
 <h4>Obtain target model with <code>gesso.coefnum()</code> function</h4>
@@ -526,7 +538,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## precision_gxe   0.6             0.07692308      
 ## auc_g           1               1               
 ## auc_gxe         0.7989873       0.6711392</code></pre>
-<p>Here we see that the number of non-zero interactions in the model (<code>b_gxe_non_zero</code>) is 4 (vs 45 non-zero terms in the model corresponding to the minimal cross-validated error), leading to substantially increased precision and decreased sensitivity.</p>
+<p>Here we see that the number of non-zero interactions in the model (<code>b_gxe_non_zero</code>) is 5 (vs 16 non-zero terms in the model corresponding to the minimal cross-validated error), leading to substantially increased precision and decreased sensitivity.</p>
 </div>
 </div>
 <div id="prediction-example" class="section level3">
@@ -590,8 +602,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb42-4" data-line-number="4">                <span class="dt">tolerance=</span><span class="fl">1e-4</span>,</a>
 <a class="sourceLine" id="cb42-5" data-line-number="5">                <span class="dt">normalize=</span><span class="ot">TRUE</span>,</a>
 <a class="sourceLine" id="cb42-6" data-line-number="6">                <span class="dt">normalize_response=</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb42-7" data-line-number="7">time_non_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_non_sparse</a></code></pre></div>
-<pre><code>## Time difference of 1.096153 mins</code></pre>
+<a class="sourceLine" id="cb42-7" data-line-number="7">time_non_sparse =<span class="st"> </span><span class="kw">difftime</span>(<span class="kw">Sys.time</span>(), start, <span class="dt">units=</span><span class="st">&quot;secs&quot;</span>); time_non_sparse</a></code></pre></div>
+<pre><code>## Time difference of 62.72046 secs</code></pre>
 <p>We then convert our generated matrix to sparse format and measure fitting time again.</p>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb44-1" data-line-number="1">G_train_sparse =<span class="st"> </span><span class="kw">as</span>(data<span class="op">$</span>G_train, <span class="st">&quot;dgCMatrix&quot;</span>)</a>
 <a class="sourceLine" id="cb44-2" data-line-number="2"></a>
@@ -601,15 +613,15 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb44-6" data-line-number="6">                <span class="dt">grid_size=</span><span class="dv">20</span>, <span class="dt">grid_min_ratio=</span><span class="fl">1e-2</span>,</a>
 <a class="sourceLine" id="cb44-7" data-line-number="7">                <span class="dt">normalize=</span><span class="ot">TRUE</span>,</a>
 <a class="sourceLine" id="cb44-8" data-line-number="8">                <span class="dt">normalize_response=</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb44-9" data-line-number="9">time_sparse =<span class="st"> </span><span class="kw">Sys.time</span>() <span class="op">-</span><span class="st"> </span>start; time_sparse</a></code></pre></div>
-<pre><code>## Time difference of 18.42308 secs</code></pre>
-<p>We see that the sparse option enables (0.06 times) more efficient fitting, however, the speed-up works only for substantially sparse matrices.</p>
+<a class="sourceLine" id="cb44-9" data-line-number="9">time_sparse =<span class="st"> </span><span class="kw">difftime</span>(<span class="kw">Sys.time</span>(), start, <span class="dt">units=</span><span class="st">&quot;secs&quot;</span>); time_sparse</a></code></pre></div>
+<pre><code>## Time difference of 18.58414 secs</code></pre>
+<p>We see that the sparse option enables (3.37 times) more efficient fitting, however, the speed-up works only for substantially sparse matrices.</p>
 <div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb46-1" data-line-number="1"><span class="kw">as.numeric</span>(time_non_sparse) <span class="op">/</span><span class="st"> </span><span class="kw">as.numeric</span>(time_sparse)</a></code></pre></div>
-<pre><code>## [1] 0.05949892</code></pre>
+<pre><code>## [1] 3.374946</code></pre>
 </div>
 <div id="bigmatrix-bigmemory-package-option-example" class="section level3">
 <h3>Bigmatrix (<code>bigmemory</code> package) option example</h3>
-<p>Here we show how to convert data into <code>bigmatrix</code> format. This format should be used for very large datasets that barely fit in RAM.</p>
+<p>Here we show how to convert data into <code>bigmatrix</code> format. This format should be used for large datasets that fit in RAM but do not fit in <code>R</code>.</p>
 <p>For out of RAM objects function <code>attach.big.matrix(&quot;g_train.desc&quot;)</code> should be used given that the files already exist in a correct format (<code>g_train.desc</code>, <code>g_train.bin</code>).</p>
 <div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb48-1" data-line-number="1">grid =<span class="st"> </span><span class="kw">compute.grid</span>(data<span class="op">$</span>G_train, data<span class="op">$</span>E_train, data<span class="op">$</span>Y_train,</a>
 <a class="sourceLine" id="cb48-2" data-line-number="2">                    <span class="dt">normalize=</span><span class="ot">TRUE</span>, <span class="dt">grid_size=</span>grid_size, <span class="dt">grid_min_ratio=</span><span class="fl">1e-4</span>)</a>
