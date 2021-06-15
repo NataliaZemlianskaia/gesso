@@ -73,10 +73,11 @@ $(|\beta_G| \ge |\beta_{G\times E}|)$.
 
 ```{r}
 family = "gaussian"
-sample_size = 150; p = 400; n_g_non_zero = 10; n_gxe_non_zero = 5
+sample_size = 180; p = 400; n_g_non_zero = 10; n_gxe_non_zero = 5
 
 data = data.gen(seed=1, sample_size=sample_size, p=p, 
-                n_g_non_zero=n_g_non_zero, n_gxe_non_zero=n_gxe_non_zero, 
+                n_g_non_zero=n_g_non_zero, 
+                n_gxe_non_zero=n_gxe_non_zero, 
                 mode="strong_hierarchical",
                 family=family)
 ```
@@ -108,10 +109,11 @@ To tune the model over a 2D grid of hyper-parameters (`lambda_1` and `lambda_2`)
 * our data `G, E, Y` and `family` parameter for the response variable; matrix `G` should be a numeric matrix, vector `E` should be a numeric vector. Vector `Y` could either be a continuous or binary 0/1 numeric vector
 * `tolerance` for the convergence of the fitting algorithm 
 * `grid_size` to automatically generate grid values for cross-validation
+* `grid_min_ratio` is an important parameter that controls the sparsity of the coefficients vector.  For substantially high-dimensional problems where `p` >> `n` or when the goal is to select only a few interactions we recommend setting `grid_min_ratio` to 0.1
 * `nfolds` to specify how many folds to use in cross-validation
 * `parallel` TRUE to enable parallel cross-validation (TRUE by default)
 * `seed` set the random seed to control random folds assignments
-* `normalize` TRUE to normalize matrix `G` (such that column-wise sd is eqial to 1) and vector `E` (TRUE by default)
+* `normalize` TRUE to normalize matrix `G` (such that column-wise sd is equal to 1) and vector `E` (TRUE by default)
 * `normalize_response` TRUE to normalize vector `Y` (FALSE by default)
 
 There is an option to use a custom grid in `gesso.cv()` function by specifying `grid` parameter instead of `grid_size` parameter. The user can also specify `alpha` parameter to enable tuning only over `lambda_1` while assuming `lambda_2` = `lambda_1` * `alpha`.
@@ -207,7 +209,7 @@ selection_gesso = selection.metrics(data$Beta_G, data$Beta_GxE, g_coefficients,
 cbind(selection_gesso, selection_glmnet)
 ```
 
-Here we see that the number of non-zero interactions in the model (`b_gxe_non_zero`) is 5 (vs 16 non-zero terms in the model corresponding to the minimal cross-validated error), leading to substantially increased precision and decreased sensitivity.
+Here we see that the number of non-zero interactions in the model (`b_gxe_non_zero`) is 5 (vs 22 non-zero terms in the model corresponding to the minimal cross-validated error), leading to substantially increased precision and decreased sensitivity for GxE detection.
 
 ### Prediction example
 
@@ -242,13 +244,14 @@ The package allows adding unpenalized covariates to the model (for example, impo
 
 ```{r}
 family = "gaussian"
-sample_size = 150; p = 400; n_g_non_zero = 10; n_gxe_non_zero = 5
+sample_size = 180; p = 400; n_g_non_zero = 10; n_gxe_non_zero = 5
 n_confounders = 2
 
 grid = 10^seq(-3, log10(1), length.out = 20)
 
 data = data.gen(seed=1, sample_size=sample_size, p=p, 
-                n_g_non_zero=n_g_non_zero, n_gxe_non_zero=n_gxe_non_zero, 
+                n_g_non_zero=n_g_non_zero, 
+                n_gxe_non_zero=n_gxe_non_zero, 
                 mode="strong_hierarchical",
                 family=family,
                 n_confounders=n_confounders)
@@ -271,7 +274,7 @@ tune_model = gesso.cv(G=data$G_train, E=data$E_train, Y=data$Y_train,
 We generate a large highly sparse genotype matrix `G` by setting the genotype prevalence parameter `pG` to 0.03 and measure how long does it take to fit the model.
 
 ```{r}
-sample_size = 100; p = 15000
+sample_size = 100; p = 10000
 pG = 0.03
 data = data.gen(seed=1, sample_size=sample_size, p=p, 
                 n_g_non_zero=n_g_non_zero, 
@@ -283,7 +286,7 @@ sum(data$G_train != 0) / (sample_size * p)
 
 start = Sys.time()
 fit = gesso.fit(G=data$G_train, E=data$E_train, Y=data$Y_train, 
-                grid_size=20, grid_min_ratio=1e-2,
+                grid_size=20, grid_min_ratio=1e-1,
                 tolerance=1e-4,
                 normalize=TRUE,
                 normalize_response=TRUE)
@@ -297,7 +300,7 @@ G_train_sparse = as(data$G_train, "dgCMatrix")
 start = Sys.time()
 fit = gesso.fit(G=G_train_sparse, E=data$E_train, Y=data$Y_train, 
                 tolerance=1e-4,
-                grid_size=20, grid_min_ratio=1e-2,
+                grid_size=20, grid_min_ratio=1e-1,
                 normalize=TRUE,
                 normalize_response=TRUE)
 time_sparse = difftime(Sys.time(), start, units="secs"); time_sparse
@@ -312,31 +315,33 @@ as.numeric(time_non_sparse) / as.numeric(time_sparse)
 
 ### Bigmatrix (`bigmemory` package) option example
 
-Here we show how to convert data into `bigmatrix` format. This format should be used for large datasets that fit in RAM but do not fit in `R`. 
-
-For out of RAM objects function `attach.big.matrix("g_train.desc")` should be used given that the files already exist in a correct format (`g_train.desc`, `g_train.bin`).
+For out of RAM objects function `attach.big.matrix("g_train.desc")` can be used to upload the data given that the files are already created in a correct format (`g_train.desc`, `g_train.bin`).
 
 ```R
-grid = compute.grid(data$G_train, data$E_train, data$Y_train,
-                    normalize=TRUE, grid_size=grid_size, grid_min_ratio=1e-4)
-                    
-G_train = as.big.matrix(data$G_train,
-                        backingfile="g_train.bin",
-                        descriptorfile="g_train.desc")
+
+## how to create filebacked matrix
+G_train = filebacked.big.matrix(nrow=dim(data$G_train)[1], 
+                                ncol=dim(data$G_train)[2],
+                                backingpath="./",
+                                backingfile="g_train.bin",
+                                descriptorfile="g_train.desc")
+
+for (i in 1:dim(data$G_train)[2]){
+    G_train[, i] = data$G_train[, i]
+}
+
+## how to attach filebacked matrix 
+G_train = attach.big.matrix("g_train.desc")
 ## is.filebacked(G_train) should return TRUE
 
-fit_bm = gesso.fit(G_train, data$E_train, data$Y_train,
-                     tolerance=1e-4, grid=grid, family=family)
+fit_bm = gesso.fit(G_train, data$E_train, data$Y_train, family=family)
                      
-tune_model_bm = gesso.cv(G_train, data$E_train, data$Y_train, 
-                         family=family, grid=grid, tolerance=1e-4,
-                         parallel=TRUE, nfolds=3,
-                         normalize=TRUE, seed=1)                     
+tune_model_bm = gesso.cv(G_train, data$E_train, data$Y_train, family=family)                     
 ```
 
 ### Working sets
 
-We use the same large dataset (`p` = 15,000) that we generated for the sparse matrices example to demonstrate how our screening rules work.
+We use the same large dataset (`p` = 10,000) that we generated for the sparse matrices example to demonstrate how our screening rules work.
 
 Working sets (WS) are the sets of variables left after we applied our screening rules to the full set of predictors. Histogram of the working set sizes shows that most of the time we have to fit only a handful of variables.
 
@@ -344,7 +349,7 @@ Working sets (WS) are the sets of variables left after we applied our screening 
 hist(fit$working_set_size, breaks = 100, col="blue")
 ```
 
-2-dimensional plot below shows the log(WS size) for each ($\lambda_1$, $\lambda_2$) fit.
+2-dimensional plot below shows the log10(WS size) for each ($\lambda_1$, $\lambda_2$) fit.
 
 ```{r fig.height = 3, fig.width = 4, fig.align = "center"}
 df = data.frame(lambda_1_factor = factor(fit$lambda_1),

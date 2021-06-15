@@ -1,8 +1,8 @@
 Package: gesso
 Type: Package
 Title: Hierarchical GxE Interactions in a Regularized Regression Model
-Version: 1.0.0
-Date: 2021-06-04
+Version: 1.0.1
+Date: 2021-06-14
 Author: Natalia Zemlianskaia
 Maintainer: Natalia Zemlianskaia <natasha.zemlianskaia@gmail.com>
 Description: The method focuses on a single environmental exposure and induces 
