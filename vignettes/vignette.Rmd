@@ -271,12 +271,12 @@ tune_model = gesso.cv(G=data$G_train, E=data$E_train, Y=data$Y_train,
 
 ### Sparse matrix option example
 
-We generate a large highly sparse genotype matrix `G` by setting the genotype prevalence parameter `pG` to 0.03 and measure how long does it take to fit the model.
+We generate a sparse genotype matrix `G` by setting the genotype prevalence parameter `pG` to 0.1 and measure how long does it take to fit the model.
 
 ```{r}
 sample_size = 100; p = 10000
-pG = 0.03
-data = data.gen(seed=1, sample_size=sample_size, p=p, 
+pG = 0.1
+data = data.gen(sample_size=sample_size, p=p, 
                 n_g_non_zero=n_g_non_zero, 
                 n_gxe_non_zero=n_gxe_non_zero, 
                 mode = "strong_hierarchical",
@@ -306,7 +306,7 @@ fit = gesso.fit(G=G_train_sparse, E=data$E_train, Y=data$Y_train,
 time_sparse = difftime(Sys.time(), start, units="secs"); time_sparse
 ```
 
-We see that the sparse option enables (`r round(as.numeric(time_non_sparse) / as.numeric(time_sparse), 2)` times) more efficient fitting, however, the speed-up works only for substantially sparse matrices.
+We see that the sparse option enables (`r round(as.numeric(time_non_sparse) / as.numeric(time_sparse), 2)` times) more efficient fitting. Higher speed-up can be observed for large sparse matrices.
 
 ```{r}
 as.numeric(time_non_sparse) / as.numeric(time_sparse)
