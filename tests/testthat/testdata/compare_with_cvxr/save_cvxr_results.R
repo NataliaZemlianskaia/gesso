@@ -16,13 +16,13 @@ for (family in c("gaussian", "binomial")){
     saveRDS(data, file_name)
     
     start = Sys.time()
-    fit = hierNetGxE.fit(data$G_train, data$E_train, data$Y_train,
+    fit = gesso.fit(data$G_train, data$E_train, data$Y_train,
                          tolerance=tol, grid=grid, family=family, 
                          normalize=FALSE,
                          max_iterations=max_iterations)
     print(Sys.time() - start)
     
-    cat("-- hierNetGxE.fit done in ", Sys.time() - start, " seconds. num not converged ", sum(1 - fit$has_converged), "\n")    
+    cat("-- gesso.fit done in ", Sys.time() - start, " seconds. num not converged ", sum(1 - fit$has_converged), "\n")    
 
     cvxr_fit = hierNetGxE.cvxr(data$G_train, data$E_train, data$GxE_train, data$Y_train,
                                grid=grid, tol=tol, family=family)

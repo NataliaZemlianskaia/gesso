@@ -1,10 +1,10 @@
 context("cross-validation")
 
 test_that("cv and fit return same results on individual folds", {
-  tol = 1e-4
-  grid_size = 20
+  tol = 1e-3
+  grid_size = 5
   max_iterations = 5000
-  sample_size = 400
+  sample_size = 100
   n_g_non_zero = 10
   n_gxe_non_zero = 5
   p = 30
@@ -69,15 +69,16 @@ test_that("cv and fit return same results on individual folds", {
 })
 
 test_that("cv and fit return same results on (custom) individual folds", {
-  tol = 1e-4
-  grid_size = 20
+  tol = 1e-3
+  grid_size = 5
   max_iterations = 5000
-  sample_size = 400
+  sample_size = 100
   n_g_non_zero = 10
   n_gxe_non_zero = 5
   p = 30
   nfolds = 3
-  for (seed in 3:4) {
+  seed = 1
+  #for (seed in 3:4) {
     for (family in c("gaussian", "binomial")) {
       data = data.gen(seed=seed, sample_size=sample_size,
                       family=family, normalize=TRUE)
@@ -127,5 +128,5 @@ test_that("cv and fit return same results on (custom) individual folds", {
         expect_lt(max(abs(cv$full_cv_result$test_loss[fold_id,] - test_loss)), 1e-10)
       }
     }
-  }
+  #}
 })

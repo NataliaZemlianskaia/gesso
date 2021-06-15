@@ -6,10 +6,11 @@ test_that("training loss is similar to the fit by glmnet when E=0", {
   grid = rev(grid)
   tols = c(1e-4)
   
-  max_iterations = 20000
+  max_iterations = 2000
   
   for (family in c("gaussian", "binomial")){
-    for (seed in 1:20) {
+    #for (seed in 1:20) {
+    for (seed in 1:5) {
       for (tol in tols) {
         file_name = paste0("testdata/compare_with_glmnet/", seed, "_", family, "_data.rds")
         data = readRDS(file_name)
