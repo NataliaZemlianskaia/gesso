@@ -123,6 +123,7 @@ There is an option to use a custom grid in `gesso.cv()` function by specifying `
 start = Sys.time()
 tune_model = gesso.cv(G=data$G_train, E=data$E_train, Y=data$Y_train, 
                       family=family, grid_size=20, tolerance=1e-4,
+                      grid_min_ratio=1e-2,
                       parallel=TRUE, nfolds=3,
                       normalize=TRUE,
                       normalize_response=TRUE,
@@ -270,10 +271,11 @@ tune_model = gesso.cv(G=data$G_train, E=data$E_train, Y=data$Y_train,
 We generate a large highly sparse genotype matrix `G` by setting the genotype prevalence parameter `pG` to 0.03 and measure how long does it take to fit the model.
 
 ```{r}
-sample_size = 600; p = 30000
+sample_size = 100; p = 15000
 pG = 0.03
 data = data.gen(seed=1, sample_size=sample_size, p=p, 
-                n_g_non_zero=n_g_non_zero, n_gxe_non_zero=n_gxe_non_zero, 
+                n_g_non_zero=n_g_non_zero, 
+                n_gxe_non_zero=n_gxe_non_zero, 
                 mode = "strong_hierarchical",
                 pG=pG,
                 family=family)
@@ -334,7 +336,7 @@ tune_model_bm = gesso.cv(G_train, data$E_train, data$Y_train,
 
 ### Working sets
 
-We use the same large dataset (`p` = 30,000) that we generated for the sparse matrices example to demonstrate how our screening rules work.
+We use the same large dataset (`p` = 15,000) that we generated for the sparse matrices example to demonstrate how our screening rules work.
 
 Working sets (WS) are the sets of variables left after we applied our screening rules to the full set of predictors. Histogram of the working set sizes shows that most of the time we have to fit only a handful of variables.
 

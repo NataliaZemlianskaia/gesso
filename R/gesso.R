@@ -35,7 +35,7 @@ check.is.matrix = function(X, name) {
   }
 }
 
-compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio=1e-2) {
+compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio) {
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
   E = as.double(E)
@@ -56,21 +56,27 @@ compute.grid = function(G, E, Y, C, normalize, family, grid_size, grid_min_ratio
 
 
 gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
-                     grid=NULL, grid_size=20, grid_min_ratio=1e-2, 
+                     grid=NULL, grid_size=20, grid_min_ratio=NULL, 
                      alpha=NULL, family="gaussian", weights=NULL,
-                     tolerance=1e-3, max_iterations=10000, min_working_set_size=100,
+                     tolerance=1e-3, max_iterations=5000, 
+                     min_working_set_size=100,
                      verbose=FALSE) {
   mattype_g = get.matrix.type(G)
   Y = as.double(Y)
   E = as.double(E)
   if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
   if (is.null(grid)) {
-    if (verbose) {start = Sys.time()}
+    if(is.null(grid_min_ratio)){
+      grid_min_ratio = ifelse(dim(G)[1] < dim(G)[2], 0.1, 0.01)
+    }
+    if (verbose) {
+      start = Sys.time()
+      cat("Compute grid: ", "\n")
+    }
     grid = compute.grid(G=G, E=E, Y=Y, C=C,
                         normalize=normalize, family=family,
                         grid_size=grid_size, grid_min_ratio=grid_min_ratio)
     if (verbose) {
-      cat("Compute grid: ", "\n")
       print(Sys.time() - start)
     }
   }
@@ -99,10 +105,12 @@ gesso.fit = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
 }
 
 gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
-                    grid=NULL, grid_size=20, grid_min_ratio=1e-2, alpha=NULL,
+                    grid=NULL, grid_size=20, grid_min_ratio=NULL, 
+                    alpha=NULL,
                     family="gaussian", type_measure="loss",
                     fold_ids=NULL, nfolds=4, parallel=TRUE, seed=42,
-                    tolerance=1e-3, max_iterations=10000, min_working_set_size=100,
+                    tolerance=1e-3, max_iterations=5000, 
+                    min_working_set_size=100,
                     verbose=TRUE) {
   set.seed(seed)
   mattype_g = get.matrix.type(G)
@@ -110,12 +118,17 @@ gesso.cv = function(G, E, Y, C=NULL, normalize=TRUE, normalize_response=FALSE,
   E = as.double(E)
   if (normalize_response) {tolerance = tolerance * sqrt(sum(Y^2)/length(Y) - mean(Y)^2)}
   if (is.null(grid)) {
-    if (verbose) {start = Sys.time()}
+    if(is.null(grid_min_ratio)){
+      grid_min_ratio = ifelse(dim(G)[1] < dim(G)[2], 0.1, 0.01)
+    }
+    if (verbose) {
+      start = Sys.time()
+      cat("Compute grid: ", "\n")
+    }
     grid = compute.grid(G=G, E=E, Y=Y, C=C,
                         normalize=normalize, family=family,
                         grid_size=grid_size, grid_min_ratio=grid_min_ratio)
     if (verbose) {
-      cat("Compute grid: ", "\n")
       print(Sys.time() - start)
     }
   }
