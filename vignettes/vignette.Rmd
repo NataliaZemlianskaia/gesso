@@ -271,29 +271,7 @@ tune_model = gesso.cv(G=data$G_train, E=data$E_train, Y=data$Y_train,
 
 ### Sparse matrix option example
 
-We generate a sparse genotype matrix `G` by setting the genotype prevalence parameter `pG` to 0.1 and measure how long does it take to fit the model.
-
-```{r}
-sample_size = 100; p = 10000
-pG = 0.1
-data = data.gen(sample_size=sample_size, p=p, 
-                n_g_non_zero=n_g_non_zero, 
-                n_gxe_non_zero=n_gxe_non_zero, 
-                mode = "strong_hierarchical",
-                pG=pG,
-                family=family)
-sum(data$G_train != 0) / (sample_size * p)
-
-start = Sys.time()
-fit = gesso.fit(G=data$G_train, E=data$E_train, Y=data$Y_train, 
-                grid_size=20, grid_min_ratio=1e-1,
-                tolerance=1e-4,
-                normalize=TRUE,
-                normalize_response=TRUE)
-time_non_sparse = difftime(Sys.time(), start, units="secs"); time_non_sparse
-```
-
-We then convert our generated matrix to sparse format and measure fitting time again.
+To convert data matrix to the sparse format use `as` function. 
 ```{r}
 G_train_sparse = as(data$G_train, "dgCMatrix")
 
@@ -305,13 +283,6 @@ fit = gesso.fit(G=G_train_sparse, E=data$E_train, Y=data$Y_train,
                 normalize_response=TRUE)
 time_sparse = difftime(Sys.time(), start, units="secs"); time_sparse
 ```
-
-We see that the sparse option enables (`r round(as.numeric(time_non_sparse) / as.numeric(time_sparse), 2)` times) more efficient fitting. Higher speed-up can be observed for large sparse matrices.
-
-```{r}
-as.numeric(time_non_sparse) / as.numeric(time_sparse)
-```
-
 
 ### Bigmatrix (`bigmemory` package) option example
 
@@ -335,13 +306,12 @@ G_train = attach.big.matrix("g_train.desc")
 ## is.filebacked(G_train) should return TRUE
 
 fit_bm = gesso.fit(G_train, data$E_train, data$Y_train, family=family)
-                     
 tune_model_bm = gesso.cv(G_train, data$E_train, data$Y_train, family=family)                     
 ```
 
 ### Working sets
 
-We use the same large dataset (`p` = 10,000) that we generated for the sparse matrices example to demonstrate how our screening rules work.
+We use the same dataset we generated to demonstrate how our screening rules work.
 
 Working sets (WS) are the sets of variables left after we applied our screening rules to the full set of predictors. Histogram of the working set sizes shows that most of the time we have to fit only a handful of variables.
 
